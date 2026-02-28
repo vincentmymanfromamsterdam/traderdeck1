@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-02-28 20:41 UTC",
+  "updated_at": "2026-02-28 21:11 UTC",
   "updated_date": "2026-02-28",
   "futures": [
     {
@@ -766,11 +766,11 @@
     {
       "ticker": "BTC-USD",
       "name": "Bitcoin",
-      "price": 66647.6328,
-      "chg_1d": 1.16,
-      "chg_1w": 3.14,
-      "chg_52w_hi": -46.58,
-      "chg_ytd": -21.01,
+      "price": 66482.1172,
+      "chg_1d": 0.91,
+      "chg_1w": 2.89,
+      "chg_52w_hi": -46.71,
+      "chg_ytd": -21.2,
       "spark": [
         -0.83,
         6.06,
@@ -781,11 +781,11 @@
     {
       "ticker": "ETH-USD",
       "name": "Ethereum",
-      "price": 1951.3719,
-      "chg_1d": 1.07,
-      "chg_1w": 5.17,
-      "chg_52w_hi": -59.61,
-      "chg_ytd": -12.8,
+      "price": 1952.3048,
+      "chg_1d": 1.12,
+      "chg_1w": 5.22,
+      "chg_52w_hi": -59.59,
+      "chg_ytd": -12.76,
       "spark": [
         -0.14,
         10.88,
