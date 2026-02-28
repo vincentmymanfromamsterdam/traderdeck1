@@ -1,0 +1,64 @@
+name: Daily Market Data Refresh
+
+on:
+  schedule:
+    # Runs at 22:00 UTC = 23:00 CET (after US market close)
+    - cron: '0 22 * * 1-5'
+
+  # Manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-traderdeck
+
+      - name: Install Python dependencies
+        run: |
+          pip install yfinance playwright --quiet
+
+      - name: Install Playwright browsers
+        run: |
+          python -m playwright install chromium --with-deps
+
+      # ── STEP 1: Market Data (Yahoo Finance) ──────────────
+      - name: Fetch market data
+        run: |
+          python fetch_data.py
+
+      # ── STEP 2: Carnivore Portfolio Scrape ───────────────
+      - name: Scrape Carnivore portfolios
+        env:
+          CARNIVORE_EMAIL: ${{ secrets.CARNIVORE_EMAIL }}
+          CARNIVORE_PASSWORD: ${{ secrets.CARNIVORE_PASSWORD }}
+        run: |
+          python scrape_carnivore.py
+        # Continue even if scraping fails — dashboard shows cached data
+        continue-on-error: true
+
+      # ── STEP 3: Commit everything ─────────────────────────
+      - name: Commit and push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/market_data.json
+          git add data/carnivore_portfolios.json || true
+          git diff --cached --quiet || git commit -m "chore: update market + portfolio data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
