@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-02-28 21:11 UTC",
-  "updated_date": "2026-02-28",
+  "updated_at": "2026-03-01 15:56 UTC",
+  "updated_date": "2026-03-01",
   "futures": [
     {
       "ticker": "ES=F",
@@ -9,7 +9,7 @@
       "chg_1d": -0.45,
       "chg_1w": -0.49,
       "chg_52w_hi": -1.82,
-      "chg_ytd": 15.52,
+      "chg_ytd": 17.54,
       "spark": [
         -1.04,
         0.76,
@@ -24,7 +24,7 @@
       "chg_1d": -0.3,
       "chg_1w": -0.25,
       "chg_52w_hi": -4.79,
-      "chg_ytd": 19.53,
+      "chg_ytd": 22.16,
       "spark": [
         -1.22,
         1.07,
@@ -39,7 +39,7 @@
       "chg_1d": -1.07,
       "chg_1w": -1.36,
       "chg_52w_hi": -2.53,
-      "chg_ytd": 11.65,
+      "chg_ytd": 13.3,
       "spark": [
         -1.66,
         0.79,
@@ -54,7 +54,7 @@
       "chg_1d": -1.71,
       "chg_1w": -1.28,
       "chg_52w_hi": -3.52,
-      "chg_ytd": 21.68,
+      "chg_ytd": 25.11,
       "spark": [
         -1.59,
         1.09,
@@ -97,11 +97,11 @@
     {
       "ticker": "DX-Y.NYB",
       "name": "US Dollar Index",
-      "price": 97.61,
-      "chg_1d": -0.18,
-      "chg_1w": -0.19,
-      "chg_52w_hi": -9.29,
-      "chg_ytd": -9.29,
+      "price": 97.646,
+      "chg_1d": -0.15,
+      "chg_1w": -0.16,
+      "chg_52w_hi": -8.53,
+      "chg_ytd": -8.53,
       "spark": [
         -0.1,
         0.18,
@@ -127,16 +127,16 @@
     {
       "ticker": "GBPUSD=X",
       "name": "GBP/USD",
-      "price": 1.3491,
-      "chg_1d": -0.49,
-      "chg_1w": 0.23,
-      "chg_52w_hi": -2.41,
-      "chg_ytd": 6.38,
+      "price": 1.3483,
+      "chg_1d": -0.06,
+      "chg_1w": -0.37,
+      "chg_52w_hi": -2.48,
+      "chg_ytd": 6.31,
       "spark": [
-        0.53,
         -0.27,
         0.0,
-        0.45
+        0.45,
+        -0.49
       ]
     },
     {
@@ -159,11 +159,11 @@
     {
       "ticker": "GC=F",
       "name": "Gold Futures",
-      "price": 5230.5,
-      "chg_1d": 1.04,
-      "chg_1w": 3.38,
-      "chg_52w_hi": -1.65,
-      "chg_ytd": 84.38,
+      "price": 5247.8999,
+      "chg_1d": 1.38,
+      "chg_1w": 3.73,
+      "chg_52w_hi": -1.33,
+      "chg_ytd": 81.58,
       "spark": [
         2.87,
         -0.94,
@@ -174,11 +174,11 @@
     {
       "ticker": "SI=F",
       "name": "Silver Futures",
-      "price": 92.682,
-      "chg_1d": 6.53,
-      "chg_1w": 12.64,
-      "chg_52w_hi": -19.46,
-      "chg_ytd": 196.88,
+      "price": 93.291,
+      "chg_1d": 7.23,
+      "chg_1w": 13.38,
+      "chg_52w_hi": -18.93,
+      "chg_ytd": 191.24,
       "spark": [
         5.15,
         1.08,
@@ -189,11 +189,11 @@
     {
       "ticker": "HG=F",
       "name": "Copper Futures",
-      "price": 6.0045,
-      "chg_1d": 0.97,
-      "chg_1w": 2.98,
-      "chg_52w_hi": -2.77,
-      "chg_ytd": 33.0,
+      "price": 6.0595,
+      "chg_1d": 1.89,
+      "chg_1w": 3.92,
+      "chg_52w_hi": -1.88,
+      "chg_ytd": 32.4,
       "spark": [
         -0.99,
         2.6,
@@ -204,11 +204,11 @@
     {
       "ticker": "PL=F",
       "name": "Platinum Futures",
-      "price": 2365.6001,
-      "chg_1d": 6.05,
-      "chg_1w": 9.03,
-      "chg_52w_hi": -17.07,
-      "chg_ytd": 153.74,
+      "price": 2373.5,
+      "chg_1d": 6.4,
+      "chg_1w": 9.39,
+      "chg_52w_hi": -16.79,
+      "chg_ytd": 145.55,
       "spark": [
         -1.07,
         1.62,
@@ -225,7 +225,7 @@
       "chg_1d": 2.78,
       "chg_1w": 0.95,
       "chg_52w_hi": -10.81,
-      "chg_ytd": -3.93,
+      "chg_ytd": -1.97,
       "spark": [
         -0.12,
         -1.03,
@@ -236,11 +236,11 @@
     {
       "ticker": "BZ=F",
       "name": "Brent Crude Oil",
-      "price": 72.48,
-      "chg_1d": 2.45,
-      "chg_1w": 1.0,
-      "chg_52w_hi": -5.88,
-      "chg_ytd": -0.96,
+      "price": 72.87,
+      "chg_1d": 3.0,
+      "chg_1w": 1.55,
+      "chg_52w_hi": -5.38,
+      "chg_ytd": 1.75,
       "spark": [
         -0.38,
         -1.01,
@@ -255,7 +255,7 @@
       "chg_1d": 1.13,
       "chg_1w": -6.17,
       "chg_52w_hi": -61.68,
-      "chg_ytd": -25.43,
+      "chg_ytd": -30.64,
       "spark": [
         -2.03,
         -2.35,
@@ -266,11 +266,11 @@
     {
       "ticker": "RB=F",
       "name": "RBOB Gasoline",
-      "price": 2.0779,
-      "chg_1d": 2.24,
-      "chg_1w": 4.04,
-      "chg_52w_hi": -10.86,
-      "chg_ytd": 5.46,
+      "price": 2.2855,
+      "chg_1d": 12.46,
+      "chg_1w": 14.43,
+      "chg_52w_hi": -1.95,
+      "chg_ytd": 4.47,
       "spark": [
         -0.41,
         -0.89,
@@ -766,31 +766,31 @@
     {
       "ticker": "BTC-USD",
       "name": "Bitcoin",
-      "price": 66482.1172,
-      "chg_1d": 0.91,
-      "chg_1w": 2.89,
-      "chg_52w_hi": -46.71,
-      "chg_ytd": -21.2,
+      "price": 67215.7109,
+      "chg_1d": 0.33,
+      "chg_1w": 4.89,
+      "chg_52w_hi": -46.12,
+      "chg_ytd": -21.87,
       "spark": [
-        -0.83,
         6.06,
         -0.75,
-        -2.33
+        -2.33,
+        1.69
       ]
     },
     {
       "ticker": "ETH-USD",
       "name": "Ethereum",
-      "price": 1952.3048,
-      "chg_1d": 1.12,
-      "chg_1w": 5.22,
-      "chg_52w_hi": -59.59,
-      "chg_ytd": -12.76,
+      "price": 2009.1593,
+      "chg_1d": 2.24,
+      "chg_1w": 8.43,
+      "chg_52w_hi": -58.41,
+      "chg_ytd": -9.36,
       "spark": [
-        -0.14,
         10.88,
         -1.35,
-        -4.74
+        -4.74,
+        1.78
       ]
     }
   ],
