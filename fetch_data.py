@@ -1,358 +1,491 @@
 """
-TRADERDECK - Carnivore Trading Portfolio Scraper v3
+TRADERDECK — Daily Market Data Fetcher
+Fetches EOD data from Yahoo Finance and saves to data/market_data.json
+Run: python fetch_data.py
 """
 
-import os
 import json
 import datetime
 import sys
 
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+    import yfinance as yf
 except ImportError:
+    print("Installing yfinance...")
     import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright", "-q"])
-    subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium", "--with-deps"])
-    from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance", "-q"])
+    import yfinance as yf
 
-LOGIN_URL    = "https://carnivoretradedesk.com/login"
-SECTOR_URL   = "https://carnivoretradedesk.com/sector-heaters"
-LONGTERM_URL = "https://carnivoretradedesk.com/longterm"
-OUTPUT_PATH  = "data/carnivore_portfolios.json"
+# ─────────────────────────────────────────────────────────
+#  SYMBOLS CONFIG
+# ─────────────────────────────────────────────────────────
 
+FUTURES = [
+    ("ES=F",  "E-mini S&P 500"),
+    ("NQ=F",  "E-mini Nasdaq 100"),
+    ("YM=F",  "E-mini Dow Jones"),
+    ("RTY=F", "E-mini Russell 2000"),
+]
 
-def clean_num(s):
-    if s is None:
-        return None
-    s = str(s).strip().replace("$", "").replace(",", "").replace("%", "").replace("(", "-").replace(")", "")
+VOL_DOLLAR = [
+    ("^VIX",   "VIX Index"),
+    ("^VVIX",  "VVIX"),
+    ("DX-Y.NYB", "US Dollar Index"),
+    ("EURUSD=X", "EUR/USD"),
+    ("GBPUSD=X", "GBP/USD"),
+    ("USDJPY=X", "USD/JPY"),
+]
+
+METALS = [
+    ("GC=F",  "Gold Futures"),
+    ("SI=F",  "Silver Futures"),
+    ("HG=F",  "Copper Futures"),
+    ("PL=F",  "Platinum Futures"),
+]
+
+ENERGY = [
+    ("CL=F",  "WTI Crude Oil"),
+    ("BZ=F",  "Brent Crude Oil"),
+    ("NG=F",  "Natural Gas"),
+    ("RB=F",  "RBOB Gasoline"),
+]
+
+YIELDS = [
+    ("^IRX",  "13W T-Bill"),
+    ("^FVX",  "5Y Treasury"),
+    ("^TNX",  "10Y Treasury"),
+    ("^TYX",  "30Y Treasury"),
+]
+
+GLOBAL_INDICES = [
+    ("^FTSE",  "FTSE 100"),
+    ("^GDAXI", "DAX"),
+    ("^FCHI",  "CAC 40"),
+    ("^N225",  "Nikkei 225"),
+    ("^HSI",   "Hang Seng"),
+    ("^AXJO",  "ASX 200"),
+    ("^KS11",  "KOSPI"),
+]
+
+SECTORS = [
+    ("XLK",  "Technology"),
+    ("XLF",  "Financials"),
+    ("XLV",  "Health Care"),
+    ("XLY",  "Consumer Disc."),
+    ("XLP",  "Consumer Staples"),
+    ("XLE",  "Energy"),
+    ("XLI",  "Industrials"),
+    ("XLB",  "Materials"),
+    ("XLRE", "Real Estate"),
+    ("XLU",  "Utilities"),
+    ("XLC",  "Comm. Services"),
+]
+
+MAJOR_ETFS = [
+    ("SPY",  "S&P 500"),
+    ("QQQ",  "Nasdaq 100"),
+    ("IWM",  "Russell 2000"),
+    ("DIA",  "Dow Jones"),
+    ("GLD",  "Gold"),
+    ("SLV",  "Silver"),
+    ("TLT",  "20Y Treasuries"),
+    ("HYG",  "High Yield Corp"),
+    ("LQD",  "Investment Grade"),
+    ("VNQ",  "Real Estate"),
+    ("USO",  "Oil Fund"),
+]
+
+CRYPTO = [
+    ("BTC-USD", "Bitcoin"),
+    ("ETH-USD", "Ethereum"),
+]
+
+COUNTRY_ETFS = [
+    ("EWG",  "Germany"),
+    ("EWU",  "United Kingdom"),
+    ("EWJ",  "Japan"),
+    ("FXI",  "China"),
+    ("INDA", "India"),
+    ("EWZ",  "Brazil"),
+    ("EWC",  "Canada"),
+    ("EWA",  "Australia"),
+    ("EWY",  "South Korea"),
+    ("EWQ",  "France"),
+]
+
+# ─────────────────────────────────────────────────────────
+#  FETCH HELPER
+# ─────────────────────────────────────────────────────────
+
+def fetch_group(symbols_with_names, label="group"):
+    """Fetch a group of tickers and return structured data."""
+    tickers = [s[0] for s in symbols_with_names]
+    name_map = {s[0]: s[1] for s in symbols_with_names}
+
+    print(f"  Fetching {label} ({len(tickers)} symbols)...", end=" ", flush=True)
+
     try:
-        return float(s)
-    except ValueError:
-        return None
+        import datetime as dt
+        # Fetch from Jan 1 of current year to get accurate YTD
+        # Also need 52 weeks back, so use whichever is earlier
+        today = dt.date.today()
+        jan1 = dt.date(today.year, 1, 1)
+        week52_ago = today - dt.timedelta(weeks=52)
+        start_date = min(jan1, week52_ago).strftime("%Y-%m-%d")
 
-
-def save_debug(page, label):
-    os.makedirs("data", exist_ok=True)
-    try:
-        text = page.inner_text("body")
-        with open(f"data/debug_{label}.txt", "w") as f:
-            f.write(f"URL: {page.url}\n\n{text[:5000]}")
-        print(f"  Debug saved: data/debug_{label}.txt")
+        data = yf.download(
+            tickers,
+            start=start_date,
+            interval="1d",
+            group_by="ticker",
+            auto_adjust=True,
+            progress=False,
+            threads=True,
+        )
     except Exception as e:
-        print(f"  Debug save failed: {e}")
-
-
-def do_login(page, email, password):
-    print("  Going to login page...", end=" ", flush=True)
-    page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=30000)
-    page.wait_for_timeout(3000)
-    print("OK")
-    print(f"  URL: {page.url}")
-
-    if "login" not in page.url.lower():
-        print("  Already logged in")
-        return True
-
-    # Print all inputs for debugging
-    all_inputs = page.locator("input").all()
-    print(f"  Found {len(all_inputs)} input(s):")
-    for inp in all_inputs:
-        try:
-            t = inp.get_attribute("type") or "text"
-            n = inp.get_attribute("name") or ""
-            ph = inp.get_attribute("placeholder") or ""
-            print(f"    type={t} name={n} placeholder={ph}")
-        except Exception:
-            pass
-
-    # Fill email - first non-password visible input
-    print("  Filling email...", end=" ", flush=True)
-    filled_email = False
-    for inp in page.locator("input:visible").all():
-        try:
-            itype = (inp.get_attribute("type") or "text").lower()
-            if itype in ("password", "submit", "button", "checkbox", "hidden", "radio"):
-                continue
-            inp.click()
-            inp.fill("")
-            inp.type(email, delay=50)
-            filled_email = True
-            print("OK")
-            break
-        except Exception:
-            continue
-
-    if not filled_email:
-        print("FAILED")
-        save_debug(page, "no_email_field")
-        return False
-
-    # Fill password
-    print("  Filling password...", end=" ", flush=True)
-    filled_pw = False
-    for inp in page.locator("input[type='password'], input[type='Password']").all():
-        try:
-            inp.click()
-            inp.fill("")
-            inp.type(password, delay=50)
-            filled_pw = True
-            print("OK")
-            break
-        except Exception:
-            continue
-
-    if not filled_pw:
-        # Tab from email to password
-        print("trying Tab...", end=" ", flush=True)
-        try:
-            page.keyboard.press("Tab")
-            page.wait_for_timeout(300)
-            page.keyboard.type(password, delay=50)
-            filled_pw = True
-            print("OK")
-        except Exception:
-            print("FAILED")
-            return False
-
-    page.wait_for_timeout(500)
-
-    # Submit without expecting navigation (SPA)
-    print("  Submitting...", end=" ", flush=True)
-    submitted = False
-    for sel in ['button[type="submit"]', 'input[type="submit"]', 'button:has-text("LOGIN")',
-                'button:has-text("Login")', 'button:has-text("Sign In")', 'button:has-text("SIGN IN")']:
-        try:
-            page.wait_for_selector(sel, timeout=2000)
-            page.click(sel)
-            submitted = True
-            print(f"OK ({sel})")
-            break
-        except Exception:
-            continue
-
-    if not submitted:
-        page.keyboard.press("Enter")
-        print("OK (Enter)")
-
-    # Poll for redirect (SPA won't fire navigation event)
-    print("  Waiting for auth...", end=" ", flush=True)
-    for i in range(30):
-        page.wait_for_timeout(500)
-        if "login" not in page.url.lower():
-            print(f"OK ({(i+1)*0.5:.1f}s)")
-            page.wait_for_timeout(2000)
-            print(f"  Post-login URL: {page.url}")
-            print("  Login successful")
-            return True
-        try:
-            cookies = page.context.cookies()
-            auth = [c for c in cookies if any(k in c["name"].lower() for k in ["token", "auth", "session", "jwt"])]
-            if auth:
-                print(f"OK (cookie: {auth[0]['name']})")
-                page.wait_for_timeout(2000)
-                return True
-        except Exception:
-            pass
-
-    body = page.inner_text("body")
-    if any(k in body.lower() for k in ["dashboard", "portfolio", "sector", "logout", "sign out"]):
-        print("OK (content check)")
-        return True
-
-    print("TIMEOUT")
-    save_debug(page, "login_failed")
-    print(f"  Body: {body[:300]}")
-    return False
-
-
-def scrape_page(page, url, label):
-    print(f"\n  Loading {label}...", end=" ", flush=True)
-    try:
-        page.goto(url, wait_until="domcontentloaded", timeout=30000)
-    except Exception:
-        # Fallback: try with longer timeout and no wait condition
-        try:
-            page.goto(url, wait_until="commit", timeout=45000)
-        except Exception as e:
-            print(f"FAILED: {e}")
-            return []
-    page.wait_for_timeout(5000)  # wait for JS to render
-    print("OK")
-    print(f"  URL: {page.url}")
-
-    if "login" in page.url.lower():
-        print("  Redirected to login")
-        save_debug(page, f"{label}_redirect")
+        print(f"ERROR: {e}")
         return []
 
-    save_debug(page, label)
+    results = []
 
-    tables = page.locator("table").all()
-    print(f"  Found {len(tables)} table(s)")
+    for ticker in tickers:
+        try:
+            if len(tickers) == 1:
+                df = data
+            else:
+                df = data[ticker] if ticker in data.columns.get_level_values(0) else None
 
-    if tables:
-        best, best_count = None, 0
-        for t in tables:
-            try:
-                n = len(t.locator("tbody tr").all())
-                if n > best_count:
-                    best_count, best = n, t
-            except Exception:
-                pass
+            if df is None or df.empty or len(df) < 2:
+                continue
 
-        if best and best_count > 0:
-            print(f"  Parsing table ({best_count} rows)...")
-            headers = [c.inner_text().strip() for c in best.locator("thead th, thead td").all()]
-            if not headers:
-                headers = [c.inner_text().strip() for c in best.locator("tr").first.locator("td,th").all()]
-            rows = []
-            for row in best.locator("tbody tr").all():
-                cells = [c.inner_text().strip() for c in row.locator("td,th").all()]
-                if cells and any(cells):
-                    rows.append({headers[i] if i < len(headers) else f"col_{i}": cells[i] for i in range(len(cells))})
-            return rows
+            df = df.dropna(subset=["Close"])
 
-    print("  No tables found")
-    return []
+            import datetime as dt
+            close_today = float(df["Close"].iloc[-1])
+            close_1d    = float(df["Close"].iloc[-2]) if len(df) >= 2 else close_today
+            close_1w    = float(df["Close"].iloc[-6]) if len(df) >= 6 else close_1d
+
+            # YTD: first trading day of this calendar year
+            today_dt   = dt.date.today()
+            jan1_str   = f"{today_dt.year}-01-01"
+            df_ytd     = df[df.index >= jan1_str]
+            close_ytd  = float(df_ytd["Close"].iloc[0]) if len(df_ytd) > 0 else float(df["Close"].iloc[0])
+
+            # 52W: price from exactly 52 weeks ago (closest available)
+            week52_str = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+            df_52w     = df[df.index <= week52_str]
+            close_52w  = float(df_52w["Close"].iloc[-1]) if len(df_52w) > 0 else float(df["Close"].iloc[0])
+
+            chg_1d  = round((close_today - close_1d)  / close_1d  * 100, 2)
+            chg_1w  = round((close_today - close_1w)  / close_1w  * 100, 2)
+            chg_52w = round((close_today - close_52w) / close_52w * 100, 2)
+            chg_ytd = round((close_today - close_ytd) / close_ytd * 100, 2)
+
+            # 5-day spark data
+            spark_raw = df["Close"].iloc[-6:-1].tolist() if len(df) >= 6 else df["Close"].iloc[-5:].tolist()
+            spark = [round(float(v), 4) for v in spark_raw]
+
+            # previous closes for sparkline pct changes
+            spark_chgs = []
+            for i in range(1, len(spark)):
+                c = round((spark[i] - spark[i-1]) / spark[i-1] * 100, 2)
+                spark_chgs.append(c)
+
+            results.append({
+                "ticker": ticker,
+                "name": name_map.get(ticker, ticker),
+                "price": round(close_today, 4),
+                "chg_1d": chg_1d,
+                "chg_1w": chg_1w,
+                "chg_52w_hi": chg_52w,
+                "chg_ytd": chg_ytd,
+                "spark": spark_chgs,
+            })
+
+        except Exception as e:
+            print(f"\n    Warning: could not process {ticker}: {e}")
+
+    print(f"OK ({len(results)}/{len(tickers)})")
+    return results
 
 
-def normalize(rows):
-    out = []
-    for row in rows:
-        kl = {k.lower().strip(): v for k, v in row.items()}
+def fetch_yields_group():
+    """Treasury yields need special handling (values are percentages)."""
+    symbols_with_names = YIELDS
+    print(f"  Fetching yields...", end=" ", flush=True)
 
-        def get(*keys):
-            for k in keys:
-                for rk, rv in kl.items():
-                    if k in rk:
-                        return rv
-            return None
+    tickers = [s[0] for s in symbols_with_names]
+    name_map = {s[0]: s[1] for s in symbols_with_names}
+    labels   = {
+        "^IRX": "3M",
+        "^FVX": "5Y",
+        "^TNX": "10Y",
+        "^TYX": "30Y",
+    }
 
-        ticker = get("ticker", "symbol", "stock")
-        if not ticker:
+    try:
+        import datetime as dt
+        today_dt   = dt.date.today()
+        jan1_str   = f"{today_dt.year}-01-01"
+        week52_ago = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+        start_date = min(jan1_str, week52_ago)
+
+        data = yf.download(tickers, start=start_date, interval="1d",
+                           group_by="ticker", auto_adjust=True,
+                           progress=False, threads=True)
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return []
+
+    results = []
+    for ticker in tickers:
+        try:
+            df = data[ticker] if len(tickers) > 1 else data
+            df = df.dropna(subset=["Close"])
+            if df.empty or len(df) < 2:
+                continue
+
+            import datetime as dt
+            today_dt   = dt.date.today()
+
+            yield_today = float(df["Close"].iloc[-1])
+            yield_1d    = float(df["Close"].iloc[-2])
+            yield_1w    = float(df["Close"].iloc[-6]) if len(df) >= 6 else yield_1d
+
+            df_ytd    = df[df.index >= f"{today_dt.year}-01-01"]
+            yield_ytd = float(df_ytd["Close"].iloc[0]) if len(df_ytd) > 0 else float(df["Close"].iloc[0])
+
+            week52_str = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+            df_52w     = df[df.index <= week52_str]
+            yield_52w  = float(df_52w["Close"].iloc[-1]) if len(df_52w) > 0 else float(df["Close"].iloc[0])
+
+            chg_1d_bps  = round((yield_today - yield_1d) * 100, 1)   # basis points
+            chg_1w      = round((yield_today - yield_1w)  / yield_1w  * 100, 2)
+            chg_52w     = round((yield_today - yield_52w) / yield_52w * 100, 2)
+            chg_ytd     = round((yield_today - yield_ytd) / yield_ytd * 100, 2)
+
+            results.append({
+                "ticker": ticker,
+                "tenor": labels.get(ticker, ticker),
+                "name": name_map.get(ticker, ticker),
+                "yield_pct": round(yield_today, 2),
+                "chg_1d_bps": chg_1d_bps,
+                "chg_1w": chg_1w,
+                "chg_52w_hi": chg_52w,
+                "chg_ytd": chg_ytd,
+            })
+        except Exception as e:
+            print(f"\n    Warning: {ticker}: {e}")
+
+    print(f"OK ({len(results)}/{len(tickers)})")
+    return results
+
+# ─────────────────────────────────────────────────────────
+#  BREADTH
+# ─────────────────────────────────────────────────────────
+
+SP500_TICKERS = [
+    "MMM","AOS","ABT","ABBV","ACN","ADBE","AMD","AES","AFL","A","APD","ABNB","AKAM","ALB","ARE",
+    "ALGN","ALLE","LNT","ALL","GOOGL","GOOG","MO","AMZN","AMCR","AEE","AAL","AEP","AXP","AIG",
+    "AMT","AWK","AMP","AME","AMGN","APH","ADI","ANSS","AON","APA","AAPL","AMAT","APTV","ACGL",
+    "ADM","ANET","AJG","AIZ","T","ATO","ADSK","ADP","AZO","AVB","AVY","AXON","BKR","BALL","BAC",
+    "BK","BBWI","BAX","BDX","BRK-B","BBY","BIO","TECH","BIIB","BLK","BX","BA","BCR","BSX","BMY",
+    "AVGO","BR","BRO","BF-B","BLDR","BG","CDNS","CZR","CPT","CPB","COF","CAH","KMX","CCL","CARR",
+    "CTLT","CAT","CBOE","CBRE","CDW","CE","COR","CNC","CNP","CF","CRL","SCHW","CHTR","CVX","CMG",
+    "CB","CHD","CI","CINF","CTAS","CSCO","C","CFG","CLX","CME","CMS","KO","CTSH","CL","CMCSA",
+    "CMA","CAG","COP","ED","STZ","CEG","COO","CPRT","GLW","CTVA","CSGP","COST","CTRA","CCI","CSX",
+    "CMI","CVS","DHI","DHR","DRI","DVA","DAY","DE","DAL","XRAY","DVN","DXCM","FANG","DLR","DFS",
+    "DG","DLTR","D","DPZ","DOV","DOW","DHR","DTE","DUK","DD","EMN","ETN","EBAY","ECL","EIX","EW",
+    "EA","ELV","EMR","ENPH","ETR","EOG","EPAM","EQT","EFX","EQIX","EQR","ESS","EL","ETSY","EVRG",
+    "ES","EXC","EXPE","EXPD","EXR","XOM","FFIV","FDS","FICO","FAST","FRT","FDX","FIS","FITB","FSLR",
+    "FE","FI","FLT","FMC","F","FTNT","FTV","FOXA","FOX","BEN","FCX","GRMN","IT","GE","GEHC","GEV",
+    "GEN","GNRC","GD","GIS","GM","GPC","GILD","GPN","GL","GDDY","GS","HAL","HIG","HAS","HCA","DOC",
+    "HSIC","HSY","HES","HPE","HLT","HOLX","HD","HON","HRL","HST","HWM","HPQ","HUBB","HUM","HBAN",
+    "HII","IBM","IEX","IDXX","ITW","INCY","IR","PODD","INTC","ICE","IFF","IP","IPG","INTU","ISRG",
+    "IVZ","INVH","IQV","IRM","JBHT","JBL","JKHY","J","JNJ","JCI","JPM","JNPR","K","KVUE","KDP",
+    "KEY","KEYS","KMB","KIM","KMI","KLAC","KHC","KR","LHX","LH","LRCX","LW","LVS","LDOS","LEN",
+    "LII","LLY","LIN","LYV","LKQ","LMT","L","LOW","LULU","LYB","MTB","MRO","MPC","MKTX","MAR",
+    "MMC","MLM","MAS","MA","MTCH","MKC","MCD","MCK","MDT","MRK","META","MET","MTD","MGM","MCHP",
+    "MU","MSFT","MAA","MRNA","MHK","MOH","TAP","MDLZ","MPWR","MNST","MCO","MS","MOS","MSI","MSCI",
+    "NDAQ","NTAP","NOV","NWSA","NWS","NEE","NKE","NEM","NFLX","NWL","NI","NDSN","NSC","NTRS","NOC",
+    "NCLH","NRG","NUE","NVDA","NVR","NXPI","ORLY","OXY","ODFL","OMC","ON","OKE","ORCL","OTIS","OC",
+    "PCAR","PKG","PANW","PARA","PH","PAYX","PAYC","PYPL","PNR","PEP","PFE","PCG","PM","PSX","PNW",
+    "PXD","PNC","POOL","PPG","PPL","PFG","PG","PGR","PLD","PRU","PEG","PTC","PSA","PHM","QRVO",
+    "PWR","QCOM","DGX","RL","RJF","RTX","O","REG","REGN","RF","RSG","RMD","RVTY","ROK","ROL","ROP",
+    "ROST","RCL","SPGI","CRM","SBAC","SLB","STX","SRE","NOW","SHW","SPG","SWKS","SJM","SNA","SOLV",
+    "SO","LUV","SWK","SBUX","STT","STLD","STE","SYK","SMCI","SYF","SNPS","SYY","TMUS","TROW","TTWO",
+    "TPR","TRGP","TGT","TEL","TDY","TFX","TER","TSLA","TXN","TXT","TMO","TJX","TSCO","TT","TDG",
+    "TRV","TRMB","TFC","TYL","TSN","USB","UBER","UDR","ULTA","UNP","UAL","UPS","URI","UNH","UHS",
+    "VLO","VTR","VLTO","VRSN","VRSK","VZ","VRTX","VTRS","VICI","V","VST","VMC","WRB","GWW","WAB",
+    "WBA","WMT","DIS","WBD","WM","WAT","WEC","WFC","WELL","WST","WDC","WY","WHR","WMB","WTW","WYNN",
+    "XEL","XYL","YUM","ZBRA","ZBH","ZTS"
+]
+
+def fetch_breadth():
+    """Fetch S&P 500 breadth: % above MA50/MA200, 52W highs/lows."""
+    import datetime as dt
+    print(f"  Fetching S&P 500 breadth ({len(SP500_TICKERS)} stocks)...", end=" ", flush=True)
+
+    today = dt.date.today()
+    start = (today - dt.timedelta(days=220)).strftime("%Y-%m-%d")  # 200 trading days back
+
+    try:
+        data = yf.download(
+            SP500_TICKERS,
+            start=start,
+            interval="1d",
+            group_by="ticker",
+            auto_adjust=True,
+            progress=False,
+            threads=True,
+        )
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {}
+
+    above_50, above_200, highs_52w, lows_52w, total = 0, 0, 0, 0, 0
+
+    for ticker in SP500_TICKERS:
+        try:
+            if len(SP500_TICKERS) == 1:
+                df = data
+            else:
+                df = data[ticker] if ticker in data.columns.get_level_values(0) else None
+            if df is None or df.empty:
+                continue
+            df = df.dropna(subset=["Close"])
+            if len(df) < 10:
+                continue
+
+            close = float(df["Close"].iloc[-1])
+
+            ma50  = float(df["Close"].iloc[-50:].mean())  if len(df) >= 50  else None
+            ma200 = float(df["Close"].iloc[-200:].mean()) if len(df) >= 200 else None
+            hi52  = float(df["Close"].rolling(252).max().iloc[-1]) if len(df) >= 50 else float(df["Close"].max())
+            lo52  = float(df["Close"].rolling(252).min().iloc[-1]) if len(df) >= 50 else float(df["Close"].min())
+
+            total += 1
+            if ma50  and close > ma50:  above_50  += 1
+            if ma200 and close > ma200: above_200 += 1
+            # 52W high/low: within 1% of annual extreme
+            if close >= hi52 * 0.99: highs_52w += 1
+            if close <= lo52 * 1.01: lows_52w  += 1
+
+        except Exception:
             continue
 
-        shares    = clean_num(get("shares", "qty", "quantity"))
-        avg_cost  = clean_num(get("entry px", "avg cost", "entry price", "avg", "cost", "entry", "basis"))
-        curr      = clean_num(get("current px", "current price", "current", "price", "last"))
-        mkt_val   = clean_num(get("market value", "market", "mkt val", "mkt"))
-        unrealized= clean_num(get("unrealized", "gain/loss $", "p&l", "pnl"))
-        pct_ret   = clean_num(get("gain/loss", "return", "change", "gain%", "%"))
-        weight    = clean_num(get("weight", "alloc"))
-        stop      = clean_num(get("stop loss", "stop"))
-        buy_up    = clean_num(get("buy up to", "buy up", "target"))
-        entry_date= get("entry date", "date")
+    if total == 0:
+        print("ERROR: no data")
+        return {}
 
-        # Calculate derived fields if not directly in table
-        if shares and curr and not mkt_val:
-            mkt_val = round(shares * curr, 2)
-        if shares and avg_cost and curr and not unrealized:
-            unrealized = round((curr - avg_cost) * shares, 2)
-        if avg_cost and curr and not pct_ret:
-            pct_ret = round((curr - avg_cost) / avg_cost * 100, 2)
+    pct_above_50  = round(above_50  / total * 100, 1)
+    pct_above_200 = round(above_200 / total * 100, 1)
 
-        # below_stop flag for LT dashboard highlighting
-        below_stop = bool(stop and curr and curr < stop)
-        upside_pct = round((buy_up - curr) / curr * 100, 2) if buy_up and curr else None
-        stop_dist_pct = round((curr - stop) / curr * 100, 2) if stop and curr else None
+    print(f"OK ({total} stocks processed)")
+    return {
+        "pct_above_ma50":  pct_above_50,
+        "pct_above_ma200": pct_above_200,
+        "new_52w_highs":   highs_52w,
+        "new_52w_lows":    lows_52w,
+        "total_stocks":    total,
+    }
 
-        out.append({
-            "ticker":              ticker.upper().strip(),
-            "name":                get("company", "name", "description") or ticker,
-            "shares":              shares,
-            "avg_cost":            avg_cost,
-            "curr_price":          curr,
-            "market_value":        mkt_val,
-            "unrealized_pnl":      unrealized,
-            "pct_return":          pct_ret,
-            "weight":              weight,
-            "stop_loss":           stop,
-            "buy_up_to":           buy_up,
-            "entry_date":          entry_date,
-            "below_stop":          below_stop,
-            "stop_distance_pct":   stop_dist_pct,
-            "upside_to_target_pct":upside_pct,
+
+def fetch_fear_greed():
+    """Fetch CNN Fear & Greed index via their unofficial API."""
+    import urllib.request
+    print("  Fetching Fear & Greed...", end=" ", flush=True)
+    try:
+        url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.cnn.com/",
         })
-    return out
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = json.loads(r.read().decode())
+        score = round(float(raw["fear_and_greed"]["score"]), 1)
+        rating = raw["fear_and_greed"]["rating"].replace("_", " ").title()
+        prev   = round(float(raw["fear_and_greed"]["previous_close"]), 1)
+        print(f"OK ({score} — {rating})")
+        return {"score": score, "rating": rating, "previous_close": prev}
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {}
 
+
+def fetch_put_call():
+    """Fetch CBOE total put/call ratio from their website."""
+    import urllib.request, re
+    print("  Fetching Put/Call ratio...", end=" ", flush=True)
+    try:
+        url = "https://www.cboe.com/us/options/market_statistics/daily/"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            html = r.read().decode("utf-8", errors="ignore")
+        # CBOE page has the total P/C ratio in a table
+        # Look for "Total" row with a decimal number
+        match = re.search(r'Total[^<]*</td>\s*<td[^>]*>([\d.]+)</td>\s*<td[^>]*>([\d.]+)</td>\s*<td[^>]*>([\d.]+)</td>', html)
+        if match:
+            total_pc = float(match.group(3))  # Total P/C ratio
+            print(f"OK ({total_pc})")
+            return {"total": total_pc, "equity": None, "index": None}
+        # Fallback: scan for any ratio-looking number near "total"
+        matches = re.findall(r'([\d]+\.[\d]+)', html[html.lower().find("total"):html.lower().find("total")+500])
+        ratios = [float(m) for m in matches if 0.3 < float(m) < 3.0]
+        if ratios:
+            print(f"OK ({ratios[0]})")
+            return {"total": ratios[0], "equity": None, "index": None}
+        print("WARN: could not parse ratio")
+        return {}
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {}
+
+
+# ─────────────────────────────────────────────────────────
+#  MAIN
+# ─────────────────────────────────────────────────────────
 
 def main():
-    print("\n" + "-"*55)
-    print("  TRADERDECK - Carnivore Scraper v3")
-    print("-"*55)
+    print("\n" + "─"*50)
+    print("  TRADERDECK — Market Data Fetcher")
+    print("─"*50)
 
-    email    = os.environ.get("CARNIVORE_EMAIL")
-    password = os.environ.get("CARNIVORE_PASSWORD")
+    now = datetime.datetime.utcnow()
+    print(f"  Timestamp: {now.strftime('%Y-%m-%d %H:%M UTC')}\n")
 
-    if not email or not password:
-        print("  ERROR: Missing CARNIVORE_EMAIL or CARNIVORE_PASSWORD")
-        sys.exit(1)
-
-    print(f"  Account: {email[:4]}***{email.split('@')[-1]}")
-
-    existing = {"sector_rotation": [], "long_term": []}
-    if os.path.exists(OUTPUT_PATH):
-        try:
-            with open(OUTPUT_PATH) as f:
-                existing = json.load(f)
-        except Exception:
-            pass
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"]
-        )
-        context = browser.new_context(
-            viewport={"width": 1440, "height": 900},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            locale="en-US",
-        )
-        page = context.new_page()
-
-        if not do_login(page, email, password):
-            print("\n  Login failed - keeping existing data")
-            browser.close()
-            sys.exit(1)
-
-        try:
-            sr_raw = scrape_page(page, SECTOR_URL, "sector_rotation")
-            sr = normalize(sr_raw) if sr_raw else existing.get("sector_rotation", [])
-        except Exception as e:
-            print(f"  SR scrape error: {e}")
-            sr = existing.get("sector_rotation", [])
-
-        try:
-            lt_raw = scrape_page(page, LONGTERM_URL, "long_term")
-            if not lt_raw:
-                lt_raw = scrape_page(page, "https://carnivoretradedesk.com/long-term", "long_term_alt")
-            lt = normalize(lt_raw) if lt_raw else existing.get("long_term", [])
-        except Exception as e:
-            print(f"  LT scrape error: {e}")
-            lt = existing.get("long_term", [])
-
-        browser.close()
-
-    os.makedirs("data", exist_ok=True)
     payload = {
-        "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-        "source": "carnivoretradedesk.com",
-        "sector_rotation": sr,
-        "long_term": lt,
+        "updated_at": now.strftime("%Y-%m-%d %H:%M UTC"),
+        "updated_date": now.strftime("%Y-%m-%d"),
+        "futures":        fetch_group(FUTURES,        "US Futures"),
+        "vol_dollar":     fetch_group(VOL_DOLLAR,     "Vol & Dollar"),
+        "metals":         fetch_group(METALS,         "Metals"),
+        "energy":         fetch_group(ENERGY,         "Energy"),
+        "yields":         fetch_yields_group(),
+        "global_indices": fetch_group(GLOBAL_INDICES, "Global Indices"),
+        "sectors":        fetch_group(SECTORS,        "S&P Sectors"),
+        "major_etfs":     fetch_group(MAJOR_ETFS,     "Major ETFs"),
+        "crypto":         fetch_group(CRYPTO,         "Crypto"),
+        "country_etfs":   fetch_group(COUNTRY_ETFS,   "Country ETFs"),
+        "breadth":        fetch_breadth(),
+        "fear_greed":     fetch_fear_greed(),
+        "put_call":       fetch_put_call(),
     }
-    with open(OUTPUT_PATH, "w") as f:
+
+    # Sort sectors by 1W performance
+    payload["sectors"].sort(key=lambda x: x.get("chg_1w", 0), reverse=True)
+    payload["country_etfs"].sort(key=lambda x: x.get("chg_1w", 0), reverse=True)
+
+    # Write output
+    out_path = "data/market_data.json"
+    import os
+    os.makedirs("data", exist_ok=True)
+    with open(out_path, "w") as f:
         json.dump(payload, f, indent=2)
 
-    print(f"\n  Sector Rotation: {len(sr)} positions")
-    print(f"  Long Term:       {len(lt)} positions")
-    print(f"  Saved to {OUTPUT_PATH}")
-    print("-"*55)
-
-    if len(sr) == 0 and len(lt) == 0:
-        print("  No data extracted")
-        sys.exit(1)
-
+    print(f"\n  ✓ Saved to {out_path}")
+    print(f"  ✓ Total symbols: {sum(len(v) for v in payload.values() if isinstance(v, list))}")
+    print("─"*50 + "\n")
 
 if __name__ == "__main__":
     main()
-
