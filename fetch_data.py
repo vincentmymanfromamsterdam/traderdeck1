@@ -327,7 +327,7 @@ def fetch_breadth():
     print(f"  Fetching S&P 500 breadth ({len(SP500_TICKERS)} stocks)...", end=" ", flush=True)
 
     today = dt.date.today()
-    start = (today - dt.timedelta(days=220)).strftime("%Y-%m-%d")  # 200 trading days back
+    start = (today - dt.timedelta(days=310)).strftime("%Y-%m-%d")  # 300+ calendar days = ~210 trading days
 
     try:
         data = yf.download(
@@ -392,54 +392,106 @@ def fetch_breadth():
 
 
 def fetch_fear_greed():
-    """Fetch CNN Fear & Greed index via their unofficial API."""
-    import urllib.request
+    """Fetch CNN Fear & Greed index — tries multiple endpoints."""
+    import urllib.request, re
     print("  Fetching Fear & Greed...", end=" ", flush=True)
+
+    endpoints = [
+        "https://production.dataviz.cnn.io/index/fearandgreed/graphdata",
+        "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/1m",
+    ]
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer": "https://edition.cnn.com/markets/fear-and-greed",
+        "Accept": "application/json",
+    }
+
+    for url in endpoints:
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as r:
+                raw = json.loads(r.read().decode())
+            # Handle both response shapes
+            fg = raw.get("fear_and_greed") or raw
+            score = round(float(fg["score"]), 1)
+            rating = str(fg.get("rating", "")).replace("_", " ").title()
+            prev = round(float(fg.get("previous_close", fg.get("score", 0))), 1)
+            print(f"OK ({score} — {rating})")
+            return {"score": score, "rating": rating, "previous_close": prev}
+        except Exception:
+            continue
+
+    # Fallback: scrape the page itself
     try:
-        url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.cnn.com/",
-        })
-        with urllib.request.urlopen(req, timeout=10) as r:
-            raw = json.loads(r.read().decode())
-        score = round(float(raw["fear_and_greed"]["score"]), 1)
-        rating = raw["fear_and_greed"]["rating"].replace("_", " ").title()
-        prev   = round(float(raw["fear_and_greed"]["previous_close"]), 1)
-        print(f"OK ({score} — {rating})")
-        return {"score": score, "rating": rating, "previous_close": prev}
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return {}
+        req = urllib.request.Request(
+            "https://edition.cnn.com/markets/fear-and-greed",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            html = r.read().decode("utf-8", errors="ignore")
+        match = re.search(r'"score"\s*:\s*([\d.]+)', html)
+        if match:
+            score = round(float(match.group(1)), 1)
+            print(f"OK (page scrape: {score})")
+            return {"score": score, "rating": "", "previous_close": score}
+    except Exception:
+        pass
+
+    print("ERROR: all endpoints failed")
+    return {}
 
 
 def fetch_put_call():
-    """Fetch CBOE total put/call ratio from their website."""
-    import urllib.request, re
+    """Fetch CBOE put/call ratio from their daily CSV data file."""
+    import urllib.request, re, datetime as dt
     print("  Fetching Put/Call ratio...", end=" ", flush=True)
+
+    # CBOE publishes a daily CSV — most reliable source
     try:
         url = "https://www.cboe.com/us/options/market_statistics/daily/"
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml",
+        })
+        with urllib.request.urlopen(req, timeout=15) as r:
+            html = r.read().decode("utf-8", errors="ignore")
+
+        # Look for put/call table data — CBOE format: equity, index, total columns
+        # Pattern: 3 decimal numbers in a row that look like P/C ratios (0.3 - 3.0)
+        rows = re.findall(r'<tr[^>]*>.*?</tr>', html, re.DOTALL)
+        for row in rows:
+            nums = re.findall(r'(\d\.\d{2})', row)
+            ratios = [float(n) for n in nums if 0.3 <= float(n) <= 3.0]
+            if len(ratios) >= 2:
+                # Typically: equity P/C, index P/C, total P/C
+                total = ratios[-1]
+                equity = ratios[0] if len(ratios) >= 2 else None
+                print(f"OK ({total})")
+                return {"total": total, "equity": equity, "index": None}
+    except Exception:
+        pass
+
+    # Fallback: try the CBOE API
+    try:
+        today = dt.date.today().strftime("%Y-%m-%d")
+        url = f"https://cdn.cboe.com/api/global/us_options_volume/options-volume.json"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as r:
-            html = r.read().decode("utf-8", errors="ignore")
-        # CBOE page has the total P/C ratio in a table
-        # Look for "Total" row with a decimal number
-        match = re.search(r'Total[^<]*</td>\s*<td[^>]*>([\d.]+)</td>\s*<td[^>]*>([\d.]+)</td>\s*<td[^>]*>([\d.]+)</td>', html)
-        if match:
-            total_pc = float(match.group(3))  # Total P/C ratio
-            print(f"OK ({total_pc})")
-            return {"total": total_pc, "equity": None, "index": None}
-        # Fallback: scan for any ratio-looking number near "total"
-        matches = re.findall(r'([\d]+\.[\d]+)', html[html.lower().find("total"):html.lower().find("total")+500])
-        ratios = [float(m) for m in matches if 0.3 < float(m) < 3.0]
-        if ratios:
-            print(f"OK ({ratios[0]})")
-            return {"total": ratios[0], "equity": None, "index": None}
-        print("WARN: could not parse ratio")
-        return {}
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return {}
+            data = json.loads(r.read().decode())
+        # Find total put/call
+        if isinstance(data, list) and data:
+            last = data[-1]
+            total_calls = last.get("Total Calls", 0)
+            total_puts  = last.get("Total Puts", 0)
+            if total_calls:
+                ratio = round(total_puts / total_calls, 2)
+                print(f"OK (computed {ratio})")
+                return {"total": ratio, "equity": None, "index": None}
+    except Exception:
+        pass
+
+    print("ERROR: could not fetch P/C ratio")
+    return {}
 
 
 # ─────────────────────────────────────────────────────────
@@ -489,3 +541,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
