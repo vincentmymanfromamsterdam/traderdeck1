@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-01 16:54 UTC",
+  "last_updated": "2026-03-01 20:08 UTC",
   "source": "carnivoretradedesk.com",
   "sector_rotation": [
     {
@@ -8,13 +8,16 @@
       "shares": 2086.0,
       "avg_cost": 94.02,
       "curr_price": 91.23,
-      "market_value": null,
-      "unrealized_pnl": -2.97,
-      "pct_return": null,
+      "market_value": 190305.78,
+      "unrealized_pnl": -5819.94,
+      "pct_return": -2.97,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "ONDS",
@@ -22,13 +25,16 @@
       "shares": 12798.0,
       "avg_cost": 11.85,
       "curr_price": 10.09,
-      "market_value": null,
-      "unrealized_pnl": -14.89,
-      "pct_return": null,
+      "market_value": 129131.82,
+      "unrealized_pnl": -22524.48,
+      "pct_return": -14.89,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "NVDA",
@@ -36,13 +42,16 @@
       "shares": 624.0,
       "avg_cost": 163.4,
       "curr_price": 177.16,
-      "market_value": null,
-      "unrealized_pnl": 8.42,
-      "pct_return": null,
+      "market_value": 110547.84,
+      "unrealized_pnl": 8586.24,
+      "pct_return": 8.42,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "AMAT",
@@ -50,13 +59,16 @@
       "shares": 320.0,
       "avg_cost": 267.58,
       "curr_price": 372.28,
-      "market_value": null,
-      "unrealized_pnl": 39.13,
-      "pct_return": null,
+      "market_value": 119129.6,
+      "unrealized_pnl": 33504.0,
+      "pct_return": 39.13,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "ASML",
@@ -64,13 +76,16 @@
       "shares": 80.0,
       "avg_cost": 1100.0,
       "curr_price": 1451.7,
-      "market_value": null,
-      "unrealized_pnl": 31.97,
-      "pct_return": null,
+      "market_value": 116136.0,
+      "unrealized_pnl": 28136.0,
+      "pct_return": 31.97,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "TSM",
@@ -78,13 +93,16 @@
       "shares": 289.0,
       "avg_cost": 247.68,
       "curr_price": 374.58,
-      "market_value": null,
-      "unrealized_pnl": 51.24,
-      "pct_return": null,
+      "market_value": 108253.62,
+      "unrealized_pnl": 36674.1,
+      "pct_return": 51.24,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "MU",
@@ -92,13 +110,16 @@
       "shares": 250.0,
       "avg_cost": 240.46,
       "curr_price": 412.25,
-      "market_value": null,
-      "unrealized_pnl": 71.44,
-      "pct_return": null,
+      "market_value": 103062.5,
+      "unrealized_pnl": 42947.5,
+      "pct_return": 71.44,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "IREN",
@@ -106,13 +127,16 @@
       "shares": 2261.0,
       "avg_cost": 49.79,
       "curr_price": 40.94,
-      "market_value": null,
-      "unrealized_pnl": -17.79,
-      "pct_return": null,
+      "market_value": 92565.34,
+      "unrealized_pnl": -20009.85,
+      "pct_return": -17.79,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "NEM",
@@ -120,13 +144,16 @@
       "shares": 763.0,
       "avg_cost": 122.13,
       "curr_price": 130.02,
-      "market_value": null,
-      "unrealized_pnl": 6.46,
-      "pct_return": null,
+      "market_value": 99205.26,
+      "unrealized_pnl": 6020.07,
+      "pct_return": 6.46,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "TE",
@@ -134,13 +161,16 @@
       "shares": 14965.0,
       "avg_cost": 7.6,
       "curr_price": 6.16,
-      "market_value": null,
-      "unrealized_pnl": -18.95,
-      "pct_return": null,
+      "market_value": 92184.4,
+      "unrealized_pnl": -21549.6,
+      "pct_return": -18.95,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "NXT",
@@ -148,13 +178,16 @@
       "shares": 794.0,
       "avg_cost": 110.3,
       "curr_price": 105.07,
-      "market_value": null,
-      "unrealized_pnl": -4.74,
-      "pct_return": null,
+      "market_value": 83425.58,
+      "unrealized_pnl": -4152.62,
+      "pct_return": -4.74,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "ASTS",
@@ -162,13 +195,16 @@
       "shares": 1100.0,
       "avg_cost": 73.05,
       "curr_price": 79.19,
-      "market_value": null,
-      "unrealized_pnl": 8.41,
-      "pct_return": null,
+      "market_value": 87109.0,
+      "unrealized_pnl": 6754.0,
+      "pct_return": 8.41,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "BE",
@@ -176,13 +212,16 @@
       "shares": 375.0,
       "avg_cost": 147.55,
       "curr_price": 155.65,
-      "market_value": null,
-      "unrealized_pnl": 5.49,
-      "pct_return": null,
+      "market_value": 58368.75,
+      "unrealized_pnl": 3037.5,
+      "pct_return": 5.49,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "ERO",
@@ -190,13 +229,16 @@
       "shares": 1900.0,
       "avg_cost": 26.68,
       "curr_price": 34.17,
-      "market_value": null,
-      "unrealized_pnl": 28.07,
-      "pct_return": null,
+      "market_value": 64923.0,
+      "unrealized_pnl": 14231.0,
+      "pct_return": 28.07,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "RIO",
@@ -204,13 +246,16 @@
       "shares": 600.0,
       "avg_cost": 76.34,
       "curr_price": 99.35,
-      "market_value": null,
-      "unrealized_pnl": 30.14,
-      "pct_return": null,
+      "market_value": 59610.0,
+      "unrealized_pnl": 13806.0,
+      "pct_return": 30.14,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "SCCO",
@@ -218,13 +263,16 @@
       "shares": 281.0,
       "avg_cost": 193.72,
       "curr_price": 218.31,
-      "market_value": null,
-      "unrealized_pnl": 12.69,
-      "pct_return": null,
+      "market_value": 61345.11,
+      "unrealized_pnl": 6909.79,
+      "pct_return": 12.69,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "FCX",
@@ -232,13 +280,16 @@
       "shares": 871.0,
       "avg_cost": 61.97,
       "curr_price": 68.07,
-      "market_value": null,
-      "unrealized_pnl": 9.84,
-      "pct_return": null,
+      "market_value": 59288.97,
+      "unrealized_pnl": 5313.1,
+      "pct_return": 9.84,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "PL",
@@ -246,13 +297,16 @@
       "shares": 2360.0,
       "avg_cost": 23.9,
       "curr_price": 24.14,
-      "market_value": null,
-      "unrealized_pnl": 1.0,
-      "pct_return": null,
+      "market_value": 56970.4,
+      "unrealized_pnl": 566.4,
+      "pct_return": 1.0,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "TMDX",
@@ -260,13 +314,16 @@
       "shares": 385.0,
       "avg_cost": 126.35,
       "curr_price": 145.29,
-      "market_value": null,
-      "unrealized_pnl": 14.99,
-      "pct_return": null,
+      "market_value": 55936.65,
+      "unrealized_pnl": 7291.9,
+      "pct_return": 14.99,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     },
     {
       "ticker": "RKLB",
@@ -274,13 +331,16 @@
       "shares": 700.0,
       "avg_cost": 62.57,
       "curr_price": 69.1,
-      "market_value": null,
-      "unrealized_pnl": 10.44,
-      "pct_return": null,
+      "market_value": 48370.0,
+      "unrealized_pnl": 4571.0,
+      "pct_return": 10.44,
       "weight": null,
       "stop_loss": null,
       "buy_up_to": null,
-      "entry_date": null
+      "entry_date": null,
+      "below_stop": false,
+      "stop_distance_pct": null,
+      "upside_to_target_pct": null
     }
   ],
   "long_term": [
