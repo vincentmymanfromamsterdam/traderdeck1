@@ -17,7 +17,7 @@ except ImportError:
 
 LOGIN_URL    = "https://carnivoretradedesk.com/login"
 SECTOR_URL   = "https://carnivoretradedesk.com/sector-heaters"
-LONGTERM_URL = "https://carnivoretradedesk.com/long-term-portfolio"
+LONGTERM_URL = "https://carnivoretradedesk.com/longterm"
 OUTPUT_PATH  = "data/carnivore_portfolios.json"
 
 
@@ -311,4 +311,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
