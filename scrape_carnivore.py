@@ -1,32 +1,25 @@
-    """
-TRADERDECK — Carnivore Trading Portfolio Scraper
-Logs into carnivoretradedesk.com and extracts both portfolio tables.
-Requires: CARNIVORE_EMAIL and CARNIVORE_PASSWORD environment variables.
+"""
+TRADERDECK - Carnivore Trading Portfolio Scraper v3
 """
 
 import os
 import json
 import datetime
 import sys
-import time
 
 try:
     from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 except ImportError:
-    print("Installing playwright...")
     import subprocess
     subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright", "-q"])
     subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium", "--with-deps"])
     from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-LOGIN_URL       = "https://carnivoretradedesk.com/login"
-SECTOR_URL      = "https://carnivoretradedesk.com/sector-heaters"
-LONGTERM_URL    = "https://carnivoretradedesk.com/long-term-portfolio"
-OUTPUT_PATH     = "data/carnivore_portfolios.json"
+LOGIN_URL    = "https://carnivoretradedesk.com/login"
+SECTOR_URL   = "https://carnivoretradedesk.com/sector-heaters"
+LONGTERM_URL = "https://carnivoretradedesk.com/long-term-portfolio"
+OUTPUT_PATH  = "data/carnivore_portfolios.json"
 
-# ─────────────────────────────────────────────────────────
-#  HELPERS
-# ─────────────────────────────────────────────────────────
 
 def clean_num(s):
     if s is None:
@@ -37,71 +30,52 @@ def clean_num(s):
     except ValueError:
         return None
 
-def save_debug(page, label="debug"):
-    """Save page text and screenshot for debugging."""
+
+def save_debug(page, label):
     os.makedirs("data", exist_ok=True)
     try:
         text = page.inner_text("body")
-        with open(f"data/carnivore_{label}_dump.txt", "w") as f:
-            f.write(f"URL: {page.url}\n\n{text}")
-        print(f"  Debug dump saved: data/carnivore_{label}_dump.txt")
+        with open(f"data/debug_{label}.txt", "w") as f:
+            f.write(f"URL: {page.url}\n\n{text[:5000]}")
+        print(f"  Debug saved: data/debug_{label}.txt")
     except Exception as e:
-        print(f"  Could not save debug dump: {e}")
+        print(f"  Debug save failed: {e}")
 
-# ─────────────────────────────────────────────────────────
-#  LOGIN
-# ─────────────────────────────────────────────────────────
 
 def do_login(page, email, password):
-    """
-    SPA-aware login for React apps.
-    Does not rely on page navigation — watches for URL change or auth token instead.
-    Returns True if login succeeded.
-    """
-    print("  Navigating to login page...", end=" ", flush=True)
+    print("  Going to login page...", end=" ", flush=True)
     page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=30000)
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(3000)
     print("OK")
+    print(f"  URL: {page.url}")
 
-    print(f"  Current URL: {page.url}")
-
-    # Already logged in?
     if "login" not in page.url.lower():
-        print("  Already logged in — skipping")
+        print("  Already logged in")
         return True
 
-    # Wait for any input to appear
-    print("  Waiting for form inputs...", end=" ", flush=True)
-    try:
-        page.wait_for_selector("input", timeout=10000)
-        print("OK")
-    except Exception:
-        print("FAILED — no inputs found at all")
-        save_debug(page, "login_no_inputs")
-        return False
-
-    # Find all visible inputs
-    all_inputs = page.locator("input:visible").all()
-    print(f"  Found {len(all_inputs)} visible input(s)")
+    # Print all inputs for debugging
+    all_inputs = page.locator("input").all()
+    print(f"  Found {len(all_inputs)} input(s):")
     for inp in all_inputs:
         try:
-            itype = inp.get_attribute("type") or "text"
-            iname = inp.get_attribute("name") or ""
-            iph   = inp.get_attribute("placeholder") or ""
-            print(f"    input: type={itype} name={iname} placeholder={iph}")
+            t = inp.get_attribute("type") or "text"
+            n = inp.get_attribute("name") or ""
+            ph = inp.get_attribute("placeholder") or ""
+            print(f"    type={t} name={n} placeholder={ph}")
         except Exception:
             pass
 
-    # Fill email — use first non-password input
+    # Fill email - first non-password visible input
     print("  Filling email...", end=" ", flush=True)
     filled_email = False
-    for inp in all_inputs:
+    for inp in page.locator("input:visible").all():
         try:
             itype = (inp.get_attribute("type") or "text").lower()
-            if itype in ("password", "submit", "button", "checkbox", "hidden"):
+            if itype in ("password", "submit", "button", "checkbox", "hidden", "radio"):
                 continue
             inp.click()
-            inp.fill(email)
+            inp.fill("")
+            inp.type(email, delay=50)
             filled_email = True
             print("OK")
             break
@@ -109,343 +83,177 @@ def do_login(page, email, password):
             continue
 
     if not filled_email:
-        # Last resort: Tab into first field
-        print("trying Tab method...", end=" ", flush=True)
-        try:
-            page.keyboard.press("Tab")
-            page.wait_for_timeout(300)
-            page.keyboard.type(email, delay=50)
-            print("OK")
-            filled_email = True
-        except Exception:
-            print("FAILED")
-            save_debug(page, "login_no_email_field")
-            return False
+        print("FAILED")
+        save_debug(page, "no_email_field")
+        return False
 
-    # Fill password — use first password input
+    # Fill password
     print("  Filling password...", end=" ", flush=True)
     filled_pw = False
-    for inp in all_inputs:
+    for inp in page.locator("input[type='password'], input[type='Password']").all():
         try:
-            itype = (inp.get_attribute("type") or "").lower()
-            if itype == "password":
-                inp.click()
-                inp.fill(password)
-                filled_pw = True
-                print("OK")
-                break
+            inp.click()
+            inp.fill("")
+            inp.type(password, delay=50)
+            filled_pw = True
+            print("OK")
+            break
         except Exception:
             continue
 
     if not filled_pw:
-        # Tab from email field to password
-        print("trying Tab method...", end=" ", flush=True)
+        # Tab from email to password
+        print("trying Tab...", end=" ", flush=True)
         try:
             page.keyboard.press("Tab")
             page.wait_for_timeout(300)
             page.keyboard.type(password, delay=50)
-            print("OK")
             filled_pw = True
+            print("OK")
         except Exception:
             print("FAILED")
             return False
 
     page.wait_for_timeout(500)
 
-    # Submit — click button WITHOUT expecting navigation (SPA pattern)
+    # Submit without expecting navigation (SPA)
     print("  Submitting...", end=" ", flush=True)
     submitted = False
-    for sel in [
-        'button[type="submit"]',
-        'input[type="submit"]',
-        'button:has-text("LOGIN")',
-        'button:has-text("Login")',
-        'button:has-text("Sign In")',
-        'button:has-text("SIGN IN")',
-        'button:has-text("Log In")',
-    ]:
+    for sel in ['button[type="submit"]', 'input[type="submit"]', 'button:has-text("LOGIN")',
+                'button:has-text("Login")', 'button:has-text("Sign In")', 'button:has-text("SIGN IN")']:
         try:
             page.wait_for_selector(sel, timeout=2000)
             page.click(sel)
             submitted = True
-            print(f"clicked ({sel})", end=" ", flush=True)
+            print(f"OK ({sel})")
             break
         except Exception:
             continue
 
     if not submitted:
-        # Last resort: Enter key
         page.keyboard.press("Enter")
-        print("Enter key", end=" ", flush=True)
+        print("OK (Enter)")
 
-    # ── Wait for SPA to process login ─────────────────────
-    # Strategy: poll URL every 500ms for up to 15 seconds
-    print("waiting...", end=" ", flush=True)
-    for attempt in range(30):
+    # Poll for redirect (SPA won't fire navigation event)
+    print("  Waiting for auth...", end=" ", flush=True)
+    for i in range(30):
         page.wait_for_timeout(500)
-        current_url = page.url
-        if "login" not in current_url.lower():
-            print(f"OK (redirected after {(attempt+1)*0.5:.1f}s)")
-            break
-        # Also check if an auth token/cookie appeared
+        if "login" not in page.url.lower():
+            print(f"OK ({(i+1)*0.5:.1f}s)")
+            page.wait_for_timeout(2000)
+            print(f"  Post-login URL: {page.url}")
+            print("  Login successful")
+            return True
         try:
             cookies = page.context.cookies()
-            auth_cookies = [c for c in cookies if any(k in c["name"].lower()
-                for k in ["token", "auth", "session", "jwt", "access"])]
-            if auth_cookies:
-                print(f"OK (auth cookie found: {auth_cookies[0]['name']})")
-                break
+            auth = [c for c in cookies if any(k in c["name"].lower() for k in ["token", "auth", "session", "jwt"])]
+            if auth:
+                print(f"OK (cookie: {auth[0]['name']})")
+                page.wait_for_timeout(2000)
+                return True
         except Exception:
             pass
-    else:
-        print("TIMEOUT")
-        save_debug(page, "login_timeout")
-        # Check if we're actually logged in despite URL not changing
-        body = page.inner_text("body")
-        if any(k in body.lower() for k in ["dashboard", "portfolio", "sector", "logout", "sign out"]):
-            print("  ✓ Login appears successful (dashboard content detected)")
-            return True
-        print(f"  ✗ Still on login page after 15s. Body preview: {body[:200]}")
-        return False
 
-    print(f"  Post-login URL: {page.url}")
+    body = page.inner_text("body")
+    if any(k in body.lower() for k in ["dashboard", "portfolio", "sector", "logout", "sign out"]):
+        print("OK (content check)")
+        return True
 
-    # Extra wait for SPA to fully render after auth
-    page.wait_for_timeout(3000)
+    print("TIMEOUT")
+    save_debug(page, "login_failed")
+    print(f"  Body: {body[:300]}")
+    return False
 
-    print("  ✓ Login successful")
-    return True
-
-
-# ─────────────────────────────────────────────────────────
-#  SCRAPE A PORTFOLIO PAGE
-# ─────────────────────────────────────────────────────────
 
 def scrape_page(page, url, label):
-    """Navigate to a portfolio page and extract all meaningful data."""
-    print(f"\n  Navigating to {label} ({url})...", end=" ", flush=True)
+    print(f"\n  Loading {label}...", end=" ", flush=True)
     page.goto(url, wait_until="networkidle", timeout=30000)
-    page.wait_for_timeout(4000)  # wait for JS rendering
+    page.wait_for_timeout(4000)
     print("OK")
+    print(f"  URL: {page.url}")
 
-    current_url = page.url
-    print(f"  URL after navigation: {current_url}")
-
-    # Redirected back to login?
-    if "login" in current_url.lower():
-        print(f"  ⚠ Redirected to login — session not maintained")
+    if "login" in page.url.lower():
+        print("  Redirected to login")
         save_debug(page, f"{label}_redirect")
         return []
 
-    # Get full page text for debugging
     save_debug(page, label)
 
-    # ── Strategy 1: Standard HTML tables ────────────────
-    all_tables = page.locator("table").all()
-    print(f"  Found {len(all_tables)} HTML table(s)")
+    tables = page.locator("table").all()
+    print(f"  Found {len(tables)} table(s)")
 
-    if all_tables:
-        best_table = None
-        best_row_count = 0
-        for tbl in all_tables:
+    if tables:
+        best, best_count = None, 0
+        for t in tables:
             try:
-                rows = tbl.locator("tbody tr").all()
-                if len(rows) > best_row_count:
-                    best_row_count = len(rows)
-                    best_table = tbl
+                n = len(t.locator("tbody tr").all())
+                if n > best_count:
+                    best_count, best = n, t
             except Exception:
-                continue
+                pass
 
-        if best_table and best_row_count > 0:
-            print(f"  Parsing table with {best_row_count} rows...")
-            return parse_table(best_table)
+        if best and best_count > 0:
+            print(f"  Parsing table ({best_count} rows)...")
+            headers = [c.inner_text().strip() for c in best.locator("thead th, thead td").all()]
+            if not headers:
+                headers = [c.inner_text().strip() for c in best.locator("tr").first.locator("td,th").all()]
+            rows = []
+            for row in best.locator("tbody tr").all():
+                cells = [c.inner_text().strip() for c in row.locator("td,th").all()]
+                if cells and any(cells):
+                    rows.append({headers[i] if i < len(headers) else f"col_{i}": cells[i] for i in range(len(cells))})
+            return rows
 
-    # ── Strategy 2: Look for list/card rows ─────────────
-    print("  No tables found — trying list/card layout...")
-
-    # Common patterns for JS portfolio dashboards
-    row_selectors = [
-        '[class*="row"]',
-        '[class*="position"]',
-        '[class*="holding"]',
-        '[class*="stock"]',
-        '[class*="portfolio-item"]',
-        'li[class*="item"]',
-        'tr',
-    ]
-
-    for sel in row_selectors:
-        try:
-            items = page.locator(sel).all()
-            if len(items) > 3:
-                print(f"  Found {len(items)} items matching '{sel}'")
-                break
-        except Exception:
-            continue
-
-    # ── Strategy 3: Extract structured data via JS ───────
-    print("  Trying JavaScript data extraction...")
-    try:
-        # Look for React/Vue component data in the DOM
-        data = page.evaluate("""
-            () => {
-                const results = [];
-                // Look for elements containing ticker-like text (2-5 uppercase letters)
-                const tickerRegex = /^[A-Z]{1,5}$/;
-                const allEls = document.querySelectorAll('*');
-                const candidates = [];
-
-                for (const el of allEls) {
-                    if (el.children.length > 0) continue; // skip parent elements
-                    const txt = el.innerText ? el.innerText.trim() : '';
-                    if (tickerRegex.test(txt) && txt.length >= 1 && txt.length <= 5) {
-                        // Found a potential ticker — grab its row/parent context
-                        const parent = el.closest('tr, [class*="row"], [class*="item"], li') || el.parentElement;
-                        if (parent && !candidates.includes(parent)) {
-                            candidates.push(parent);
-                            results.push({
-                                ticker: txt,
-                                context: parent.innerText.replace(/\\n/g, ' | ').substring(0, 200)
-                            });
-                        }
-                    }
-                }
-                return results.slice(0, 50); // max 50 rows
-            }
-        """)
-
-        if data and len(data) > 2:
-            print(f"  Found {len(data)} potential position rows via JS")
-            for row in data[:5]:
-                print(f"    {row['ticker']}: {row['context'][:100]}")
-            return parse_js_data(data)
-
-    except Exception as e:
-        print(f"  JS extraction error: {e}")
-
-    print(f"  ⚠ Could not extract data from {label}")
+    print("  No tables found")
     return []
 
 
-def parse_table(table):
-    """Parse a standard HTML table into list of dicts."""
-    headers = []
-    for cell in table.locator("thead th, thead td").all():
-        headers.append(cell.inner_text().strip())
-
-    if not headers:
-        first_row = table.locator("tr").first
-        headers = [c.inner_text().strip() for c in first_row.locator("td,th").all()]
-
-    rows = []
-    for row in table.locator("tbody tr").all():
-        cells = [c.inner_text().strip() for c in row.locator("td,th").all()]
-        if not cells or not any(cells):
-            continue
-        row_dict = {headers[i] if i < len(headers) else f"col_{i}": cells[i]
-                    for i in range(len(cells))}
-        rows.append(row_dict)
-    return rows
-
-
-def parse_js_data(data):
-    """Parse JS-extracted ticker+context rows into normalized dicts."""
-    results = []
-    for item in data:
-        ticker = item.get("ticker", "").strip()
-        context = item.get("context", "")
-        if not ticker:
-            continue
-
-        # Try to extract numbers from context
-        import re
-        numbers = re.findall(r'\$?[\d,]+\.?\d*', context)
-        prices = []
-        for n in numbers:
-            val = clean_num(n)
-            if val and 0.01 < val < 100000:
-                prices.append(val)
-
-        row = {"ticker": ticker, "name": ticker, "_raw_context": context}
-        if len(prices) >= 1:
-            row["avg_cost"] = prices[0]
-        if len(prices) >= 2:
-            row["curr_price"] = prices[1]
-        results.append(row)
-
-    return results
-
-
-# ─────────────────────────────────────────────────────────
-#  NORMALIZE
-# ─────────────────────────────────────────────────────────
-
 def normalize(rows):
-    normalized = []
+    out = []
     for row in rows:
         kl = {k.lower().strip(): v for k, v in row.items()}
 
-        def get(*candidates):
-            for c in candidates:
-                for k, v in kl.items():
-                    if c in k:
-                        return v
+        def get(*keys):
+            for k in keys:
+                for rk, rv in kl.items():
+                    if k in rk:
+                        return rv
             return None
 
-        ticker    = get("ticker", "symbol", "stock")
-        name      = get("company", "name", "description") or ticker
-        shares    = clean_num(get("shares", "qty", "quantity"))
-        avg_cost  = clean_num(get("avg", "cost", "average", "entry", "basis"))
-        curr      = clean_num(get("current", "price", "last", "close"))
-        mkt_val   = clean_num(get("market", "value", "mkt"))
-        unrealized= clean_num(get("unrealized", "gain", "p&l", "pnl", "profit", "loss"))
-        pct_chg   = clean_num(get("return", "change", "pct", "%", "gain%"))
-        weight    = clean_num(get("weight", "alloc", "allocation"))
-        stop      = clean_num(get("stop"))
-        buy_up    = clean_num(get("buy", "target", "limit"))
-        entry_date= get("date", "entry date", "entered")
-
+        ticker = get("ticker", "symbol", "stock")
         if not ticker:
             continue
+        out.append({
+            "ticker":         ticker.upper().strip(),
+            "name":           get("company", "name", "description") or ticker,
+            "shares":         clean_num(get("shares", "qty", "quantity")),
+            "avg_cost":       clean_num(get("avg", "cost", "entry", "basis")),
+            "curr_price":     clean_num(get("current", "price", "last")),
+            "market_value":   clean_num(get("market", "value", "mkt")),
+            "unrealized_pnl": clean_num(get("unrealized", "gain", "p&l", "pnl")),
+            "pct_return":     clean_num(get("return", "change", "gain%")),
+            "weight":         clean_num(get("weight", "alloc")),
+            "stop_loss":      clean_num(get("stop")),
+            "buy_up_to":      clean_num(get("buy up", "target")),
+            "entry_date":     get("date", "entry date"),
+        })
+    return out
 
-        pos = {
-            "ticker":          ticker.upper().strip(),
-            "name":            name if name != ticker else ticker,
-            "shares":          shares,
-            "avg_cost":        avg_cost,
-            "curr_price":      curr,
-            "market_value":    mkt_val,
-            "unrealized_pnl":  unrealized,
-            "pct_return":      pct_chg,
-            "weight":          weight,
-            "stop_loss":       stop,
-            "buy_up_to":       buy_up,
-            "entry_date":      entry_date,
-        }
-        normalized.append(pos)
-    return normalized
-
-
-# ─────────────────────────────────────────────────────────
-#  MAIN
-# ─────────────────────────────────────────────────────────
 
 def main():
-    print("\n" + "─"*55)
-    print("  TRADERDECK — Carnivore Portfolio Scraper v2")
-    print("─"*55)
+    print("\n" + "-"*55)
+    print("  TRADERDECK - Carnivore Scraper v3")
+    print("-"*55)
 
     email    = os.environ.get("CARNIVORE_EMAIL")
     password = os.environ.get("CARNIVORE_PASSWORD")
 
     if not email or not password:
-        print("\n  ERROR: Missing credentials.")
-        print("  Set CARNIVORE_EMAIL and CARNIVORE_PASSWORD env vars.")
+        print("  ERROR: Missing CARNIVORE_EMAIL or CARNIVORE_PASSWORD")
         sys.exit(1)
 
     print(f"  Account: {email[:4]}***{email.split('@')[-1]}")
 
-    # Load existing file so we don't wipe good data on failure
     existing = {"sector_rotation": [], "long_term": []}
     if os.path.exists(OUTPUT_PATH):
         try:
@@ -457,11 +265,7 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-blink-features=AutomationControlled",
-                "--disable-dev-shm-usage",
-            ]
+            args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"]
         )
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
@@ -470,30 +274,21 @@ def main():
         )
         page = context.new_page()
 
-        # Login
-        login_ok = do_login(page, email, password)
-
-        if not login_ok:
-            print("\n  ✗ Login failed — keeping existing portfolio data")
+        if not do_login(page, email, password):
+            print("\n  Login failed - keeping existing data")
             browser.close()
             sys.exit(1)
 
-        # Scrape sector rotation
         sr_raw = scrape_page(page, SECTOR_URL, "sector_rotation")
         sr = normalize(sr_raw) if sr_raw else existing.get("sector_rotation", [])
-        print(f"\n  Sector Rotation: {len(sr)} position(s) extracted")
 
-        # Scrape long term — try common URL patterns
         lt_raw = scrape_page(page, LONGTERM_URL, "long_term")
         if not lt_raw:
-            # Try alternate URL
             lt_raw = scrape_page(page, "https://carnivoretradedesk.com/long-term", "long_term_alt")
         lt = normalize(lt_raw) if lt_raw else existing.get("long_term", [])
-        print(f"  Long Term:       {len(lt)} position(s) extracted")
 
         browser.close()
 
-    # Save results
     os.makedirs("data", exist_ok=True)
     payload = {
         "last_updated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -501,18 +296,19 @@ def main():
         "sector_rotation": sr,
         "long_term": lt,
     }
-
     with open(OUTPUT_PATH, "w") as f:
         json.dump(payload, f, indent=2)
 
-    print(f"\n  ✓ Saved to {OUTPUT_PATH}")
-    print("─"*55 + "\n")
+    print(f"\n  Sector Rotation: {len(sr)} positions")
+    print(f"  Long Term:       {len(lt)} positions")
+    print(f"  Saved to {OUTPUT_PATH}")
+    print("-"*55)
 
     if len(sr) == 0 and len(lt) == 0:
-        print("  ⚠ No data extracted from either portfolio.")
-        print("  Check data/carnivore_*_dump.txt files for page content.")
+        print("  No data extracted")
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+
