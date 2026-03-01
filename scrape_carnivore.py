@@ -54,7 +54,8 @@ def save_debug(page, label="debug"):
 
 def do_login(page, email, password):
     """
-    Robust login: fill credentials, submit, verify session established.
+    SPA-aware login for React apps.
+    Does not rely on page navigation — watches for URL change or auth token instead.
     Returns True if login succeeded.
     """
     print("  Navigating to login page...", end=" ", flush=True)
@@ -64,106 +65,102 @@ def do_login(page, email, password):
 
     print(f"  Current URL: {page.url}")
 
-    # If already logged in, skip
+    # Already logged in?
     if "login" not in page.url.lower():
-        print("  Already logged in — skipping login step")
+        print("  Already logged in — skipping")
         return True
 
+    # Fill email
     print("  Filling email...", end=" ", flush=True)
-    email_selectors = [
-        'input[type="email"]',
-        'input[name="email"]',
-        'input[placeholder*="email" i]',
-        'input[id*="email" i]',
-        'input[autocomplete*="email" i]',
-    ]
-    for sel in email_selectors:
+    for sel in ['input[type="email"]', 'input[name="email"]', 'input[placeholder*="email" i]', 'input[id*="email" i]']:
         try:
             page.wait_for_selector(sel, timeout=3000)
-            page.click(sel)
-            page.fill(sel, email)
+            page.triple_click(sel)
+            page.type(sel, email, delay=50)
             print("OK")
             break
         except Exception:
             continue
     else:
-        print("FAILED — could not find email field")
-        save_debug(page, "login_fail")
+        save_debug(page, "login_no_email_field")
         return False
 
+    # Fill password
     print("  Filling password...", end=" ", flush=True)
-    pw_selectors = [
-        'input[type="password"]',
-        'input[name="password"]',
-        'input[placeholder*="password" i]',
-        'input[id*="password" i]',
-    ]
-    for sel in pw_selectors:
+    for sel in ['input[type="password"]', 'input[name="password"]', 'input[placeholder*="password" i]']:
         try:
             page.wait_for_selector(sel, timeout=3000)
-            page.click(sel)
-            page.fill(sel, password)
+            page.triple_click(sel)
+            page.type(sel, password, delay=50)
             print("OK")
             break
         except Exception:
             continue
     else:
-        print("FAILED — could not find password field")
         return False
 
-    # Small pause to let React/Vue state update
     page.wait_for_timeout(500)
 
-    print("  Clicking submit...", end=" ", flush=True)
-    submit_selectors = [
+    # Submit — click button WITHOUT expecting navigation (SPA pattern)
+    print("  Submitting...", end=" ", flush=True)
+    submitted = False
+    for sel in [
         'button[type="submit"]',
         'input[type="submit"]',
         'button:has-text("LOGIN")',
         'button:has-text("Login")',
-        'button:has-text("Sign in")',
-        'button:has-text("Log in")',
+        'button:has-text("Sign In")',
         'button:has-text("SIGN IN")',
-    ]
-
-    clicked = False
-    for sel in submit_selectors:
+        'button:has-text("Log In")',
+    ]:
         try:
             page.wait_for_selector(sel, timeout=2000)
-            # Use expect_navigation for React apps
-            with page.expect_navigation(wait_until="networkidle", timeout=20000):
-                page.click(sel)
-            clicked = True
-            print("OK")
+            page.click(sel)
+            submitted = True
+            print(f"clicked ({sel})", end=" ", flush=True)
             break
         except Exception:
             continue
 
-    if not clicked:
-        # Fallback: press Enter in the password field
-        print("trying Enter key...", end=" ", flush=True)
+    if not submitted:
+        # Last resort: Enter key
+        page.keyboard.press("Enter")
+        print("Enter key", end=" ", flush=True)
+
+    # ── Wait for SPA to process login ─────────────────────
+    # Strategy: poll URL every 500ms for up to 15 seconds
+    print("waiting...", end=" ", flush=True)
+    for attempt in range(30):
+        page.wait_for_timeout(500)
+        current_url = page.url
+        if "login" not in current_url.lower():
+            print(f"OK (redirected after {(attempt+1)*0.5:.1f}s)")
+            break
+        # Also check if an auth token/cookie appeared
         try:
-            page.keyboard.press("Enter")
-            page.wait_for_load_state("networkidle", timeout=20000)
-            print("OK")
-        except Exception as e:
-            print(f"FAILED: {e}")
-            save_debug(page, "submit_fail")
-            return False
-
-    # Wait a moment for auth to settle
-    page.wait_for_timeout(3000)
-
-    current_url = page.url
-    print(f"  Post-login URL: {current_url}")
-
-    # Verify login succeeded — should no longer be on login page
-    if "login" in current_url.lower():
-        print("  ⚠ Still on login page — login may have failed")
-        print("  Checking page content...")
-        body_text = page.inner_text("body")
-        print(f"  Page preview: {body_text[:300]}")
-        save_debug(page, "login_still_on_login")
+            cookies = page.context.cookies()
+            auth_cookies = [c for c in cookies if any(k in c["name"].lower()
+                for k in ["token", "auth", "session", "jwt", "access"])]
+            if auth_cookies:
+                print(f"OK (auth cookie found: {auth_cookies[0]['name']})")
+                break
+        except Exception:
+            pass
+    else:
+        print("TIMEOUT")
+        save_debug(page, "login_timeout")
+        # Check if we're actually logged in despite URL not changing
+        body = page.inner_text("body")
+        if any(k in body.lower() for k in ["dashboard", "portfolio", "sector", "logout", "sign out"]):
+            print("  ✓ Login appears successful (dashboard content detected)")
+            return True
+        print(f"  ✗ Still on login page after 15s. Body preview: {body[:200]}")
         return False
+
+    print(f"  Post-login URL: {page.url}")
+
+    # Extra wait for SPA to fully render after auth
+    page.wait_for_timeout(3000)
 
     print("  ✓ Login successful")
     return True
