@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-03-01 16:53 UTC",
+  "updated_at": "2026-03-01 20:01 UTC",
   "updated_date": "2026-03-01",
   "futures": [
     {
@@ -15,6 +15,21 @@
         0.76,
         0.81,
         -0.57
+      ]
+    },
+    {
+      "ticker": "NQ=F",
+      "name": "E-mini Nasdaq 100",
+      "price": 25004.75,
+      "chg_1d": -0.3,
+      "chg_1w": -0.25,
+      "chg_52w_hi": 22.16,
+      "chg_ytd": -1.5,
+      "spark": [
+        -1.22,
+        1.07,
+        1.41,
+        -1.19
       ]
     },
     {
@@ -97,26 +112,26 @@
     {
       "ticker": "EURUSD=X",
       "name": "EUR/USD",
-      "price": 1.1803,
-      "chg_1d": -0.1,
-      "chg_1w": 0.29,
-      "chg_52w_hi": 13.34,
-      "chg_ytd": 0.45,
+      "price": 1.1818,
+      "chg_1d": 0.12,
+      "chg_1w": -0.15,
+      "chg_52w_hi": 13.48,
+      "chg_ytd": 0.57,
       "spark": [
-        0.56,
         -0.35,
         -0.16,
-        0.34
+        0.34,
+        -0.1
       ]
     },
     {
       "ticker": "GBPUSD=X",
       "name": "GBP/USD",
-      "price": 1.3483,
-      "chg_1d": -0.06,
-      "chg_1w": -0.37,
-      "chg_52w_hi": 6.97,
-      "chg_ytd": 0.07,
+      "price": 1.3424,
+      "chg_1d": -0.5,
+      "chg_1w": -0.81,
+      "chg_52w_hi": 6.51,
+      "chg_ytd": -0.37,
       "spark": [
         -0.27,
         0.0,
@@ -127,11 +142,11 @@
     {
       "ticker": "USDJPY=X",
       "name": "USD/JPY",
-      "price": 156.035,
-      "chg_1d": 0.11,
-      "chg_1w": 1.1,
-      "chg_52w_hi": 3.49,
-      "chg_ytd": -0.44,
+      "price": 156.081,
+      "chg_1d": 0.14,
+      "chg_1w": 1.13,
+      "chg_52w_hi": 3.52,
+      "chg_ytd": -0.41,
       "spark": [
         0.19,
         0.81,
@@ -751,11 +766,11 @@
     {
       "ticker": "BTC-USD",
       "name": "Bitcoin",
-      "price": 66030.9531,
-      "chg_1d": -1.44,
-      "chg_1w": 3.04,
-      "chg_52w_hi": -29.94,
-      "chg_ytd": -25.58,
+      "price": 65962.25,
+      "chg_1d": -1.54,
+      "chg_1w": 2.94,
+      "chg_52w_hi": -30.01,
+      "chg_ytd": -25.66,
       "spark": [
         6.06,
         -0.75,
@@ -766,11 +781,11 @@
     {
       "ticker": "ETH-USD",
       "name": "Ethereum",
-      "price": 1971.0219,
-      "chg_1d": 0.3,
-      "chg_1w": 6.37,
-      "chg_52w_hi": -21.78,
-      "chg_ytd": -34.31,
+      "price": 1954.1591,
+      "chg_1d": -0.55,
+      "chg_1w": 5.46,
+      "chg_52w_hi": -22.44,
+      "chg_ytd": -34.87,
       "spark": [
         10.88,
         -1.35,
