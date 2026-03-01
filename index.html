@@ -205,13 +205,22 @@
   <div class="hero-title"><span class="hl">MARKET</span><br>COMMAND</div>
   <div class="hero-sub">EOD snapshot. Macro, sector rotation, breadth, and risk-based position sizing — built for swing and position traders.</div>
   <div class="hero-meta">
-    <div class="hero-stat">
-      <div class="hero-stat-label">S&P 500 (SPY)</div>
-      <div class="hero-stat-value pos" id="hs-spy">—</div>
-    </div>
-    <div class="hero-stat">
-      <div class="hero-stat-label">1D Change</div>
-      <div class="hero-stat-value" id="hs-spy-chg">—</div>
+    <div class="hero-stat" style="display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--border);padding-right:24px;margin-right:8px">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">S&amp;P 500</span>
+        <span class="hero-stat-value pos" id="hs-spy" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-spy-chg" style="font-size:13px">—</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">NDX 100</span>
+        <span class="hero-stat-value" id="hs-ndx" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-ndx-chg" style="font-size:13px">—</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">IWM</span>
+        <span class="hero-stat-value" id="hs-iwm" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-iwm-chg" style="font-size:13px">—</span>
+      </div>
     </div>
     <div class="hero-stat">
       <div class="hero-stat-label">VIX</div>
@@ -221,9 +230,22 @@
       <div class="hero-stat-label">DXY</div>
       <div class="hero-stat-value" id="hs-dxy">—</div>
     </div>
-    <div class="hero-stat">
-      <div class="hero-stat-label">Gold</div>
-      <div class="hero-stat-value" id="hs-gold">—</div>
+    <div class="hero-stat" style="display:flex;flex-direction:column;gap:8px;border-left:1px solid var(--border);padding-left:24px;margin-left:8px">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">GOLD</span>
+        <span class="hero-stat-value" id="hs-gold" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-gold-chg" style="font-size:13px">—</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">SILVER</span>
+        <span class="hero-stat-value" id="hs-silver" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-silver-chg" style="font-size:13px">—</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <span class="hero-stat-label" style="width:52px">COPPER</span>
+        <span class="hero-stat-value" id="hs-copper" style="font-size:16px">—</span>
+        <span class="hero-stat-value" id="hs-copper-chg" style="font-size:13px">—</span>
+      </div>
     </div>
     <div class="hero-stat">
       <div class="hero-stat-label">10Y Yield</div>
@@ -552,21 +574,33 @@ async function loadData() {
     $('footer-status').textContent = isDemo ? 'DEMO' : `Updated ${d.updated_at}`;
 
     // Hero cards
-    const spy = (d.major_etfs || []).find(e => e.ticker === 'SPY');
-    const vix = (d.vol_dollar || []).find(e => e.ticker === '^VIX');
-    const dxy = (d.vol_dollar || []).find(e => e.ticker === 'DX-Y.NYB');
-    const gold = (d.metals || []).find(e => e.ticker === 'GC=F');
-    const y10 = (d.yields || []).find(e => e.ticker === '^TNX');
+    const spy    = (d.major_etfs || []).find(e => e.ticker === 'SPY');
+    const qqq    = (d.major_etfs || []).find(e => e.ticker === 'QQQ');
+    const iwm    = (d.major_etfs || []).find(e => e.ticker === 'IWM');
+    const vix    = (d.vol_dollar || []).find(e => e.ticker === '^VIX');
+    const dxy    = (d.vol_dollar || []).find(e => e.ticker === 'DX-Y.NYB');
+    const gold   = (d.metals || []).find(e => e.ticker === 'GC=F');
+    const silver = (d.metals || []).find(e => e.ticker === 'SI=F');
+    const y10    = (d.yields || []).find(e => e.ticker === '^TNX');
 
-    if (spy) {
-      $('hs-spy').textContent = fmtPrice(spy.price);
-      $('hs-spy').className = 'hero-stat-value ' + pctChgClass(spy.chg_1d);
-      $('hs-spy-chg').textContent = (spy.chg_1d > 0 ? '+' : '') + spy.chg_1d.toFixed(2) + '%';
-      $('hs-spy-chg').className = 'hero-stat-value ' + pctChgClass(spy.chg_1d);
+    function setHeroRow(idVal, idChg, item) {
+      if (!item) return;
+      $(idVal).textContent = fmtPrice(item.price);
+      $(idVal).className = 'hero-stat-value ' + pctChgClass(item.chg_1d);
+      if (idChg) {
+        $(idChg).textContent = (item.chg_1d >= 0 ? '+' : '') + item.chg_1d.toFixed(2) + '%';
+        $(idChg).className = 'hero-stat-value ' + pctChgClass(item.chg_1d);
+      }
     }
+    setHeroRow('hs-spy',    'hs-spy-chg',    spy);
+    setHeroRow('hs-ndx',    'hs-ndx-chg',    qqq);
+    setHeroRow('hs-iwm',    'hs-iwm-chg',    iwm);
+    setHeroRow('hs-gold',   'hs-gold-chg',   gold);
+    const copper = (d.metals || []).find(e => e.ticker === 'HG=F');
+    setHeroRow('hs-silver', 'hs-silver-chg', silver);
+    setHeroRow('hs-copper', 'hs-copper-chg', copper);
     if (vix) { $('hs-vix').textContent = fmtPrice(vix.price); $('hs-vix').className = 'hero-stat-value ' + (vix.price > 25 ? 'neg' : vix.price > 18 ? 'neu' : 'pos'); }
     if (dxy) { $('hs-dxy').textContent = fmtPrice(dxy.price); $('hs-dxy').className = 'hero-stat-value ' + pctChgClass(dxy.chg_1d); }
-    if (gold) { $('hs-gold').textContent = fmtPrice(gold.price); $('hs-gold').className = 'hero-stat-value ' + pctChgClass(gold.chg_1d); }
     if (y10) { $('hs-10y').textContent = y10.yield_pct.toFixed(2) + '%'; $('hs-10y').className = 'hero-stat-value neu'; }
 
     // TAPE
@@ -1046,22 +1080,24 @@ function applyLiveQuotes() {
   if (!Object.keys(liveQuotes).length) return;
 
   // ── Hero stats ──
-  const heroMap = { 'SPY': 'hs-spy', 'VIXY': 'hs-vix' };
-  if (liveQuotes['SPY']) {
-    const q = liveQuotes['SPY'];
-    $('hs-spy').textContent = fmtPrice(q.c);
-    $('hs-spy').className = 'hero-stat-value ' + (q.dp >= 0 ? 'pos' : 'neg');
-    $('hs-spy-chg').textContent = (q.dp >= 0 ? '+' : '') + q.dp.toFixed(2) + '%';
-    $('hs-spy-chg').className = 'hero-stat-value ' + (q.dp >= 0 ? 'pos' : 'neg');
+  function liveHeroRow(idVal, idChg, ticker) {
+    const q = liveQuotes[ticker];
+    if (!q) return;
+    $(idVal).textContent = fmtPrice(q.c);
+    $(idVal).className = 'hero-stat-value ' + (q.dp >= 0 ? 'pos' : 'neg');
+    if (idChg) {
+      $(idChg).textContent = (q.dp >= 0 ? '+' : '') + q.dp.toFixed(2) + '%';
+      $(idChg).className = 'hero-stat-value ' + (q.dp >= 0 ? 'pos' : 'neg');
+    }
   }
+  liveHeroRow('hs-spy',    'hs-spy-chg',    'SPY');
+  liveHeroRow('hs-ndx',    'hs-ndx-chg',    'QQQ');
+  liveHeroRow('hs-iwm',    'hs-iwm-chg',    'IWM');
+  liveHeroRow('hs-gold',   'hs-gold-chg',   'GLD');
+  liveHeroRow('hs-silver', 'hs-silver-chg', 'SLV');
+  liveHeroRow('hs-copper', 'hs-copper-chg', 'CPER');
   if (liveQuotes['VIXY']) {
-    const q = liveQuotes['VIXY'];
-    $('hs-vix').textContent = fmtPrice(q.c);
-  }
-  if (liveQuotes['GLD']) {
-    const q = liveQuotes['GLD'];
-    $('hs-gold').textContent = fmtPrice(q.c);
-    $('hs-gold').className = 'hero-stat-value ' + (q.dp >= 0 ? 'pos' : 'neg');
+    $('hs-vix').textContent = fmtPrice(liveQuotes['VIXY'].c);
   }
 
   // ── Tape — rebuild with live prices ──
@@ -1227,7 +1263,28 @@ async function liveRefresh(apiKey) {
         : `⟳ Extended hours · refreshing every ${nextMin} min`;
       liveRefreshTimer = setTimeout(() => liveRefresh(apiKey), interval);
     } else {
-      $('live-next-refresh').textContent = '⟳ Market closed · resumes Mon 9:30 ET';
+      // Calculate next market open in CET
+      const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const day = nowET.getDay(); // 0=Sun,6=Sat
+      // Next weekday open at 9:30 ET = 15:30 CET (winter) / 15:30 CEST (summer)
+      // Just show the fixed CET equivalent
+      const openET = new Date(nowET);
+      openET.setHours(9, 30, 0, 0);
+      // Find next weekday
+      let daysAhead = 0;
+      const testDay = nowET.getDay();
+      if (testDay === 5 && nowET.getHours() >= 16) daysAhead = 3; // Friday after close -> Monday
+      else if (testDay === 6) daysAhead = 2; // Saturday -> Monday
+      else if (testDay === 0) daysAhead = 1; // Sunday -> Monday
+      else if (nowET.getHours() >= 16) daysAhead = 1; // weekday after close -> next day
+      const nextOpenET = new Date(nowET);
+      nextOpenET.setDate(nowET.getDate() + daysAhead);
+      nextOpenET.setHours(9, 30, 0, 0);
+      const nextOpenCET = new Date(nextOpenET.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      // Convert ET->CET: format in Amsterdam timezone
+      const cetStr = nextOpenET.toLocaleTimeString('en-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' });
+      const cetDay = nextOpenET.toLocaleDateString('en-NL', { timeZone: 'Europe/Amsterdam', weekday: 'short' });
+      $('live-next-refresh').textContent = `⟳ Market closed · resumes ${cetDay} ${cetStr} CET`;
     }
 
   } catch(err) {
