@@ -125,9 +125,17 @@ def fetch_group(symbols_with_names, label="group"):
     print(f"  Fetching {label} ({len(tickers)} symbols)...", end=" ", flush=True)
 
     try:
+        import datetime as dt
+        # Fetch from Jan 1 of current year to get accurate YTD
+        # Also need 52 weeks back, so use whichever is earlier
+        today = dt.date.today()
+        jan1 = dt.date(today.year, 1, 1)
+        week52_ago = today - dt.timedelta(weeks=52)
+        start_date = min(jan1, week52_ago).strftime("%Y-%m-%d")
+
         data = yf.download(
             tickers,
-            period="1y",
+            start=start_date,
             interval="1d",
             group_by="ticker",
             auto_adjust=True,
@@ -152,11 +160,21 @@ def fetch_group(symbols_with_names, label="group"):
 
             df = df.dropna(subset=["Close"])
 
+            import datetime as dt
             close_today = float(df["Close"].iloc[-1])
-            close_1d    = float(df["Close"].iloc[-2])
+            close_1d    = float(df["Close"].iloc[-2]) if len(df) >= 2 else close_today
             close_1w    = float(df["Close"].iloc[-6]) if len(df) >= 6 else close_1d
-            close_52w   = float(df["Close"].max())
-            close_ytd   = float(df["Close"].iloc[0])
+
+            # YTD: first trading day of this calendar year
+            today_dt   = dt.date.today()
+            jan1_str   = f"{today_dt.year}-01-01"
+            df_ytd     = df[df.index >= jan1_str]
+            close_ytd  = float(df_ytd["Close"].iloc[0]) if len(df_ytd) > 0 else float(df["Close"].iloc[0])
+
+            # 52W: price from exactly 52 weeks ago (closest available)
+            week52_str = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+            df_52w     = df[df.index <= week52_str]
+            close_52w  = float(df_52w["Close"].iloc[-1]) if len(df_52w) > 0 else float(df["Close"].iloc[0])
 
             chg_1d  = round((close_today - close_1d)  / close_1d  * 100, 2)
             chg_1w  = round((close_today - close_1w)  / close_1w  * 100, 2)
@@ -206,7 +224,13 @@ def fetch_yields_group():
     }
 
     try:
-        data = yf.download(tickers, period="1y", interval="1d",
+        import datetime as dt
+        today_dt   = dt.date.today()
+        jan1_str   = f"{today_dt.year}-01-01"
+        week52_ago = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+        start_date = min(jan1_str, week52_ago)
+
+        data = yf.download(tickers, start=start_date, interval="1d",
                            group_by="ticker", auto_adjust=True,
                            progress=False, threads=True)
     except Exception as e:
@@ -221,11 +245,19 @@ def fetch_yields_group():
             if df.empty or len(df) < 2:
                 continue
 
+            import datetime as dt
+            today_dt   = dt.date.today()
+
             yield_today = float(df["Close"].iloc[-1])
             yield_1d    = float(df["Close"].iloc[-2])
             yield_1w    = float(df["Close"].iloc[-6]) if len(df) >= 6 else yield_1d
-            yield_52w   = float(df["Close"].max())
-            yield_ytd   = float(df["Close"].iloc[0])
+
+            df_ytd    = df[df.index >= f"{today_dt.year}-01-01"]
+            yield_ytd = float(df_ytd["Close"].iloc[0]) if len(df_ytd) > 0 else float(df["Close"].iloc[0])
+
+            week52_str = (today_dt - dt.timedelta(weeks=52)).strftime("%Y-%m-%d")
+            df_52w     = df[df.index <= week52_str]
+            yield_52w  = float(df_52w["Close"].iloc[-1]) if len(df_52w) > 0 else float(df["Close"].iloc[0])
 
             chg_1d_bps  = round((yield_today - yield_1d) * 100, 1)   # basis points
             chg_1w      = round((yield_today - yield_1w)  / yield_1w  * 100, 2)
