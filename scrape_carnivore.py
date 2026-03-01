@@ -223,19 +223,47 @@ def normalize(rows):
         ticker = get("ticker", "symbol", "stock")
         if not ticker:
             continue
+
+        shares    = clean_num(get("shares", "qty", "quantity"))
+        avg_cost  = clean_num(get("entry px", "avg cost", "entry price", "avg", "cost", "entry", "basis"))
+        curr      = clean_num(get("current px", "current price", "current", "price", "last"))
+        mkt_val   = clean_num(get("market value", "market", "mkt val", "mkt"))
+        unrealized= clean_num(get("unrealized", "gain/loss $", "p&l", "pnl"))
+        pct_ret   = clean_num(get("gain/loss", "return", "change", "gain%", "%"))
+        weight    = clean_num(get("weight", "alloc"))
+        stop      = clean_num(get("stop loss", "stop"))
+        buy_up    = clean_num(get("buy up to", "buy up", "target"))
+        entry_date= get("entry date", "date")
+
+        # Calculate derived fields if not directly in table
+        if shares and curr and not mkt_val:
+            mkt_val = round(shares * curr, 2)
+        if shares and avg_cost and curr and not unrealized:
+            unrealized = round((curr - avg_cost) * shares, 2)
+        if avg_cost and curr and not pct_ret:
+            pct_ret = round((curr - avg_cost) / avg_cost * 100, 2)
+
+        # below_stop flag for LT dashboard highlighting
+        below_stop = bool(stop and curr and curr < stop)
+        upside_pct = round((buy_up - curr) / curr * 100, 2) if buy_up and curr else None
+        stop_dist_pct = round((curr - stop) / curr * 100, 2) if stop and curr else None
+
         out.append({
-            "ticker":         ticker.upper().strip(),
-            "name":           get("company", "name", "description") or ticker,
-            "shares":         clean_num(get("shares", "qty", "quantity")),
-            "avg_cost":       clean_num(get("avg", "cost", "entry", "basis")),
-            "curr_price":     clean_num(get("current", "price", "last")),
-            "market_value":   clean_num(get("market", "value", "mkt")),
-            "unrealized_pnl": clean_num(get("unrealized", "gain", "p&l", "pnl")),
-            "pct_return":     clean_num(get("return", "change", "gain%")),
-            "weight":         clean_num(get("weight", "alloc")),
-            "stop_loss":      clean_num(get("stop")),
-            "buy_up_to":      clean_num(get("buy up", "target")),
-            "entry_date":     get("date", "entry date"),
+            "ticker":              ticker.upper().strip(),
+            "name":                get("company", "name", "description") or ticker,
+            "shares":              shares,
+            "avg_cost":            avg_cost,
+            "curr_price":          curr,
+            "market_value":        mkt_val,
+            "unrealized_pnl":      unrealized,
+            "pct_return":          pct_ret,
+            "weight":              weight,
+            "stop_loss":           stop,
+            "buy_up_to":           buy_up,
+            "entry_date":          entry_date,
+            "below_stop":          below_stop,
+            "stop_distance_pct":   stop_dist_pct,
+            "upside_to_target_pct":upside_pct,
         })
     return out
 
@@ -311,5 +339,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
