@@ -167,8 +167,16 @@ def do_login(page, email, password):
 
 def scrape_page(page, url, label):
     print(f"\n  Loading {label}...", end=" ", flush=True)
-    page.goto(url, wait_until="networkidle", timeout=30000)
-    page.wait_for_timeout(4000)
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+    except Exception:
+        # Fallback: try with longer timeout and no wait condition
+        try:
+            page.goto(url, wait_until="commit", timeout=45000)
+        except Exception as e:
+            print(f"FAILED: {e}")
+            return []
+    page.wait_for_timeout(5000)  # wait for JS to render
     print("OK")
     print(f"  URL: {page.url}")
 
@@ -307,13 +315,21 @@ def main():
             browser.close()
             sys.exit(1)
 
-        sr_raw = scrape_page(page, SECTOR_URL, "sector_rotation")
-        sr = normalize(sr_raw) if sr_raw else existing.get("sector_rotation", [])
+        try:
+            sr_raw = scrape_page(page, SECTOR_URL, "sector_rotation")
+            sr = normalize(sr_raw) if sr_raw else existing.get("sector_rotation", [])
+        except Exception as e:
+            print(f"  SR scrape error: {e}")
+            sr = existing.get("sector_rotation", [])
 
-        lt_raw = scrape_page(page, LONGTERM_URL, "long_term")
-        if not lt_raw:
-            lt_raw = scrape_page(page, "https://carnivoretradedesk.com/long-term", "long_term_alt")
-        lt = normalize(lt_raw) if lt_raw else existing.get("long_term", [])
+        try:
+            lt_raw = scrape_page(page, LONGTERM_URL, "long_term")
+            if not lt_raw:
+                lt_raw = scrape_page(page, "https://carnivoretradedesk.com/long-term", "long_term_alt")
+            lt = normalize(lt_raw) if lt_raw else existing.get("long_term", [])
+        except Exception as e:
+            print(f"  LT scrape error: {e}")
+            lt = existing.get("long_term", [])
 
         browser.close()
 
@@ -339,6 +355,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
