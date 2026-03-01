@@ -1,4 +1,4 @@
-"""
+    """
 TRADERDECK — Carnivore Trading Portfolio Scraper
 Logs into carnivoretradedesk.com and extracts both portfolio tables.
 Requires: CARNIVORE_EMAIL and CARNIVORE_PASSWORD environment variables.
@@ -70,34 +70,85 @@ def do_login(page, email, password):
         print("  Already logged in — skipping")
         return True
 
-    # Fill email
-    print("  Filling email...", end=" ", flush=True)
-    for sel in ['input[type="email"]', 'input[name="email"]', 'input[placeholder*="email" i]', 'input[id*="email" i]']:
-        try:
-            page.wait_for_selector(sel, timeout=3000)
-            page.triple_click(sel)
-            page.type(sel, email, delay=50)
-            print("OK")
-            break
-        except Exception:
-            continue
-    else:
-        save_debug(page, "login_no_email_field")
+    # Wait for any input to appear
+    print("  Waiting for form inputs...", end=" ", flush=True)
+    try:
+        page.wait_for_selector("input", timeout=10000)
+        print("OK")
+    except Exception:
+        print("FAILED — no inputs found at all")
+        save_debug(page, "login_no_inputs")
         return False
 
-    # Fill password
-    print("  Filling password...", end=" ", flush=True)
-    for sel in ['input[type="password"]', 'input[name="password"]', 'input[placeholder*="password" i]']:
+    # Find all visible inputs
+    all_inputs = page.locator("input:visible").all()
+    print(f"  Found {len(all_inputs)} visible input(s)")
+    for inp in all_inputs:
         try:
-            page.wait_for_selector(sel, timeout=3000)
-            page.triple_click(sel)
-            page.type(sel, password, delay=50)
+            itype = inp.get_attribute("type") or "text"
+            iname = inp.get_attribute("name") or ""
+            iph   = inp.get_attribute("placeholder") or ""
+            print(f"    input: type={itype} name={iname} placeholder={iph}")
+        except Exception:
+            pass
+
+    # Fill email — use first non-password input
+    print("  Filling email...", end=" ", flush=True)
+    filled_email = False
+    for inp in all_inputs:
+        try:
+            itype = (inp.get_attribute("type") or "text").lower()
+            if itype in ("password", "submit", "button", "checkbox", "hidden"):
+                continue
+            inp.click()
+            inp.fill(email)
+            filled_email = True
             print("OK")
             break
         except Exception:
             continue
-    else:
-        return False
+
+    if not filled_email:
+        # Last resort: Tab into first field
+        print("trying Tab method...", end=" ", flush=True)
+        try:
+            page.keyboard.press("Tab")
+            page.wait_for_timeout(300)
+            page.keyboard.type(email, delay=50)
+            print("OK")
+            filled_email = True
+        except Exception:
+            print("FAILED")
+            save_debug(page, "login_no_email_field")
+            return False
+
+    # Fill password — use first password input
+    print("  Filling password...", end=" ", flush=True)
+    filled_pw = False
+    for inp in all_inputs:
+        try:
+            itype = (inp.get_attribute("type") or "").lower()
+            if itype == "password":
+                inp.click()
+                inp.fill(password)
+                filled_pw = True
+                print("OK")
+                break
+        except Exception:
+            continue
+
+    if not filled_pw:
+        # Tab from email field to password
+        print("trying Tab method...", end=" ", flush=True)
+        try:
+            page.keyboard.press("Tab")
+            page.wait_for_timeout(300)
+            page.keyboard.type(password, delay=50)
+            print("OK")
+            filled_pw = True
+        except Exception:
+            print("FAILED")
+            return False
 
     page.wait_for_timeout(500)
 
