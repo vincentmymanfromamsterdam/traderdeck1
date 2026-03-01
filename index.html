@@ -1264,26 +1264,39 @@ async function liveRefresh(apiKey) {
       liveRefreshTimer = setTimeout(() => liveRefresh(apiKey), interval);
     } else {
       // Calculate next market open in CET
-      const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      const day = nowET.getDay(); // 0=Sun,6=Sat
-      // Next weekday open at 9:30 ET = 15:30 CET (winter) / 15:30 CEST (summer)
-      // Just show the fixed CET equivalent
-      const openET = new Date(nowET);
-      openET.setHours(9, 30, 0, 0);
-      // Find next weekday
+      // Strategy: build a real UTC Date for 9:30 ET on the next trading day
+      // by using Intl to find the ET offset, then compute proper UTC time
+      const now = new Date();
+      const nowET = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const etDay = nowET.getDay();
+      const etHour = nowET.getHours();
+      const etMin  = nowET.getMinutes();
+
+      // Days until next market open at 09:30 ET
       let daysAhead = 0;
-      const testDay = nowET.getDay();
-      if (testDay === 5 && nowET.getHours() >= 16) daysAhead = 3; // Friday after close -> Monday
-      else if (testDay === 6) daysAhead = 2; // Saturday -> Monday
-      else if (testDay === 0) daysAhead = 1; // Sunday -> Monday
-      else if (nowET.getHours() >= 16) daysAhead = 1; // weekday after close -> next day
-      const nextOpenET = new Date(nowET);
-      nextOpenET.setDate(nowET.getDate() + daysAhead);
-      nextOpenET.setHours(9, 30, 0, 0);
-      const nextOpenCET = new Date(nextOpenET.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      // Convert ET->CET: format in Amsterdam timezone
-      const cetStr = nextOpenET.toLocaleTimeString('en-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' });
-      const cetDay = nextOpenET.toLocaleDateString('en-NL', { timeZone: 'Europe/Amsterdam', weekday: 'short' });
+      if      (etDay === 5 && (etHour > 16 || (etHour === 16 && etMin >= 0))) daysAhead = 3;
+      else if (etDay === 6) daysAhead = 2;
+      else if (etDay === 0) daysAhead = 1;
+      else if (etHour >= 16) daysAhead = 1;
+
+      // Build a date string "YYYY-MM-DD 09:30:00" in ET, parse it as ET
+      const nextDay = new Date(nowET);
+      nextDay.setDate(nowET.getDate() + daysAhead);
+      const yyyy = nextDay.getFullYear();
+      const mm   = String(nextDay.getMonth() + 1).padStart(2, '0');
+      const dd   = String(nextDay.getDate()).padStart(2, '0');
+      // Parse "YYYY-MM-DD 09:30:00" as ET by using a known ET offset trick
+      // Easiest: use the actual UTC offset of ET on that date via Intl
+      const etOpenStr = `${yyyy}-${mm}-${dd}T09:30:00`;
+      // Find ET UTC offset on that date
+      const tempDate = new Date(`${yyyy}-${mm}-${dd}T14:00:00Z`); // noon-ish UTC
+      const etAtNoon = new Date(tempDate.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const etOffset = tempDate - etAtNoon; // ms difference = UTC offset
+      const nextOpenUTC = new Date(new Date(`${yyyy}-${mm}-${dd}T09:30:00`).getTime() + etOffset);
+
+      // Now format in Amsterdam timezone
+      const cetStr = nextOpenUTC.toLocaleTimeString('nl-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' });
+      const cetDay = nextOpenUTC.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', weekday: 'short' });
       $('live-next-refresh').textContent = `⟳ Market closed · resumes ${cetDay} ${cetStr} CET`;
     }
 
