@@ -380,27 +380,47 @@
     </div>
   </div>
 
-  <!-- 03 BREADTH (static — extend with your own data sources) -->
+  <!-- 03 BREADTH -->
   <div class="section" id="breadth">
     <div class="section-header">
       <div class="section-num">03</div>
       <div class="section-title">Market Breadth & Sentiment</div>
-      <div class="section-subtitle">S&P 500 INTERNALS</div>
-    </div>
-    <div style="color:var(--muted);font-size:11px;margin-bottom:16px">
-      Breadth data (% above MA, A-D line, Fear &amp; Greed) requires paid data sources or manual input.<br>
-      Free options: <a href="https://finviz.com/map.ashx" target="_blank" style="color:var(--accent)">FinViz</a>, 
-      <a href="https://stockcharts.com/freecharts/gallery.html" target="_blank" style="color:var(--accent)">StockCharts</a>,
-      <a href="https://cnn.com/markets/fear-and-greed" target="_blank" style="color:var(--accent)">CNN F&amp;G</a>.
-      Add your own values below and they'll persist in the JSON.
+      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
     </div>
     <div class="gauge-grid" id="breadth-gauges">
-      <div class="gauge-cell"><div class="gauge-label">% Above MA200</div><div class="gauge-val" style="color:var(--amber)">—</div><div class="gauge-sub">Update in market_data.json</div></div>
-      <div class="gauge-cell"><div class="gauge-label">% Above MA50</div><div class="gauge-val" style="color:var(--amber)">—</div></div>
-      <div class="gauge-cell"><div class="gauge-label">New 52W High</div><div class="gauge-val" style="color:var(--amber)">—</div></div>
-      <div class="gauge-cell"><div class="gauge-label">New 52W Low</div><div class="gauge-val" style="color:var(--amber)">—</div></div>
-      <div class="gauge-cell"><div class="gauge-label">Fear &amp; Greed</div><div class="gauge-val" style="color:var(--amber)">—</div></div>
-      <div class="gauge-cell"><div class="gauge-label">Put/Call Ratio</div><div class="gauge-val" style="color:var(--amber)">—</div></div>
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA200</div>
+        <div class="gauge-val" id="b-ma200">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA50</div>
+        <div class="gauge-val" id="b-ma50">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Highs</div>
+        <div class="gauge-val pos" id="b-highs">—</div>
+        <div class="gauge-sub">within 1% of annual high</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Lows</div>
+        <div class="gauge-val neg" id="b-lows">—</div>
+        <div class="gauge-sub">within 1% of annual low</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Fear &amp; Greed</div>
+        <div class="gauge-val" id="b-fg">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
+        <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Put/Call Ratio</div>
+        <div class="gauge-val" id="b-pc">—</div>
+        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
+      </div>
     </div>
   </div>
 
@@ -686,14 +706,54 @@ async function loadData() {
       ).join('');
     }
 
-    // Breadth from JSON if present
-    if (d.breadth) {
-      $('breadth-gauges').innerHTML = Object.entries(d.breadth).map(([k, v]) =>
-        `<div class="gauge-cell">
-          <div class="gauge-label">${k}</div>
-          <div class="gauge-val" style="color:var(--amber)">${v}</div>
-        </div>`
-      ).join('');
+    // Breadth gauges
+    function setBreadthBar(barId, pct, color) {
+      const el = $(barId);
+      if (el) { el.style.width = Math.min(pct, 100) + '%'; el.style.background = color; }
+    }
+    function breadthColor(pct) {
+      if (pct >= 70) return 'var(--green)';
+      if (pct >= 50) return 'var(--amber)';
+      return 'var(--red)';
+    }
+    function fgColor(score) {
+      if (score >= 75) return 'var(--green)';
+      if (score >= 55) return '#8bc34a';
+      if (score >= 45) return 'var(--amber)';
+      if (score >= 25) return '#ff7043';
+      return 'var(--red)';
+    }
+
+    if (d.breadth && Object.keys(d.breadth).length) {
+      const b = d.breadth;
+      if (b.pct_above_ma200 != null) {
+        $('b-ma200').textContent = b.pct_above_ma200 + '%';
+        $('b-ma200').style.color = breadthColor(b.pct_above_ma200);
+        setBreadthBar('b-ma200-bar', b.pct_above_ma200, breadthColor(b.pct_above_ma200));
+        if (b.total_stocks) $('b-ma200-sub').textContent = `${b.total_stocks} S&P 500 stocks`;
+      }
+      if (b.pct_above_ma50 != null) {
+        $('b-ma50').textContent = b.pct_above_ma50 + '%';
+        $('b-ma50').style.color = breadthColor(b.pct_above_ma50);
+        setBreadthBar('b-ma50-bar', b.pct_above_ma50, breadthColor(b.pct_above_ma50));
+      }
+      if (b.new_52w_highs != null) $('b-highs').textContent = b.new_52w_highs;
+      if (b.new_52w_lows  != null) $('b-lows').textContent  = b.new_52w_lows;
+    }
+
+    if (d.fear_greed && d.fear_greed.score != null) {
+      const fg = d.fear_greed;
+      $('b-fg').textContent = fg.score;
+      $('b-fg').style.color = fgColor(fg.score);
+      setBreadthBar('b-fg-bar', fg.score, fgColor(fg.score));
+      if (fg.rating) $('b-fg-sub').textContent = `${fg.rating} · prev ${fg.previous_close}`;
+    }
+
+    if (d.put_call && d.put_call.total != null) {
+      const pc = d.put_call.total;
+      $('b-pc').textContent = pc.toFixed(2);
+      $('b-pc').style.color = pc > 1.1 ? 'var(--red)' : pc > 0.9 ? 'var(--amber)' : 'var(--green)';
+      $('b-pc-sub').textContent = pc > 1.1 ? 'CBOE Total · Bearish' : pc < 0.8 ? 'CBOE Total · Complacent' : 'CBOE Total · Neutral';
     }
 
   } catch (err) {
