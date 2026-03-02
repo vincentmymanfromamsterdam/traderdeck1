@@ -174,8 +174,8 @@
   <div class="logo">TRADER<span>DECK</span></div>
   <nav class="nav">
     <a href="#macro">MACRO</a>
-    <a href="#equities">EQUITIES</a>
     <a href="#breadth">BREADTH</a>
+    <a href="#equities">EQUITIES</a>
     <a href="#calc">CALC</a>
   </nav>
   <div class="clock-wrap">
@@ -318,10 +318,54 @@
     </div>
   </div>
 
-  <!-- 02 EQUITIES -->
-  <div class="section" id="equities">
+  <!-- 02 BREADTH -->
+  <div class="section" id="breadth">
     <div class="section-header">
       <div class="section-num">02</div>
+      <div class="section-title">Market Breadth & Sentiment</div>
+      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
+    </div>
+    <div class="gauge-grid" id="breadth-gauges">
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA200</div>
+        <div class="gauge-val" id="b-ma200">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA50</div>
+        <div class="gauge-val" id="b-ma50">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Highs</div>
+        <div class="gauge-val pos" id="b-highs">—</div>
+        <div class="gauge-sub">within 1% of annual high</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Lows</div>
+        <div class="gauge-val neg" id="b-lows">—</div>
+        <div class="gauge-sub">within 1% of annual low</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Fear &amp; Greed</div>
+        <div class="gauge-val" id="b-fg">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
+        <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Put/Call Ratio</div>
+        <div class="gauge-val" id="b-pc">—</div>
+        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 EQUITIES -->
+  <div class="section" id="equities">
+    <div class="section-header">
+      <div class="section-num">03</div>
       <div class="section-title">Equities & Sector Rotation</div>
       <div class="section-subtitle">RANKED BY 1W PERFORMANCE</div>
     </div>
@@ -376,50 +420,6 @@
           <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Entry Date</th><th>Avg Cost</th><th>Current</th><th>Stop Loss</th><th>Buy Up To</th><th>Return %</th><th>Stop Dist.</th><th>Upside</th></tr></thead>
           <tbody id="tb-carnivore-lt"><tr><td colspan="10" class="loading-msg">Loading...</td></tr></tbody>
         </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- 03 BREADTH -->
-  <div class="section" id="breadth">
-    <div class="section-header">
-      <div class="section-num">03</div>
-      <div class="section-title">Market Breadth & Sentiment</div>
-      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
-    </div>
-    <div class="gauge-grid" id="breadth-gauges">
-      <div class="gauge-cell">
-        <div class="gauge-label">% Above MA200</div>
-        <div class="gauge-val" id="b-ma200">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">% Above MA50</div>
-        <div class="gauge-val" id="b-ma50">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">New 52W Highs</div>
-        <div class="gauge-val pos" id="b-highs">—</div>
-        <div class="gauge-sub">within 1% of annual high</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">New 52W Lows</div>
-        <div class="gauge-val neg" id="b-lows">—</div>
-        <div class="gauge-sub">within 1% of annual low</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">Fear &amp; Greed</div>
-        <div class="gauge-val" id="b-fg">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
-        <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">Put/Call Ratio</div>
-        <div class="gauge-val" id="b-pc">—</div>
-        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
       </div>
     </div>
   </div>
