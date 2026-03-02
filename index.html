@@ -982,6 +982,15 @@ async function loadCarnivorePortfolios() {
       ? `<span style="color:var(--green)">${sr.length} positions</span>`
       : `<span style="color:var(--amber)">pending first scrape</span>`;
     if (sr.length) renderPortfolioSummary('carnivore-sr-summary', sr);
+    // Inject Carnivore tickers into live refresh list
+    const carnivore_tickers = [
+      ...sr.map(p => p.ticker),
+      ...lt.map(p => p.ticker)
+    ].filter(t => t && !LIVE_TICKERS.includes(t));
+    if (carnivore_tickers.length) {
+      LIVE_TICKERS = [...BASE_TICKERS, ...sr.map(p => p.ticker), ...lt.map(p => p.ticker)].filter((v,i,a) => v && a.indexOf(v) === i);
+    }
+
     renderPortfolioTable('tb-carnivore-sr', sr);
 
     // Long Term
@@ -1030,18 +1039,14 @@ async function loadCarnivorePortfolios() {
 // ────────────────────────────────────────────────
 
 // All tickers we want to live-refresh
-const LIVE_TICKERS = [
-  // Macro ETF proxies
-  'SPY','QQQ','IWM','DIA','GLD','SLV','USO','TLT','HYG','LQD','UNG','VIXY',
-  // Sectors
+// Base tickers always included (macro + sectors)
+const BASE_TICKERS = [
+  'SPY','QQQ','IWM','DIA','GLD','SLV','CPER','USO','TLT','HYG','LQD','UNG','VIXY',
   'XLK','XLF','XLV','XLY','XLP','XLE','XLI','XLB','XLRE','XLU','XLC',
-  // Carnivore Sector Rotation
-  'NBIS','ONDS','NVDA','AMAT','ASML','TSM','MU','IREN','NEM','TE',
-  'NXT','ASTS','BE','ERO','RIO','SCCO','FCX','PL','TMDX','RKLB',
-  // Carnivore Long Term extras
-  'MLYS','NVTS','DELL','CIFR','DAVE','HOOD','AMD','SEDG','SOFI','CLS',
-  'TSLA','EOSE','SKYT','GRAL','WDC','DOCN','AEHR','AAPL'
 ];
+
+// Built dynamically — Carnivore tickers added after portfolio JSON loads
+let LIVE_TICKERS = [...BASE_TICKERS];
 
 // Storage key
 const LS_KEY = 'traderdeck_finnhub_key';
