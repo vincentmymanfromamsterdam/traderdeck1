@@ -173,8 +173,8 @@
 <header>
   <div class="logo">TRADER<span>DECK</span></div>
   <nav class="nav">
-    <a href="#macro">MACRO</a>
     <a href="#breadth">BREADTH</a>
+    <a href="#macro">MACRO</a>
     <a href="#equities">EQUITIES</a>
     <a href="#calc">CALC</a>
   </nav>
@@ -260,10 +260,54 @@
 
 <div class="main">
 
-  <!-- 01 MACRO -->
-  <div class="section" id="macro">
+  <!-- 01 BREADTH -->
+  <div class="section" id="breadth">
     <div class="section-header">
       <div class="section-num">01</div>
+      <div class="section-title">Market Breadth & Sentiment</div>
+      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
+    </div>
+    <div class="gauge-grid" id="breadth-gauges">
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA200</div>
+        <div class="gauge-val" id="b-ma200">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">% Above MA50</div>
+        <div class="gauge-val" id="b-ma50">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
+        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Highs</div>
+        <div class="gauge-val pos" id="b-highs">—</div>
+        <div class="gauge-sub">within 1% of annual high</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">New 52W Lows</div>
+        <div class="gauge-val neg" id="b-lows">—</div>
+        <div class="gauge-sub">within 1% of annual low</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Fear &amp; Greed</div>
+        <div class="gauge-val" id="b-fg">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
+        <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Put/Call Ratio</div>
+        <div class="gauge-val" id="b-pc">—</div>
+        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 MACRO -->
+  <div class="section" id="macro">
+    <div class="section-header">
+      <div class="section-num">02</div>
       <div class="section-title">Macro Overview</div>
       <div class="section-subtitle">EOD SNAPSHOT · PREV CLOSE</div>
     </div>
@@ -318,76 +362,7 @@
     </div>
   </div>
 
-  <!-- 02 BREADTH -->
-  <div class="section" id="breadth">
-    <div class="section-header">
-      <div class="section-num">02</div>
-      <div class="section-title">Market Breadth & Sentiment</div>
-      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
-    </div>
-    <div class="gauge-grid" id="breadth-gauges">
-      <div class="gauge-cell">
-        <div class="gauge-label">% Above MA200</div>
-        <div class="gauge-val" id="b-ma200">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">% Above MA50</div>
-        <div class="gauge-val" id="b-ma50">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">New 52W Highs</div>
-        <div class="gauge-val pos" id="b-highs">—</div>
-        <div class="gauge-sub">within 1% of annual high</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">New 52W Lows</div>
-        <div class="gauge-val neg" id="b-lows">—</div>
-        <div class="gauge-sub">within 1% of annual low</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">Fear &amp; Greed</div>
-        <div class="gauge-val" id="b-fg">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
-        <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">Put/Call Ratio</div>
-        <div class="gauge-val" id="b-pc">—</div>
-        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 03 EQUITIES -->
-  <div class="section" id="equities">
-    <div class="section-header">
-      <div class="section-num">03</div>
-      <div class="section-title">Equities & Sector Rotation</div>
-      <div class="section-subtitle">RANKED BY 1W PERFORMANCE</div>
-    </div>
-
-    <div class="table-label">S&P 500 GICS Sectors</div>
-    <div class="table-wrap"><table><thead><tr><th>#</th><th>Sector / ETF</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-sectors"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
-
-    <div class="collapsible-head" onclick="toggle(this)">
-      <span class="caret">▸</span><span class="collapsible-title">Major ETFs</span>
-    </div>
-    <div class="collapsible-body">
-      <div class="table-wrap"><table><thead><tr><th>ETF</th><th>Name</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-etfs"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
-    </div>
-
-    <div class="collapsible-head" onclick="toggle(this)">
-      <span class="caret">▸</span><span class="collapsible-title">Country ETFs — Top 10 by 1W</span>
-    </div>
-    <div class="collapsible-body">
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Country / ETF</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-country"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
-    </div>
-
-    <!-- CARNIVORE SECTOR ROTATION -->
+  <!-- CARNIVORE SECTOR ROTATION -->
     <div style="margin-top:20px;padding-top:16px;border-top:2px solid var(--border2)">
       <div style="font-size:9px;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;opacity:0.8">🥩 Carnivore Trading Portfolios <span style="color:var(--muted);font-size:8px" id="carnivore-updated"></span></div>
     </div>
@@ -424,7 +399,32 @@
     </div>
   </div>
 
-  <!-- 04 POSITION CALC -->
+  <!-- 03 EQUITIES -->
+  <div class="section" id="equities">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">Equities & Sector Rotation</div>
+      <div class="section-subtitle">RANKED BY 1W PERFORMANCE</div>
+    </div>
+
+    <div class="table-label">S&P 500 GICS Sectors</div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Sector / ETF</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-sectors"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
+
+    <div class="collapsible-head" onclick="toggle(this)">
+      <span class="caret">▸</span><span class="collapsible-title">Major ETFs</span>
+    </div>
+    <div class="collapsible-body">
+      <div class="table-wrap"><table><thead><tr><th>ETF</th><th>Name</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-etfs"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <div class="collapsible-head" onclick="toggle(this)">
+      <span class="caret">▸</span><span class="collapsible-title">Country ETFs — Top 10 by 1W</span>
+    </div>
+    <div class="collapsible-body">
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Country / ETF</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-country"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <!-- 04 POSITION CALC -->
   <div class="section" id="calc">
     <div class="section-header">
       <div class="section-num">04</div>
