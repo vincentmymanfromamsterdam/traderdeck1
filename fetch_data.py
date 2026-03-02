@@ -327,7 +327,7 @@ def fetch_breadth():
     print(f"  Fetching S&P 500 breadth ({len(SP500_TICKERS)} stocks)...", end=" ", flush=True)
 
     today = dt.date.today()
-    start = (today - dt.timedelta(days=310)).strftime("%Y-%m-%d")  # 300+ calendar days = ~210 trading days
+    start = (today - dt.timedelta(days=380)).strftime("%Y-%m-%d")  # 380 calendar days = ~265 trading days (enough for 252-day MA)
 
     try:
         data = yf.download(
@@ -361,8 +361,10 @@ def fetch_breadth():
 
             ma50  = float(df["Close"].iloc[-50:].mean())  if len(df) >= 50  else None
             ma200 = float(df["Close"].iloc[-200:].mean()) if len(df) >= 200 else None
-            hi52  = float(df["Close"].rolling(252).max().iloc[-1]) if len(df) >= 50 else float(df["Close"].max())
-            lo52  = float(df["Close"].rolling(252).min().iloc[-1]) if len(df) >= 50 else float(df["Close"].min())
+            # True 52W high/low: use last 252 rows if available, else all data
+            window = df["Close"].iloc[-252:] if len(df) >= 252 else df["Close"]
+            hi52 = float(window.max())
+            lo52 = float(window.min())
 
             total += 1
             if ma50  and close > ma50:  above_50  += 1
@@ -541,4 +543,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
