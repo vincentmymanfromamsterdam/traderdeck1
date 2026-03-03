@@ -975,26 +975,21 @@ async function loadCarnivorePortfolios() {
       if (el) el.textContent = '· Updated ' + d.last_updated;
     }
 
-    // Sector Rotation
+    // Declare both first so neither references the other before definition
     const sr = d.sector_rotation || [];
+    const lt = d.long_term || [];
+
+    // Inject all Carnivore tickers into live Finnhub refresh list
+    LIVE_TICKERS = [...BASE_TICKERS, ...sr.map(p => p.ticker), ...lt.map(p => p.ticker)]
+      .filter((v, i, a) => v && a.indexOf(v) === i);
+
+    // Sector Rotation
     const srBadge = $('carnivore-sr-badge');
     if (srBadge) srBadge.innerHTML = sr.length
       ? `<span style="color:var(--green)">${sr.length} positions</span>`
       : `<span style="color:var(--amber)">pending first scrape</span>`;
     if (sr.length) renderPortfolioSummary('carnivore-sr-summary', sr);
-    // Inject Carnivore tickers into live refresh list
-    const carnivore_tickers = [
-      ...sr.map(p => p.ticker),
-      ...lt.map(p => p.ticker)
-    ].filter(t => t && !LIVE_TICKERS.includes(t));
-    if (carnivore_tickers.length) {
-      LIVE_TICKERS = [...BASE_TICKERS, ...sr.map(p => p.ticker), ...lt.map(p => p.ticker)].filter((v,i,a) => v && a.indexOf(v) === i);
-    }
-
     renderPortfolioTable('tb-carnivore-sr', sr);
-
-    // Long Term
-    const lt = d.long_term || [];
     const ltBadge = $('carnivore-lt-badge');
     if (ltBadge) ltBadge.innerHTML = lt.length
       ? `<span style="color:var(--green)">${lt.length} positions</span>`
