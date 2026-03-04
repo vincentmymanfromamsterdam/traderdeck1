@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          pip install yfinance playwright requests --quiet
+          pip install yfinance playwright requests beautifulsoup4 --quiet
 
       - name: Install Playwright browsers
         run: |
