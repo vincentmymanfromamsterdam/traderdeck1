@@ -9,8 +9,14 @@ import json
 import os
 import sys
 import datetime
-import urllib.request
-import urllib.error
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    import urllib.request
+    import urllib.error
+    HAS_REQUESTS = False
 
 OUTPUT_PATH = "data/political_alpha.json"
 
@@ -19,12 +25,29 @@ OUTPUT_PATH = "data/political_alpha.json"
 # ─────────────────────────────────────────────────────────
 
 def fetch_json(url, label=""):
-    req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (compatible; TRADERDECK/1.0)",
-        "Accept": "application/json",
-    })
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.loads(r.read().decode())
+    """Fetch JSON — uses requests (follows redirects) or urllib fallback."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json, */*",
+    }
+    if HAS_REQUESTS:
+        r = requests.get(url, headers=headers, timeout=30, allow_redirects=True)
+        r.raise_for_status()
+        return r.json()
+    else:
+        # urllib fallback — manually follow redirect
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            if e.code in (301, 302, 303, 307, 308):
+                new_url = e.headers.get('Location')
+                if new_url:
+                    req2 = urllib.request.Request(new_url, headers=headers)
+                    with urllib.request.urlopen(req2, timeout=30) as r2:
+                        return json.loads(r2.read().decode())
+            raise
 
 def days_ago(n):
     return (datetime.date.today() - datetime.timedelta(days=n)).isoformat()
@@ -62,26 +85,42 @@ def get_sector(ticker):
 # ─────────────────────────────────────────────────────────
 
 def fetch_house_trades():
-    """Fetch House trades from housestockwatcher.com API."""
+    """Fetch House trades — tries multiple known endpoints."""
     print("  Fetching House trades...", end=" ", flush=True)
-    try:
-        data = fetch_json("https://house-stock-watcher-data.s3-us-east-2.amazonaws.com/data/all_transactions.json")
-        print(f"OK ({len(data)} records)")
-        return data
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return []
+    urls = [
+        "https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json",
+        "https://house-stock-watcher-data.s3-us-east-2.amazonaws.com/data/all_transactions.json",
+        "https://housestockwatcher.com/api/transactions_partitioned/all_transactions.json",
+    ]
+    for url in urls:
+        try:
+            data = fetch_json(url)
+            if isinstance(data, list) and len(data) > 0:
+                print(f"OK ({len(data)} records)")
+                return data
+        except Exception as e:
+            continue
+    print("ERROR: all endpoints failed")
+    return []
 
 def fetch_senate_trades():
-    """Fetch Senate trades from senatestockwatcher.com API."""
+    """Fetch Senate trades — tries multiple known endpoints."""
     print("  Fetching Senate trades...", end=" ", flush=True)
-    try:
-        data = fetch_json("https://senate-stock-watcher-data.s3-us-east-2.amazonaws.com/aggregate/all_transactions.json")
-        print(f"OK ({len(data)} records)")
-        return data
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return []
+    urls = [
+        "https://senate-stock-watcher-data.s3-us-east-2.amazonaws.com/aggregate/all_transactions.json",
+        "https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json",
+        "https://senatestockwatcher.com/api/transactions/all_transactions.json",
+    ]
+    for url in urls:
+        try:
+            data = fetch_json(url)
+            if isinstance(data, list) and len(data) > 0:
+                print(f"OK ({len(data)} records)")
+                return data
+        except Exception as e:
+            continue
+    print("ERROR: all endpoints failed")
+    return []
 
 def process_trades(house, senate, days=90):
     """
@@ -401,8 +440,12 @@ def main():
     senate = fetch_senate_trades()
 
     if not house and not senate:
-        print("  ERROR: No trade data fetched")
+        print("  ERROR: Both House and Senate data unavailable — aborting")
         sys.exit(1)
+    if not house:
+        print("  WARN: House data unavailable — using Senate only")
+    if not senate:
+        print("  WARN: Senate data unavailable — using House only")
 
     # Aggregate
     print("  Aggregating trades...")
