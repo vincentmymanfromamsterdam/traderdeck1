@@ -53,12 +53,19 @@ jobs:
         # Continue even if scraping fails — dashboard shows cached data
         continue-on-error: true
 
-      # ── STEP 3: Commit everything ─────────────────────────
+      # ── STEP 3: Political Alpha (Congressional Trades) ───
+      - name: Fetch political alpha data
+        run: |
+          python fetch_political.py
+        continue-on-error: true
+
+      # ── STEP 4: Commit everything ─────────────────────────
       - name: Commit and push data
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/market_data.json
           git add data/carnivore_portfolios.json || true
-          git diff --cached --quiet || git commit -m "chore: update market + portfolio data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git add data/political_alpha.json || true
+          git diff --cached --quiet || git commit -m "chore: update market + portfolio + political data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
