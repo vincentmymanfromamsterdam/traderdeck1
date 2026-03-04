@@ -166,6 +166,42 @@
   ::-webkit-scrollbar-track { background:var(--bg); }
   ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
   .divider { height:1px; background:var(--border); margin:18px 0; }
+
+  /* ── POLITICAL ALPHA ── */
+  .pol-filter {
+    padding: 4px 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    cursor: pointer;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border2); border-radius: 3px;
+    transition: all 0.15s;
+  }
+  .pol-filter.active { color: var(--accent); border-color: var(--accent); }
+  .pol-score {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 3px;
+    font-size: 13px; font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .pol-score-hi  { background: rgba(0,230,118,0.12); color: var(--green);  border: 1px solid rgba(0,230,118,0.25); }
+  .pol-score-mid { background: rgba(255,179,0,0.10);  color: var(--amber); border: 1px solid rgba(255,179,0,0.25); }
+  .pol-score-lo  { background: rgba(255,61,87,0.10);  color: var(--red);   border: 1px solid rgba(255,61,87,0.20); }
+  .pol-pill { display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:2px;font-size:9px;font-weight:600;letter-spacing:0.08em;font-family:'IBM Plex Mono',monospace; }
+  .pol-pill-buy   { background:rgba(0,230,118,0.10); color:var(--green); }
+  .pol-pill-sell  { background:rgba(255,61,87,0.08);  color:var(--red); }
+  .pol-pill-mixed { background:rgba(255,179,0,0.08);  color:var(--amber); }
+  .pol-badge-13f  { display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:2px;font-size:9px;font-weight:600;background:rgba(79,195,247,0.10);color:#4FC3F7;border:1px solid rgba(79,195,247,0.2);font-family:'IBM Plex Mono',monospace; }
+  .pol-badge-carn { padding:2px 6px;border-radius:2px;font-size:9px;font-weight:600;background:rgba(0,230,118,0.08);color:var(--accent);border:1px solid rgba(0,230,118,0.2);font-family:'IBM Plex Mono',monospace; }
+  .pol-bar-wrap { display:flex;align-items:center;gap:7px; }
+  .pol-bar-bg   { flex:1;height:3px;background:var(--border2);border-radius:2px;min-width:50px; }
+  .pol-bar-fill { height:100%;border-radius:2px; }
+  #pol-table tr.pol-carnivore-row td { border-left: 2px solid var(--accent); }
+  .pol-detail-inner { padding:14px 18px;display:flex;gap:28px;flex-wrap:wrap;background:var(--bg2); }
+  .pol-detail-col { display:flex;flex-direction:column;gap:7px;min-width:200px; }
+  .pol-detail-title { font-size:9px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:3px; }
+  .pol-trade-row { display:flex;justify-content:space-between;gap:12px;font-size:10px;font-family:'IBM Plex Mono',monospace; }
+
 </style>
 </head>
 <body>
@@ -176,6 +212,7 @@
     <a href="#breadth">BREADTH</a>
     <a href="#macro">MACRO</a>
     <a href="#equities">EQUITIES</a>
+    <a href="#political">POL ALPHA</a>
     <a href="#calc">CALC</a>
   </nav>
   <div class="clock-wrap">
@@ -423,6 +460,89 @@
     <div class="collapsible-body">
       <div class="table-wrap"><table><thead><tr><th>#</th><th>Country / ETF</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-country"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
     </div>
+
+
+  <!-- 05 POLITICAL ALPHA -->
+  <div class="section" id="political">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Political Alpha & Smart Money</div>
+      <div class="section-subtitle">CONGRESSIONAL TRADES · 13F FILINGS · 30 / 90D</div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="gauge-grid" id="pol-summary-grid" style="margin-bottom:20px">
+      <div class="gauge-cell"><div class="gauge-label">Active Politicians</div><div class="gauge-val" id="pol-s-pols">—</div><div class="gauge-sub">traded last 90D</div></div>
+      <div class="gauge-cell"><div class="gauge-label">Buy Capital</div><div class="gauge-val pos" id="pol-s-buy">—</div><div class="gauge-sub">est. midpoint</div></div>
+      <div class="gauge-cell"><div class="gauge-label">Sell Capital</div><div class="gauge-val neg" id="pol-s-sell">—</div><div class="gauge-sub">est. midpoint</div></div>
+      <div class="gauge-cell"><div class="gauge-label">Carnivore Overlap</div><div class="gauge-val" id="pol-s-carnivore" style="color:var(--accent)">—</div><div class="gauge-sub">tickers in your portfolios</div></div>
+      <div class="gauge-cell"><div class="gauge-label">13F Confirmed</div><div class="gauge-val" id="pol-s-13f" style="color:var(--blue)">—</div><div class="gauge-sub">hedge fund overlap</div></div>
+      <div class="gauge-cell"><div class="gauge-label">Top Conviction</div><div class="gauge-val" id="pol-s-top">—</div><div class="gauge-sub" id="pol-s-top-sub">highest score</div></div>
+    </div>
+
+    <!-- Mode + filter controls -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <div style="display:flex;border:1px solid var(--accent);border-radius:3px;overflow:hidden">
+        <button id="pol-tab-portfolio" onclick="polSetMode('portfolio')"
+          style="padding:5px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;cursor:pointer;background:var(--border2);color:var(--accent);border:none">
+          MY PORTFOLIO
+        </button>
+        <button id="pol-tab-scan" onclick="polSetMode('scan')"
+          style="padding:5px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;cursor:pointer;background:var(--bg2);color:var(--muted);border:none;border-left:1px solid var(--border2)">
+          FULL SCAN
+        </button>
+      </div>
+      <div style="width:1px;height:22px;background:var(--border2)"></div>
+      <div style="display:flex;border:1px solid var(--border2);border-radius:3px;overflow:hidden">
+        <button id="pol-win-30" onclick="polSetWindow(30)"
+          style="padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;background:var(--border2);color:var(--text);border:none">30D</button>
+        <button id="pol-win-90" onclick="polSetWindow(90)"
+          style="padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;background:var(--bg2);color:var(--muted);border:none;border-left:1px solid var(--border2)">90D</button>
+      </div>
+      <div style="width:1px;height:22px;background:var(--border2)"></div>
+      <button class="pol-filter active" data-filter="all"    onclick="polSetFilter('all')">ALL</button>
+      <button class="pol-filter"        data-filter="buy"    onclick="polSetFilter('buy')">BUYS</button>
+      <button class="pol-filter"        data-filter="sell"   onclick="polSetFilter('sell')">SELLS</button>
+      <button class="pol-filter"        data-filter="13f"    onclick="polSetFilter('13f')">13F CONFIRMED</button>
+      <span style="margin-left:auto;font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="pol-updated"></span>
+    </div>
+
+    <!-- Mode description -->
+    <div id="pol-mode-desc" style="font-size:10px;color:var(--muted);margin-bottom:14px;padding:7px 12px;background:var(--bg2);border-left:2px solid var(--accent);font-family:'IBM Plex Mono',monospace"></div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table id="pol-table">
+        <thead>
+          <tr>
+            <th style="width:46px">SCORE</th>
+            <th>TICKER</th>
+            <th>SECTOR</th>
+            <th>DIRECTION</th>
+            <th>POLITICIANS <span style="opacity:0.5;font-weight:300">(window)</span></th>
+            <th style="text-align:right">BUY CAP</th>
+            <th style="text-align:right">SELL CAP</th>
+            <th>NET FLOW</th>
+            <th>13F BONUS</th>
+            <th>PORTFOLIO</th>
+            <th>TREND</th>
+            <th style="width:24px"></th>
+          </tr>
+        </thead>
+        <tbody id="pol-tbody">
+          <tr><td colspan="12" class="loading-msg">Loading political data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.07em">
+      <span>⬜ green border = Carnivore match</span>
+      <span style="color:var(--blue)">13F</span><span>= hedge fund overlap (quarterly lag)</span>
+      <span>Score: 40% breadth · 30% capital · 30% 13F</span>
+      <span>⚠ Trades reported with up to 45-day delay</span>
+      <span>Source: housestockwatcher.com · senatestockwatcher.com</span>
+    </div>
+  </div>
 
     <!-- 04 POSITION CALC -->
   <div class="section" id="calc">
@@ -1387,6 +1507,7 @@ function activateLive(apiKey) {
 // ────────────────────────────────────────────────
 loadData();
 loadCarnivorePortfolios();
+  loadPoliticalData();
 calc();
 
 // Auto-load saved Finnhub key
@@ -1394,6 +1515,236 @@ const savedKey = localStorage.getItem(LS_KEY);
 if (savedKey) {
   setTimeout(() => activateLive(savedKey), 1500); // slight delay so EOD data loads first
 }
+
+// ────────────────────────────────────────────────────────
+//  POLITICAL ALPHA
+// ────────────────────────────────────────────────────────
+let polData       = null;
+let polMode       = 'portfolio';   // 'portfolio' | 'scan'
+let polWindow     = 30;
+let polFilter     = 'all';
+let polOpenTicker = null;
+
+function fmtCapPol(v) {
+  if (!v || v === 0) return '—';
+  if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000)    return '$' + (v/1000).toFixed(0) + 'K';
+  return '$' + v;
+}
+
+function polScoreClass(s) {
+  return s >= 70 ? 'pol-score-hi' : s >= 40 ? 'pol-score-mid' : 'pol-score-lo';
+}
+
+function polDirPill(d) {
+  if (d === 'buy')   return '<span class="pol-pill pol-pill-buy">▲ BUY</span>';
+  if (d === 'sell')  return '<span class="pol-pill pol-pill-sell">▼ SELL</span>';
+  if (d === 'mixed') return '<span class="pol-pill pol-pill-mixed">▲▼ MIXED</span>';
+  return '<span style="color:var(--muted);font-size:10px">—</span>';
+}
+
+function polTrend(t) {
+  if (t === 'up')   return '<span style="color:var(--green);font-size:14px">↑</span>';
+  if (t === 'down') return '<span style="color:var(--red);font-size:14px">↓</span>';
+  return '<span style="color:var(--muted);font-size:14px">→</span>';
+}
+
+function polSectorColor(s) {
+  const map = {
+    'Technology': '#4FC3F7', 'Information Technology': '#4FC3F7',
+    'Health Care': '#81C784', 'Healthcare': '#81C784',
+    'Financials': '#FFD54F', 'Financial Services': '#FFD54F',
+    'Energy': '#FF8A65',
+    'Industrials': '#CE93D8',
+    'Defense': '#FFB300',
+    'Consumer Discretionary': '#A5D6A7',
+    'Communication Services': '#80DEEA',
+    'Materials': '#BCAAA4',
+    'Real Estate': '#F48FB1',
+    'Utilities': '#B0BEC5',
+    'Consumer Staples': '#C5E1A5',
+  };
+  for (const [k, v] of Object.entries(map)) {
+    if (s && s.includes(k.split(' ')[0])) return v;
+  }
+  return 'var(--muted)';
+}
+
+function polNetFlow(buy, sell) {
+  const net = buy - sell;
+  const col = net > 0 ? 'var(--green)' : net < 0 ? 'var(--red)' : 'var(--muted)';
+  const sign = net >= 0 ? '+' : '';
+  const arrow = net >= 0 ? '▲' : '▼';
+  return `<span style="color:${col}">${sign}${fmtCapPol(Math.abs(net))} ${arrow}</span>`;
+}
+
+function polPolBar(count) {
+  const pct = Math.min(count / 15 * 100, 100);
+  const col = count >= 8 ? 'var(--green)' : count >= 4 ? 'var(--amber)' : 'var(--muted)';
+  return `<div class="pol-bar-wrap">
+    <div class="pol-bar-bg"><div class="pol-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+    <span style="font-size:11px;font-family:'IBM Plex Mono',monospace;min-width:18px">${count}</span>
+  </div>`;
+}
+
+function polSetMode(mode) {
+  polMode = mode;
+  polOpenTicker = null;
+  const tabs = { portfolio: $('pol-tab-portfolio'), scan: $('pol-tab-scan') };
+  Object.entries(tabs).forEach(([k, el]) => {
+    if (!el) return;
+    el.style.background = k === mode ? 'var(--border2)' : 'var(--bg2)';
+    el.style.color = k === mode ? 'var(--accent)' : 'var(--muted)';
+  });
+  const desc = $('pol-mode-desc');
+  if (desc) {
+    if (mode === 'portfolio') {
+      desc.textContent = '📂 MY PORTFOLIO — Congressionele activiteit in jouw Carnivore holdings. Conviction checker voor bestaande posities.';
+      desc.style.borderColor = 'var(--accent)';
+    } else {
+      desc.textContent = '🔍 FULL SCAN — Top 50 meest actieve tickers in de volledige markt, gerankt op convergentie score. Potentiële nieuwe ideeën buiten je huidige portfolio.';
+      desc.style.borderColor = '#4FC3F7';
+    }
+  }
+  polRender();
+}
+
+function polSetWindow(w) {
+  polWindow = w;
+  [$('pol-win-30'), $('pol-win-90')].forEach((el, i) => {
+    if (!el) return;
+    const active = (i === 0 && w === 30) || (i === 1 && w === 90);
+    el.style.background = active ? 'var(--border2)' : 'var(--bg2)';
+    el.style.color = active ? 'var(--text)' : 'var(--muted)';
+  });
+  polRender();
+}
+
+function polSetFilter(f) {
+  polFilter = f;
+  document.querySelectorAll('.pol-filter').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === f);
+  });
+  polRender();
+}
+
+function polToggleDetail(ticker) {
+  polOpenTicker = polOpenTicker === ticker ? null : ticker;
+  polRender();
+}
+
+function polRender() {
+  const tbody = $('pol-tbody');
+  if (!tbody) return;
+  if (!polData) {
+    tbody.innerHTML = '<tr><td colspan="12" class="loading-msg">Loading political data...</td></tr>';
+    return;
+  }
+
+  let rows = polMode === 'portfolio'
+    ? (polData.portfolio || [])
+    : (polData.full_scan || []);
+
+  if (polFilter === 'buy')  rows = rows.filter(r => r.direction === 'buy');
+  if (polFilter === 'sell') rows = rows.filter(r => r.direction === 'sell');
+  if (polFilter === '13f')  rows = rows.filter(r => r.has_13f);
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);padding:20px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace">No data for current filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const pols    = polWindow === 30 ? r.pol_count_30 : r.pol_count_90;
+    const isOpen  = polOpenTicker === r.ticker;
+    const sector  = r.sector || 'Unknown';
+    const sCol    = polSectorColor(sector);
+    const sShort  = sector.replace('Information Technology','Technology').replace('Consumer Discretionary','Cons. Discr.').replace('Communication Services','Comm. Services').replace('Financial Services','Financials');
+
+    const mainRow = `<tr class="${r.carnivore ? 'pol-carnivore-row' : ''}" style="cursor:pointer" onclick="polToggleDetail('${r.ticker}')">
+      <td><span class="pol-score ${polScoreClass(r.score)}">${r.score}</span></td>
+      <td>
+        <div style="font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace">${r.ticker}</div>
+      </td>
+      <td><span style="font-size:10px;color:${sCol}">${sShort}</span></td>
+      <td>${polDirPill(r.direction)}</td>
+      <td>${polPolBar(pols)}</td>
+      <td style="text-align:right;color:var(--green)">${fmtCapPol(r.capital_buy)}</td>
+      <td style="text-align:right;color:var(--red)">${r.capital_sell ? fmtCapPol(r.capital_sell) : '—'}</td>
+      <td>${polNetFlow(r.capital_buy, r.capital_sell)}</td>
+      <td>${r.has_13f ? `<span class="pol-badge-13f">13F · ${r.funds_13f >= 1000 ? (r.funds_13f/1000).toFixed(1)+'k' : r.funds_13f} funds</span>` : '<span style="color:var(--muted);font-size:10px">—</span>'}</td>
+      <td>${r.carnivore ? `<span class="pol-badge-carn">${r.carnivore}</span>` : '<span style="color:var(--muted);font-size:10px">—</span>'}</td>
+      <td>${polTrend(r.trend)}</td>
+      <td style="color:var(--muted);font-size:10px;text-align:center">${isOpen ? '▲' : '▼'}</td>
+    </tr>`;
+
+    if (!isOpen) return mainRow;
+
+    const tradeRows = (r.trades || []).slice(0, 6).map(t =>
+      `<div class="pol-trade-row">
+        <span style="color:var(--muted)">${t.name} <span style="opacity:0.5;font-size:9px">[${t.chamber || '?'}]</span></span>
+        <span style="color:var(--muted)">${t.date}</span>
+        <span style="color:${t.type === 'buy' ? 'var(--green)' : 'var(--red)'}">${t.type === 'buy' ? '▲' : '▼'} ${t.type.toUpperCase()}</span>
+        <span style="color:var(--text)">${t.amount || '—'}</span>
+      </div>`
+    ).join('');
+
+    const detailRow = `<tr>
+      <td colspan="12" style="padding:0;border-bottom:2px solid var(--border2)">
+        <div class="pol-detail-inner">
+          <div class="pol-detail-col" style="min-width:280px">
+            <div class="pol-detail-title">Recent Transactions</div>
+            ${tradeRows || '<span style="color:var(--muted);font-size:10px">No transactions in window</span>'}
+          </div>
+          <div class="pol-detail-col">
+            <div class="pol-detail-title">Score Breakdown</div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Breadth (40%)</span><span style="color:var(--text)">${r.score_breadth} pts</span></div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Capital (30%)</span><span style="color:var(--text)">${r.score_capital} pts</span></div>
+            <div class="pol-trade-row"><span style="color:#4FC3F7">13F bonus (30%)</span><span style="color:#4FC3F7">${r.score_13f} pts</span></div>
+            <div class="pol-trade-row" style="border-top:1px solid var(--border);padding-top:5px;margin-top:3px"><span style="color:var(--text);font-weight:600">Total</span><span style="color:var(--text);font-weight:600">${r.score}</span></div>
+          </div>
+          <div class="pol-detail-col">
+            <div class="pol-detail-title">Activity 30D vs 90D</div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Politicians 30D</span><span>${r.pol_count_30}</span></div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Politicians 90D</span><span>${r.pol_count_90}</span></div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Buys / Sells</span><span style="color:var(--green)">${r.buy_count}</span><span style="color:var(--muted)"> / </span><span style="color:var(--red)">${r.sell_count}</span></div>
+            <div class="pol-trade-row"><span style="color:var(--muted)">Trend</span><span>${polTrend(r.trend)}</span></div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+
+    return mainRow + detailRow;
+  }).join('');
+}
+
+async function loadPoliticalData() {
+  try {
+    const res = await fetch(`data/political_alpha.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    polData = await res.json();
+
+    // Summary cards
+    const s = polData.summary || {};
+    if ($('pol-s-pols'))     $('pol-s-pols').textContent     = s.active_politicians || '—';
+    if ($('pol-s-buy'))      $('pol-s-buy').textContent      = fmtCapPol(s.total_buy_capital);
+    if ($('pol-s-sell'))     $('pol-s-sell').textContent     = fmtCapPol(s.total_sell_capital);
+    if ($('pol-s-carnivore'))$('pol-s-carnivore').textContent= s.carnivore_overlap || '—';
+    if ($('pol-s-13f'))      $('pol-s-13f').textContent      = s.f13_confirmed || '—';
+    if ($('pol-s-top'))      $('pol-s-top').textContent      = s.top_ticker || '—';
+    if ($('pol-s-top-sub'))  $('pol-s-top-sub').textContent  = `score ${s.top_score || '—'}`;
+    if ($('pol-updated'))    $('pol-updated').textContent     = polData.last_updated ? '· ' + polData.last_updated : '';
+
+    polSetMode('portfolio');  // default view
+  } catch(err) {
+    const tb = $('pol-tbody');
+    if (tb) tb.innerHTML = `<tr><td colspan="12" style="color:var(--muted);padding:20px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace">
+      Political data not yet available. Run GitHub Action to fetch. (${err.message})
+    </td></tr>`;
+    console.warn('Political alpha:', err.message);
+  }
+}
+
 </script>
 </body>
 </html>
