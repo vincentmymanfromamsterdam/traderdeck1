@@ -1650,7 +1650,7 @@ function polRender() {
   if (polFilter === '13f')  rows = rows.filter(r => r.has_13f);
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="12" style="color:var(--muted);padding:20px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace">No data for current filter.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="12" style="color:var(--muted);padding:20px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace">No data for current filter.</td></tr>`;
     return;
   }
 
