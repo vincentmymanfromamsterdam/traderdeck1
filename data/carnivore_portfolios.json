@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-05-22 22:54 UTC",
+  "last_updated": "2026-05-25 22:57 UTC",
   "source": "carnivoretradedesk.com",
   "sector_rotation": [
     {
@@ -451,17 +451,17 @@
       "name": "Soitec SA",
       "shares": null,
       "avg_cost": 178.25,
-      "curr_price": 206.09,
+      "curr_price": 205.24,
       "market_value": null,
       "unrealized_pnl": null,
-      "pct_return": 15.62,
+      "pct_return": 15.14,
       "weight": null,
       "stop_loss": 133.69,
       "buy_up_to": 222.81,
       "entry_date": "5/4/2026",
       "below_stop": false,
-      "stop_distance_pct": 35.13,
-      "upside_to_target_pct": 8.11
+      "stop_distance_pct": 34.86,
+      "upside_to_target_pct": 8.56
     },
     {
       "ticker": "LITE",
@@ -519,17 +519,17 @@
       "name": "Sivers Semiconductors AB",
       "shares": null,
       "avg_cost": 3.56,
-      "curr_price": 7.45,
+      "curr_price": 7.42,
       "market_value": null,
       "unrealized_pnl": null,
-      "pct_return": 109.27,
+      "pct_return": 108.43,
       "weight": null,
       "stop_loss": 2.67,
       "buy_up_to": 4.45,
       "entry_date": "4/27/2026",
       "below_stop": false,
-      "stop_distance_pct": 64.16,
-      "upside_to_target_pct": -40.27
+      "stop_distance_pct": 64.02,
+      "upside_to_target_pct": -40.03
     },
     {
       "ticker": "NOW",
@@ -723,7 +723,7 @@
       "name": "Tesla Inc",
       "shares": null,
       "avg_cost": 494.3,
-      "curr_price": 425.93,
+      "curr_price": 425.95,
       "market_value": null,
       "unrealized_pnl": null,
       "pct_return": -13.83,
@@ -733,7 +733,7 @@
       "entry_date": "12/22/2025",
       "below_stop": false,
       "stop_distance_pct": 12.96,
-      "upside_to_target_pct": 45.07
+      "upside_to_target_pct": 45.06
     },
     {
       "ticker": "CIFR",
