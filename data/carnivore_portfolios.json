@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-06-18 23:42 UTC",
+  "last_updated": "2026-06-19 22:52 UTC",
   "source": "carnivoretradedesk.com",
   "sector_rotation": [
     {
@@ -570,17 +570,17 @@
       "name": "Capstone Energy+ Inc",
       "shares": null,
       "avg_cost": 11.76,
-      "curr_price": 11.39,
+      "curr_price": 11.3,
       "market_value": null,
       "unrealized_pnl": null,
-      "pct_return": -3.15,
+      "pct_return": -3.91,
       "weight": null,
       "stop_loss": 8.82,
       "buy_up_to": 14.7,
       "entry_date": "6/8/2026",
       "below_stop": false,
-      "stop_distance_pct": 22.56,
-      "upside_to_target_pct": 29.06
+      "stop_distance_pct": 21.95,
+      "upside_to_target_pct": 30.09
     },
     {
       "ticker": "CRDO",
@@ -791,17 +791,17 @@
       "name": "Soitec SA",
       "shares": null,
       "avg_cost": 178.25,
-      "curr_price": 133.4,
+      "curr_price": 133.39,
       "market_value": null,
       "unrealized_pnl": null,
-      "pct_return": -25.16,
+      "pct_return": -25.17,
       "weight": null,
       "stop_loss": 133.69,
       "buy_up_to": 222.81,
       "entry_date": "5/4/2026",
       "below_stop": true,
       "stop_distance_pct": -0.22,
-      "upside_to_target_pct": 67.02
+      "upside_to_target_pct": 67.04
     },
     {
       "ticker": "SIVEF",
