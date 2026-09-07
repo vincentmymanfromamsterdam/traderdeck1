@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-09-04 23:40 UTC",
+  "last_updated": "2026-09-07 23:56 UTC",
   "source": "carnivoretradedesk.com",
   "sector_rotation": [
     {
@@ -689,17 +689,17 @@
       "name": "Soitec SA",
       "shares": null,
       "avg_cost": 178.25,
-      "curr_price": 149.0,
+      "curr_price": 151.51,
       "market_value": null,
       "unrealized_pnl": null,
-      "pct_return": -16.41,
+      "pct_return": -15.0,
       "weight": null,
       "stop_loss": 133.69,
       "buy_up_to": 222.81,
       "entry_date": "5/4/2026",
       "below_stop": false,
-      "stop_distance_pct": 10.28,
-      "upside_to_target_pct": 49.54
+      "stop_distance_pct": 11.76,
+      "upside_to_target_pct": 47.06
     },
     {
       "ticker": "INFQ",
