@@ -59,6 +59,12 @@ jobs:
           python fetch_swing.py
         continue-on-error: true
 
+      # ── STEP 3c: Full market scan (all US stocks, ~10-15 min) ──
+      - name: Full market scan
+        run: |
+          python fetch_scan.py
+        continue-on-error: true
+
       # ── STEP 4: Commit everything ─────────────────────────
       - name: Commit and push data
         run: |
@@ -67,6 +73,8 @@ jobs:
           git add data/market_data.json
           git add data/carnivore_portfolios.json || true
           git add data/swing_data.json || true
-          git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git add data/market_scan.json || true
+          git add data/sector_map.json || true
+          git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
