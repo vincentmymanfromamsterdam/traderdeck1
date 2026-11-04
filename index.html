@@ -202,6 +202,26 @@
   .pol-detail-title { font-size:9px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:3px; }
   .pol-trade-row { display:flex;justify-content:space-between;gap:12px;font-size:10px;font-family:'IBM Plex Mono',monospace; }
 
+
+  /* ── SWING ── */
+  .regime-pill { display:inline-block; font-family:var(--mono); font-size:11px; letter-spacing:0.2em; padding:4px 12px; border:1px solid; }
+  .regime-green  { color:var(--green); border-color:var(--green); background:rgba(0,230,118,0.08); }
+  .regime-yellow { color:var(--amber); border-color:var(--amber); background:rgba(255,179,0,0.08); }
+  .regime-red    { color:var(--red);   border-color:var(--red);   background:rgba(255,23,68,0.08); }
+  .dna-dots { display:inline-flex; gap:2px; }
+  .dna-dot  { width:7px; height:7px; border-radius:50%; background:var(--dim); }
+  .dna-dot.ok { background:var(--green); }
+  .conf-chip { font-size:8px; padding:1px 4px; border:1px solid var(--border2); color:var(--muted); margin-right:2px; letter-spacing:0.05em; }
+  .conf-chip.hit { color:var(--blue); border-color:var(--blue); }
+  .ext-ok { color:var(--muted); }
+  .ext-caution { color:var(--amber); font-weight:600; }
+  .ext-reduce  { color:var(--red); font-weight:600; }
+  .swing-filters { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 12px; }
+  .swing-filters .dir-btn { font-size:10px; }
+  .spark-mini { display:inline-flex; align-items:flex-end; gap:1px; height:14px; }
+  .spark-mini i { display:block; width:3px; background:var(--dim); }
+  .calc-warn { margin-top:10px; font-size:10px; letter-spacing:0.05em; color:var(--amber); display:none; }
+  .calc-warn.on { display:block; }
 </style>
 </head>
 <body>
@@ -213,6 +233,7 @@
     <a href="#macro">MACRO</a>
     <a href="#equities">EQUITIES</a>
     <a href="#political">POL ALPHA</a>
+    <a href="#swing">SWING</a>
     <a href="#calc">CALC</a>
   </nav>
   <div class="clock-wrap">
@@ -544,6 +565,76 @@
     </div>
   </div>
 
+
+  <!-- 06 SWING SCREENER -->
+  <div class="section" id="swing">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title">Swing Screener — Stock DNA &amp; Regime</div>
+      <div class="section-subtitle">IAIN × LUK · CARNIVORE + WATCHLIST · DAILY EOD <span id="swing-updated" style="color:var(--muted)"></span></div>
+    </div>
+
+    <div class="gauge-grid">
+      <div class="gauge-cell">
+        <div class="gauge-label">Regime (watchlist breadth)</div>
+        <div class="gauge-val" id="sw-regime">—</div>
+        <div class="gauge-sub" id="sw-regime-sub">% above rising EMA9 + EMA21</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Universe strong</div>
+        <div class="gauge-val" id="sw-pct">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="sw-pct-bar" style="width:0%"></div></div>
+        <div class="gauge-sub" id="sw-pct-sub">green ≥60 · yellow 40–60 · red &lt;40</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">S&amp;P 500 strong (same test)</div>
+        <div class="gauge-val" id="sw-sp">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="sw-sp-bar" style="width:0%;background:var(--blue)"></div></div>
+        <div class="gauge-sub">reference: broad market</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Stage 2 in universe</div>
+        <div class="gauge-val" id="sw-stage2">—</div>
+        <div class="gauge-sub" id="sw-stage2-sub">above rising EMA50 and SMA200</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Weakness in strength</div>
+        <div class="gauge-val" id="sw-wis">—</div>
+        <div class="gauge-sub" id="sw-wis-sub">green names on a red SPY day</div>
+      </div>
+      <div class="gauge-cell">
+        <div class="gauge-label">Regime trend (60d)</div>
+        <div class="gauge-val"><span class="spark-mini" id="sw-hist"></span></div>
+        <div class="gauge-sub" id="sw-hist-sub">daily % strong</div>
+      </div>
+    </div>
+
+    <div class="swing-filters">
+      <button class="dir-btn active-long" id="swf-all"  onclick="swFilter('all')">ALL</button>
+      <button class="dir-btn" id="swf-pass" onclick="swFilter('pass')">DNA PASS</button>
+      <button class="dir-btn" id="swf-setup" onclick="swFilter('setup')">SETUP (CONFLUENCE ≥2)</button>
+      <button class="dir-btn" id="swf-sr"   onclick="swFilter('sr')">CARNIVORE SR</button>
+      <button class="dir-btn" id="swf-lt"   onclick="swFilter('lt')">CARNIVORE LT</button>
+      <button class="dir-btn" id="swf-wl"   onclick="swFilter('wl')">WATCHLIST</button>
+    </div>
+
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
+        <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
+        <th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+      </tr></thead>
+      <tbody id="sw-tbody"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
+    </table></div>
+
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:14px;font-size:9px;color:var(--muted);letter-spacing:0.05em">
+      <span>DNA dots: ADR&gt;3 · $Vol&gt;50M · RS≥85 · Stage 2 · &lt;25% off high · ATR×&lt;10</span>
+      <span><span class="ext-caution">ATR× &gt;10</span> = do not chase · <span class="ext-reduce">&gt;15</span> = consider trimming</span>
+      <span>Signals: PP = pocket pivot · DRY = vol 5d/20d &lt;0.8 · TIGHT = 3-day range ≤1.5 ATR · WIS n = green on red SPY days (20d)</span>
+      <span>Score = DNA (0–6) + confluence + DRY + TIGHT + PP + WIS (max 3)</span>
+    </div>
+  </div>
+
     <!-- 04 POSITION CALC -->
   <div class="section" id="calc">
     <div class="section-header">
@@ -565,7 +656,7 @@
         </div>
         <div class="input-group">
           <label class="input-label">Risk Per Trade (%)</label>
-          <div class="input-row"><input class="calc-input" id="risk-pct" type="number" value="1" step="0.1" oninput="calc()"><span class="input-suffix">%</span></div>
+          <div class="input-row"><input class="calc-input" id="risk-pct" type="number" value="0.5" step="0.1" oninput="calc()"><span class="input-suffix">%</span></div>
         </div>
         <div class="input-group">
           <label class="input-label">Entry Price</label>
@@ -599,6 +690,7 @@
             <div class="result-stat"><div class="result-stat-label">Risk / Share</div><div class="result-stat-val" id="out-riskshare">—</div></div>
             <div class="result-stat"><div class="result-stat-label">% of Equity</div><div class="result-stat-val" id="out-pctequity">—</div></div>
           </div>
+          <div class="calc-warn" id="calc-warn"></div>
         </div>
 
         <div style="margin-top:14px;padding:16px;border:1px solid var(--border2);background:var(--bg2)">
@@ -933,6 +1025,13 @@ function calc() {
   $('out-posval').textContent    = '$' + fmt(posVal, 0);
   $('out-riskshare').textContent = '$' + fmt(riskShare, 2);
   $('out-pctequity').textContent = pctEq + '%';
+  // Caps from "Mijn Swing Strategie": max 25% per name, stop distance sanity
+  const stopDist = riskShare / entry * 100;
+  const warns = [];
+  if (parseFloat(pctEq) > 25) warns.push(`⚠ Position ${pctEq}% of equity exceeds the 25% cap — widen the stop or cut risk to ${(25 * stopDist / 100).toFixed(2)}%`);
+  if (stopDist > 5) warns.push(`⚠ Stop is ${stopDist.toFixed(1)}% away — a daily-chart stop; an intraday trigger would halve it and double R`);
+  if (riskPct > 0.5) warns.push(`⚠ Risk ${riskPct}% per trade is above the 0.5% standard (green regime)`);
+  const cw = $('calc-warn'); if (cw) { cw.innerHTML = warns.join('<br>'); cw.className = 'calc-warn' + (warns.length ? ' on' : ''); }
 
   // R:R
   const rrVals = rrStr.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
@@ -1508,6 +1607,7 @@ function activateLive(apiKey) {
 loadData();
 loadCarnivorePortfolios();
   loadPoliticalData();
+loadSwingData();
 calc();
 
 // Auto-load saved Finnhub key
@@ -1742,6 +1842,107 @@ async function loadPoliticalData() {
       Political data not yet available. Run GitHub Action to fetch. (${err.message})
     </td></tr>`;
     console.warn('Political alpha:', err.message);
+  }
+}
+
+// ────────────────────────────────────────────────
+//  SWING SCREENER
+// ────────────────────────────────────────────────
+let swData = null, swMode = 'all';
+
+function fmtDollarVol(v) {
+  if (v == null) return '—';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+  return '$' + Math.round(v / 1e6) + 'M';
+}
+const STAGE_LABEL = {1: 'S1 base', 2: 'S2 up', 3: 'S3 top', 4: 'S4 down'};
+
+function swFilter(mode) {
+  swMode = mode;
+  ['all', 'pass', 'setup', 'sr', 'lt', 'wl'].forEach(m => {
+    const b = $('swf-' + m); if (b) b.className = 'dir-btn' + (m === mode ? ' active-long' : '');
+  });
+  renderSwing();
+}
+
+function renderSwing() {
+  const tb = $('sw-tbody'); if (!tb || !swData) return;
+  let rows = swData.universe || [];
+  if (swMode === 'pass')  rows = rows.filter(r => r.dna_pass);
+  if (swMode === 'setup') rows = rows.filter(r => r.confluence_n >= 2 && r.stage === 2);
+  if (swMode === 'sr')    rows = rows.filter(r => r.in_sr);
+  if (swMode === 'lt')    rows = rows.filter(r => r.in_lt);
+  if (swMode === 'wl')    rows = rows.filter(r => r.in_watchlist);
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>'; return; }
+
+  const order = ['adr', 'vol', 'rs', 'stage', 'high', 'ext'];
+  tb.innerHTML = rows.map(r => {
+    const dots = order.map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
+    const conf = ['ema9', 'ema21', 'ema50', 'ma10w', 'avwap'].map(k => {
+      const d = r.dist_atr[k];
+      const hit = r.confluence.includes(k);
+      const t = d == null ? '' : ` title="${k.toUpperCase()} ${d > 0 ? '+' : ''}${d} ATR"`;
+      return `<span class="conf-chip${hit ? ' hit' : ''}"${t}>${k.toUpperCase()}</span>`;
+    }).join('');
+    const sig = [];
+    if (r.pocket_pivot) sig.push('<span class="pos">PP</span>');
+    if ((r.vol_ratio_5_20 ?? 1) < 0.8) sig.push('<span class="neu">DRY</span>');
+    if (r.tight) sig.push('<span style="color:var(--blue)">TIGHT</span>');
+    if (r.wis_count_20d) sig.push(`<span class="${r.wis_today ? 'pos' : ''}">WIS ${r.wis_count_20d}</span>`);
+    const rsCls = r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 60 ? 'neu' : 'neg';
+    const stCls = r.stage === 2 ? 'pos' : r.stage === 4 ? 'neg' : 'neu';
+    const extCls = 'ext-' + (r.extension || 'ok');
+    const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : ''].filter(Boolean).join('·');
+    const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
+    return `<tr>
+      <td><span style="color:var(--accent);font-weight:600">${r.ticker}</span> <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td>$${fmtPrice(r.price)}</td>
+      <td>${pct(r.chg_1d)}</td>
+      <td><span class="dna-dots">${dots}</span></td>
+      <td class="${rsCls}">${r.rs_rating ?? '—'}</td>
+      <td class="${stCls}">${STAGE_LABEL[r.stage] || '—'}</td>
+      <td>${r.adr_pct ?? '—'}</td>
+      <td class="${extCls}">${r.atr_mult_50 == null ? '—' : (r.atr_mult_50 > 0 ? '+' : '') + r.atr_mult_50.toFixed(1)}</td>
+      <td>${r.off_52w_high == null ? '—' : r.off_52w_high.toFixed(1) + '%'}</td>
+      <td>${fmtDollarVol(r.avg_dollar_vol)}</td>
+      <td>${lod}</td>
+      <td>${conf}</td>
+      <td style="font-size:9px;letter-spacing:0.05em">${sig.join(' ') || '<span class="neu">—</span>'}</td>
+      <td style="font-weight:600">${r.setup_score}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadSwingData() {
+  try {
+    const res = await fetch(`data/swing_data.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    swData = await res.json();
+    const g = swData.regime || {};
+    const lab = (g.label || '—').toUpperCase();
+    const el = $('sw-regime');
+    if (el) el.innerHTML = `<span class="regime-pill regime-${g.label || 'red'}">${lab}</span>`;
+    if ($('sw-regime-sub')) $('sw-regime-sub').textContent = `${g.universe_n ?? '—'} tickers · SPY ${g.spy_chg_1d > 0 ? '+' : ''}${g.spy_chg_1d ?? '—'}% today`;
+    const col = g.label === 'green' ? 'var(--green)' : g.label === 'yellow' ? 'var(--amber)' : 'var(--red)';
+    if ($('sw-pct')) { $('sw-pct').textContent = (g.pct_strong ?? '—') + '%'; $('sw-pct').style.color = col; }
+    if ($('sw-pct-bar')) { $('sw-pct-bar').style.width = (g.pct_strong || 0) + '%'; $('sw-pct-bar').style.background = col; }
+    if ($('sw-sp')) $('sw-sp').textContent = (g.sp500_pct_strong ?? '—') + '%';
+    if ($('sw-sp-bar')) $('sw-sp-bar').style.width = (g.sp500_pct_strong || 0) + '%';
+    if ($('sw-stage2')) $('sw-stage2').textContent = (g.pct_stage2 ?? '—') + '%';
+    const wis = g.wis_today || [];
+    if ($('sw-wis')) $('sw-wis').textContent = (g.spy_chg_1d != null && g.spy_chg_1d < -0.5) ? String(wis.length) : 'n/a';
+    if ($('sw-wis-sub')) $('sw-wis-sub').textContent = (g.spy_chg_1d != null && g.spy_chg_1d < -0.5) ? (wis.join(', ') || 'none') : 'SPY not red today';
+    const h = g.history || [];
+    if ($('sw-hist')) $('sw-hist').innerHTML = h.map(x => {
+      const v = x.pct_strong || 0; const c = v >= 60 ? 'var(--green)' : v >= 40 ? 'var(--amber)' : 'var(--red)';
+      return `<i style="height:${Math.max(2, v / 100 * 14)}px;background:${c}" title="${x.date}: ${v}%"></i>`;
+    }).join('');
+    if ($('sw-hist-sub')) $('sw-hist-sub').textContent = `${h.length} days · latest ${h.length ? h[h.length - 1].date : '—'}`;
+    if ($('swing-updated')) $('swing-updated').textContent = swData.updated_at ? '· ' + swData.updated_at : '';
+    renderSwing();
+  } catch (err) {
+    const tb = $('sw-tbody');
+    if (tb) tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Swing data not available yet (${err.message}). Run fetch_swing.py or wait for the nightly Action.</td></tr>`;
   }
 }
 
