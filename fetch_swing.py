@@ -87,11 +87,16 @@ def load_universe():
 
 
 def load_sp500():
+    """Top-500 US stocks by market cap (live). Falls back to the static list in fetch_data.py."""
     try:
-        from fetch_data import SP500_TICKERS
-        return [t for t in SP500_TICKERS if t]
+        from sector_map import get_benchmark_tickers
+        try:
+            from fetch_data import SP500_TICKERS
+        except Exception:
+            SP500_TICKERS = []
+        return get_benchmark_tickers(500, fallback=SP500_TICKERS)
     except Exception as e:
-        print(f"  (SP500 list unavailable: {e})")
+        print(f"  (benchmark list unavailable: {e})")
         return []
 
 
@@ -257,7 +262,9 @@ def analyse(ticker, df, spy_chg):
 # ─────────────────────────────────────────────────────────
 def main():
     print("TRADERDECK — Swing Screener")
+    from sector_map import exclude_dead, record_results
     universe, sources = load_universe()
+    universe = exclude_dead(universe, label="universe")
     sp500 = load_sp500()
     bench_pool = sorted(set(sp500) | set(universe))
     tickers = sorted(set(bench_pool) | {"SPY"})
@@ -279,6 +286,7 @@ def main():
 
     spy = frame("SPY")
     spy_chg = spy["Close"].pct_change() * 100 if spy is not None else None
+    record_results(tickers, [t for t in tickers if frame(t) is not None and len(frame(t)) >= 5])
 
     # RS raw for the whole benchmark pool (cheap: close series only)
     rs_pool = {}

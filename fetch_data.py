@@ -321,17 +321,28 @@ SP500_TICKERS = [
     "XEL","XYL","YUM","ZBRA","ZBH","ZTS"
 ]
 
+def get_breadth_universe():
+    """Top-500 US stocks by market cap (live, from the Nasdaq screener); falls back to the static S&P list."""
+    try:
+        from sector_map import get_benchmark_tickers
+        return get_benchmark_tickers(500, fallback=SP500_TICKERS)
+    except Exception as e:
+        print(f"  (live benchmark unavailable: {e})")
+        return list(SP500_TICKERS)
+
+
 def fetch_breadth():
-    """Fetch S&P 500 breadth: % above MA50/MA200, 52W highs/lows."""
+    """Breadth of the top-500 US stocks: % above MA50/MA200, 52W highs/lows."""
     import datetime as dt
-    print(f"  Fetching S&P 500 breadth ({len(SP500_TICKERS)} stocks)...", end=" ", flush=True)
+    universe = get_breadth_universe()
+    print(f"  Fetching breadth ({len(universe)} stocks)...", end=" ", flush=True)
 
     today = dt.date.today()
     start = (today - dt.timedelta(days=380)).strftime("%Y-%m-%d")  # 380 calendar days = ~265 trading days (enough for 252-day MA)
 
     try:
         data = yf.download(
-            SP500_TICKERS,
+            universe,
             start=start,
             interval="1d",
             group_by="ticker",
@@ -345,9 +356,9 @@ def fetch_breadth():
 
     above_50, above_200, highs_52w, lows_52w, total = 0, 0, 0, 0, 0
 
-    for ticker in SP500_TICKERS:
+    for ticker in universe:
         try:
-            if len(SP500_TICKERS) == 1:
+            if len(universe) == 1:
                 df = data
             else:
                 df = data[ticker] if ticker in data.columns.get_level_values(0) else None
@@ -375,6 +386,14 @@ def fetch_breadth():
 
         except Exception:
             continue
+
+    try:
+        from sector_map import record_results
+        found = [t for t in universe if (isinstance(data.columns, __import__('pandas').MultiIndex) and t in data.columns.get_level_values(0)
+                 and not data[t].dropna(subset=["Close"]).empty)]
+        record_results(universe, found)
+    except Exception:
+        pass
 
     if total == 0:
         print("ERROR: no data")
@@ -443,63 +462,6 @@ def fetch_fear_greed():
     return {}
 
 
-def fetch_put_call():
-    """Fetch CBOE put/call ratio from their daily CSV data file."""
-    import urllib.request, re, datetime as dt
-    print("  Fetching Put/Call ratio...", end=" ", flush=True)
-
-    # CBOE publishes a daily CSV — most reliable source
-    try:
-        url = "https://www.cboe.com/us/options/market_statistics/daily/"
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "text/html,application/xhtml+xml",
-        })
-        with urllib.request.urlopen(req, timeout=15) as r:
-            html = r.read().decode("utf-8", errors="ignore")
-
-        # Look for put/call table data — CBOE format: equity, index, total columns
-        # Pattern: 3 decimal numbers in a row that look like P/C ratios (0.3 - 3.0)
-        rows = re.findall(r'<tr[^>]*>.*?</tr>', html, re.DOTALL)
-        for row in rows:
-            nums = re.findall(r'(\d\.\d{2})', row)
-            ratios = [float(n) for n in nums if 0.3 <= float(n) <= 3.0]
-            if len(ratios) >= 2:
-                # Typically: equity P/C, index P/C, total P/C
-                total = ratios[-1]
-                equity = ratios[0] if len(ratios) >= 2 else None
-                print(f"OK ({total})")
-                return {"total": total, "equity": equity, "index": None}
-    except Exception:
-        pass
-
-    # Fallback: try the CBOE API
-    try:
-        today = dt.date.today().strftime("%Y-%m-%d")
-        url = f"https://cdn.cboe.com/api/global/us_options_volume/options-volume.json"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            data = json.loads(r.read().decode())
-        # Find total put/call
-        if isinstance(data, list) and data:
-            last = data[-1]
-            total_calls = last.get("Total Calls", 0)
-            total_puts  = last.get("Total Puts", 0)
-            if total_calls:
-                ratio = round(total_puts / total_calls, 2)
-                print(f"OK (computed {ratio})")
-                return {"total": ratio, "equity": None, "index": None}
-    except Exception:
-        pass
-
-    print("ERROR: could not fetch P/C ratio")
-    return {}
-
-
-# ─────────────────────────────────────────────────────────
-#  MAIN
-# ─────────────────────────────────────────────────────────
-
 def main():
     print("\n" + "─"*50)
     print("  TRADERDECK — Market Data Fetcher")
@@ -523,7 +485,6 @@ def main():
         "country_etfs":   fetch_group(COUNTRY_ETFS,   "Country ETFs"),
         "breadth":        fetch_breadth(),
         "fear_greed":     fetch_fear_greed(),
-        "put_call":       fetch_put_call(),
     }
 
     # Sort sectors by 1W performance

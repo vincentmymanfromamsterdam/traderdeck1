@@ -160,3 +160,83 @@ if __name__ == "__main__":
     d = load_directory()
     for t in ("NVDA", "LLY", "XOM", "RKLB", "SNDK"):
         print(t, d.get(t))
+
+
+# ─────────────────────────────────────────────────────────
+#  TICKER HEALTH — skip names that failed on consecutive nights
+# ─────────────────────────────────────────────────────────
+HEALTH_PATH = "data/ticker_health.json"
+MAX_MISSES = 2          # excluded after this many consecutive nights without data
+RETRY_AFTER_DAYS = 30   # ...but re-tried once a month in case it was a temporary outage
+
+
+def load_health():
+    if os.path.exists(HEALTH_PATH):
+        try:
+            with open(HEALTH_PATH) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_health(h):
+    os.makedirs(os.path.dirname(HEALTH_PATH), exist_ok=True)
+    with open(HEALTH_PATH, "w") as f:
+        json.dump(h, f, indent=0, sort_keys=True)
+
+
+def exclude_dead(tickers, verbose=True, label=""):
+    """Drop tickers that missed MAX_MISSES nights in a row (unless due for a monthly retry)."""
+    h = load_health()
+    today = dt.date.today()
+    keep, dead = [], []
+    for t in tickers:
+        rec = h.get(t)
+        if rec and rec.get("misses", 0) >= MAX_MISSES:
+            last = rec.get("last_miss")
+            try:
+                days = (today - dt.date.fromisoformat(last)).days if last else 999
+            except Exception:
+                days = 999
+            if days < RETRY_AFTER_DAYS:
+                dead.append(t)
+                continue
+        keep.append(t)
+    if dead and verbose:
+        print(f"  Skipping {len(dead)} dead tickers{(' for ' + label) if label else ''}: {', '.join(dead[:12])}{'…' if len(dead) > 12 else ''}")
+    return keep
+
+
+def record_results(requested, found):
+    """After a download: reset misses for found tickers, increment for the rest."""
+    h = load_health()
+    today = dt.date.today().isoformat()
+    found = set(found)
+    for t in requested:
+        if t in found:
+            if t in h:
+                del h[t]
+        else:
+            rec = h.get(t, {"misses": 0})
+            if rec.get("last_miss") != today:
+                rec["misses"] = rec.get("misses", 0) + 1
+                rec["last_miss"] = today
+            h[t] = rec
+    save_health(h)
+    return h
+
+
+def get_benchmark_tickers(n=500, fallback=None):
+    """Top-n US-listed stocks by market cap from the directory (a live S&P 500 proxy)."""
+    try:
+        d = load_directory(verbose=False)
+        rows = [(t, v["market_cap"]) for t, v in d.items()
+                if v.get("market_cap") and (v.get("country") in (None, "", "United States"))]
+        rows.sort(key=lambda x: x[1], reverse=True)
+        tickers = [t for t, _ in rows[:n]]
+        if len(tickers) >= n * 0.8:
+            return exclude_dead(tickers, label="benchmark")
+    except Exception as e:
+        print(f"  (benchmark from directory failed: {e})")
+    return exclude_dead(list(fallback or []), label="benchmark")

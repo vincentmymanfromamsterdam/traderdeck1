@@ -29,7 +29,7 @@ import yfinance as yf
 from fetch_swing import (
     DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw,
 )
-from sector_map import load_directory, yf_fallback, SECTOR_ETF
+from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results
 
 MIN_MARKET_CAP = 1_000_000_000   # pre-filter before downloading (strategy hard filter is $2B; shown per row)
 
@@ -118,11 +118,13 @@ def main():
     syms = {t: v for t, v in directory.items()
             if (v.get("market_cap") or 0) >= MIN_MARKET_CAP and (v.get("last") or 0) >= MIN_PRICE}
     print(f"  {len(syms)} names with market cap >= ${MIN_MARKET_CAP/1e9:.0f}B and price >= ${MIN_PRICE:.0f}")
+    alive = exclude_dead(sorted(syms), label="scan")
 
     # ── 3. Quick liquidity pass ──────────────────────────
     start60 = (dt.date.today() - dt.timedelta(days=90)).strftime("%Y-%m-%d")
     print("  Liquidity pre-filter (60d)...")
-    quick = download(sorted(syms), start60, "prefilter")
+    quick = download(alive, start60, "prefilter")
+    record_results(alive, [t for t, df in quick.items() if len(df) >= 5])
     liquid = []
     for t, df in quick.items():
         if len(df) < 40:

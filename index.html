@@ -299,20 +299,20 @@
     <div class="section-header">
       <div class="section-num">01</div>
       <div class="section-title">Market Breadth & Sentiment</div>
-      <div class="section-subtitle">S&P 500 INTERNALS · DAILY EOD</div>
+      <div class="section-subtitle">TOP-500 US STOCKS BY MARKET CAP · DAILY EOD</div>
     </div>
     <div class="gauge-grid" id="breadth-gauges">
       <div class="gauge-cell">
         <div class="gauge-label">% Above MA200</div>
         <div class="gauge-val" id="b-ma200">—</div>
         <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma200-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma200-sub">S&P 500 stocks</div>
+        <div class="gauge-sub" id="b-ma200-sub">top-500 stocks</div>
       </div>
       <div class="gauge-cell">
         <div class="gauge-label">% Above MA50</div>
         <div class="gauge-val" id="b-ma50">—</div>
         <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-ma50-bar" style="width:0%;background:var(--accent)"></div></div>
-        <div class="gauge-sub" id="b-ma50-sub">S&P 500 stocks</div>
+        <div class="gauge-sub" id="b-ma50-sub">top-500 stocks</div>
       </div>
       <div class="gauge-cell">
         <div class="gauge-label">New 52W Highs</div>
@@ -329,11 +329,6 @@
         <div class="gauge-val" id="b-fg">—</div>
         <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="b-fg-bar" style="width:0%"></div></div>
         <div class="gauge-sub" id="b-fg-sub">CNN Index · 0=Fear 100=Greed</div>
-      </div>
-      <div class="gauge-cell">
-        <div class="gauge-label">Put/Call Ratio</div>
-        <div class="gauge-val" id="b-pc">—</div>
-        <div class="gauge-sub" id="b-pc-sub">CBOE Total · &gt;1.0 bearish</div>
       </div>
     </div>
   </div>
@@ -847,7 +842,7 @@ async function loadData() {
         $('b-ma200').textContent = b.pct_above_ma200 + '%';
         $('b-ma200').style.color = breadthColor(b.pct_above_ma200);
         setBreadthBar('b-ma200-bar', b.pct_above_ma200, breadthColor(b.pct_above_ma200));
-        if (b.total_stocks) $('b-ma200-sub').textContent = `${b.total_stocks} S&P 500 stocks`;
+        if (b.total_stocks) $('b-ma200-sub').textContent = `${b.total_stocks} top-500 stocks`;
       }
       if (b.pct_above_ma50 != null) {
         $('b-ma50').textContent = b.pct_above_ma50 + '%';
@@ -866,12 +861,6 @@ async function loadData() {
       if (fg.rating) $('b-fg-sub').textContent = `${fg.rating} · prev ${fg.previous_close}`;
     }
 
-    if (d.put_call && d.put_call.total != null) {
-      const pc = d.put_call.total;
-      $('b-pc').textContent = pc.toFixed(2);
-      $('b-pc').style.color = pc > 1.1 ? 'var(--red)' : pc > 0.9 ? 'var(--amber)' : 'var(--green)';
-      $('b-pc-sub').textContent = pc > 1.1 ? 'CBOE Total · Bearish' : pc < 0.8 ? 'CBOE Total · Complacent' : 'CBOE Total · Neutral';
-    }
 
   } catch (err) {
     $('status-text').textContent = `Error loading data: ${err.message}. Make sure data/market_data.json exists.`;
