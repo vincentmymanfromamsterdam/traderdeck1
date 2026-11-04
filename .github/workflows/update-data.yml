@@ -53,12 +53,6 @@ jobs:
         # Continue even if scraping fails — dashboard shows cached data
         continue-on-error: true
 
-      # ── STEP 3: Political Alpha (Congressional Trades) ───
-      - name: Fetch political alpha data
-        run: |
-          python fetch_political.py
-        continue-on-error: true
-
       # ── STEP 3b: Swing Screener (Stock DNA + Regime) ─────
       - name: Fetch swing screener data
         run: |
@@ -72,7 +66,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/market_data.json
           git add data/carnivore_portfolios.json || true
-          git add data/political_alpha.json || true
           git add data/swing_data.json || true
-          git diff --cached --quiet || git commit -m "chore: update market + portfolio + political + swing data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin main
           git push
