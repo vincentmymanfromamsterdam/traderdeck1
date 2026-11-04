@@ -186,6 +186,19 @@
   .spark-mini i { display:block; width:3px; background:var(--dim); }
   .calc-warn { margin-top:10px; font-size:10px; letter-spacing:0.05em; color:var(--amber); display:none; }
   .calc-warn.on { display:block; }
+
+  /* ── SECTOR DRILL-DOWN ── */
+  tr.sec-row { cursor:pointer; }
+  tr.sec-row:hover td { background:var(--bg2); }
+  tr.sec-row.open td:nth-child(2) { color:var(--accent); }
+  tr.sec-expand > td { padding:0 0 14px 0 !important; background:var(--bg2); }
+  .ind-wrap { padding:10px 14px 0 28px; }
+  .ind-wrap table { width:100%; }
+  tr.ind-row { cursor:pointer; }
+  tr.ind-row:hover td { background:rgba(255,255,255,0.03); }
+  tr.ind-row.open td:first-child { color:var(--accent); }
+  tr.ind-expand > td { padding:4px 0 10px 22px !important; }
+  .mini-bar { display:inline-block; height:6px; background:var(--dim); vertical-align:middle; margin-left:6px; }
 </style>
 </head>
 <body>
@@ -425,11 +438,11 @@
     <div class="section-header">
       <div class="section-num">03</div>
       <div class="section-title">Equities & Sector Rotation</div>
-      <div class="section-subtitle">RANKED BY 1W PERFORMANCE</div>
+      <div class="section-subtitle">RANKED BY 1W PERFORMANCE · CLICK A SECTOR FOR INDUSTRY GROUPS AND LEADERS</div>
     </div>
 
     <div class="table-label">S&P 500 GICS Sectors</div>
-    <div class="table-wrap"><table><thead><tr><th>#</th><th>Sector / ETF</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-sectors"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Sector / ETF</th><th>1D %</th><th>1W %</th><th>YTD %</th><th title="% of liquid stocks in this sector above rising EMA9 + EMA21">% Strong</th><th title="stocks passing all 6 DNA filters">DNA ✓</th><th>Leaders (RS)</th><th>5D</th></tr></thead><tbody id="tb-sectors"><tr><td colspan="9" class="loading-msg">Loading...</td></tr></tbody></table></div>
 
     <div class="collapsible-head" onclick="toggle(this)">
       <span class="caret">▸</span><span class="collapsible-title">Major ETFs</span>
@@ -506,6 +519,32 @@
       </tr></thead>
       <tbody id="sw-tbody"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
     </table></div>
+
+    <div class="collapsible-head" onclick="toggle(this)" style="margin-top:18px">
+      <span class="caret">▸</span><span class="collapsible-title">Market Scan — DNA leaders across all US stocks <span id="scan-updated" style="color:var(--muted);font-weight:400"></span></span>
+    </div>
+    <div class="collapsible-body">
+      <div class="gauge-grid" style="margin-bottom:10px">
+        <div class="gauge-cell"><div class="gauge-label">Stocks analysed</div><div class="gauge-val" id="sc-analysed">—</div><div class="gauge-sub" id="sc-analysed-sub">liquid US common stocks</div></div>
+        <div class="gauge-cell"><div class="gauge-label">Pass all DNA filters</div><div class="gauge-val pos" id="sc-pass">—</div><div class="gauge-sub" id="sc-pass-sub">of which not in my universe</div></div>
+        <div class="gauge-cell"><div class="gauge-label">Market strong</div><div class="gauge-val" id="sc-strong">—</div><div class="gauge-sub">above rising EMA9 + EMA21</div></div>
+        <div class="gauge-cell"><div class="gauge-label">Market Stage 2</div><div class="gauge-val" id="sc-stage2">—</div><div class="gauge-sub">above rising EMA50 and SMA200</div></div>
+      </div>
+      <div class="swing-filters">
+        <button class="dir-btn active-long" id="scf-pass" onclick="scFilter('pass')">DNA PASS</button>
+        <button class="dir-btn" id="scf-new"  onclick="scFilter('new')">NEW (NOT IN MY UNIVERSE)</button>
+        <button class="dir-btn" id="scf-setup" onclick="scFilter('setup')">SETUP (CONFLUENCE ≥2)</button>
+        <button class="dir-btn" id="scf-all"  onclick="scFilter('all')">TOP 150</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
+          <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
+          <th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+        </tr></thead>
+        <tbody id="sc-tbody"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
 
     <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:14px;font-size:9px;color:var(--muted);letter-spacing:0.05em">
       <span>DNA dots: ADR&gt;3 · $Vol&gt;50M · RS≥85 · Stage 2 · &lt;25% off high · ATR×&lt;10</span>
@@ -750,23 +789,9 @@ async function loadData() {
       ).join('');
     }
 
-    // Sectors (ranked, with bar)
-    if (d.sectors && d.sectors.length) {
-      const maxAbs = Math.max(...d.sectors.map(s => Math.abs(s.chg_1w || 0)), 0.01);
-      $('tb-sectors').innerHTML = d.sectors.map((r, i) => {
-        const barW = Math.round(Math.abs(r.chg_1w || 0) / maxAbs * 50);
-        const barCol = (r.chg_1w || 0) >= 0 ? 'var(--green)' : 'var(--red)';
-        return `<tr>
-          <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-          <td class="td-name">${r.name} <span class="td-ticker">${r.ticker}</span></td>
-          <td>${pct(r.chg_1d)}</td>
-          <td>${pct(r.chg_1w)} <div class="perf-bar-wrap"><div class="perf-bar-fill" style="width:${barW}px;background:${barCol}"></div></div></td>
-          <td>${pct(r.chg_1w)}</td>
-          <td>${pct(r.chg_ytd)}</td>
-          <td>${spark(r.spark)}</td>
-        </tr>`;
-      }).join('');
-    }
+    // Sectors (ranked, with bar) — drill-down rendered by renderSectors()
+    sectorRows = d.sectors || [];
+    renderSectors();
 
     // ETFs
     if (d.major_etfs && d.major_etfs.length) {
@@ -1487,6 +1512,7 @@ function activateLive(apiKey) {
 loadData();
 loadCarnivorePortfolios();
 loadSwingData();
+loadScanData();
 calc();
 
 // Auto-load saved Finnhub key
@@ -1525,8 +1551,12 @@ function renderSwing() {
   if (swMode === 'wl')    rows = rows.filter(r => r.in_watchlist);
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>'; return; }
 
+  tb.innerHTML = rows.map(swRow).join('');
+}
+
+function swRow(r) {
   const order = ['adr', 'vol', 'rs', 'stage', 'high', 'ext'];
-  tb.innerHTML = rows.map(r => {
+  {
     const dots = order.map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
     const conf = ['ema9', 'ema21', 'ema50', 'ma10w', 'avwap'].map(k => {
       const d = r.dist_atr[k];
@@ -1542,10 +1572,10 @@ function renderSwing() {
     const rsCls = r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 60 ? 'neu' : 'neg';
     const stCls = r.stage === 2 ? 'pos' : r.stage === 4 ? 'neg' : 'neu';
     const extCls = 'ext-' + (r.extension || 'ok');
-    const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : ''].filter(Boolean).join('·');
+    const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : '', (r.in_universe === false) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
-      <td><span style="color:var(--accent);font-weight:600">${r.ticker}</span> <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span> <span style="font-size:8px;color:var(--muted)">${src}</span></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
       <td><span class="dna-dots">${dots}</span></td>
@@ -1560,7 +1590,124 @@ function renderSwing() {
       <td style="font-size:9px;letter-spacing:0.05em">${sig.join(' ') || '<span class="neu">—</span>'}</td>
       <td style="font-weight:600">${r.setup_score}</td>
     </tr>`;
+  }
+}
+
+// ────────────────────────────────────────────────
+//  SECTOR DRILL-DOWN (section 03 ← market scan)
+// ────────────────────────────────────────────────
+let sectorRows = [];
+const openSectors = new Set(), openInds = new Set();
+
+function strongCol(v) { return v == null ? 'var(--muted)' : v >= 60 ? 'var(--green)' : v >= 40 ? 'var(--amber)' : 'var(--red)'; }
+function strongCell(v) {
+  if (v == null) return '<span class="neu">—</span>';
+  return `<span style="color:${strongCol(v)}">${v.toFixed(0)}%</span><span class="mini-bar" style="width:${Math.round(v/100*40)}px;background:${strongCol(v)}"></span>`;
+}
+function tickerChips(list, scan) {
+  return (list || []).map(t => {
+    const r = scan && scan[t];
+    const rs = r ? r.rs_rating : null;
+    const c = rs == null ? 'var(--muted)' : rs >= 85 ? 'var(--green)' : rs >= 60 ? 'var(--amber)' : 'var(--text)';
+    return `<span style="color:${c};margin-right:6px" title="${r ? (r.name || '') + ' · RS ' + rs + ' · score ' + r.setup_score : ''}">${t}</span>`;
   }).join('');
+}
+
+function renderSectors() {
+  const tb = $('tb-sectors'); if (!tb || !sectorRows.length) return;
+  const sc = scData ? scData.sectors || {} : {};
+  const byT = {}; (scData && scData.all || []).forEach(r => byT[r.ticker] = r);
+  const maxAbs = Math.max(...sectorRows.map(s => Math.abs(s.chg_1w || 0)), 0.01);
+  tb.innerHTML = sectorRows.map((r, i) => {
+    const barW = Math.round(Math.abs(r.chg_1w || 0) / maxAbs * 50);
+    const barCol = (r.chg_1w || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+    const s = sc[r.ticker];
+    const isOpen = openSectors.has(r.ticker);
+    let row = `<tr class="sec-row${isOpen ? ' open' : ''}" onclick="toggleSector('${r.ticker}')">
+      <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
+      <td class="td-name">${isOpen ? '▾' : '▸'} ${r.name} <span class="td-ticker">${r.ticker}</span></td>
+      <td>${pct(r.chg_1d)}</td>
+      <td>${pct(r.chg_1w)} <div class="perf-bar-wrap"><div class="perf-bar-fill" style="width:${barW}px;background:${barCol}"></div></div></td>
+      <td>${pct(r.chg_ytd)}</td>
+      <td>${s ? strongCell(s.pct_strong) : '<span class="neu">—</span>'}</td>
+      <td>${s ? `<span class="${s.dna_pass ? 'pos' : 'neu'}">${s.dna_pass}</span><span style="color:var(--muted);font-size:9px"> /${s.n}</span>` : '<span class="neu">—</span>'}</td>
+      <td style="font-size:10px">${s ? tickerChips(s.top.slice(0,3), byT) : ''}</td>
+      <td>${spark(r.spark)}</td>
+    </tr>`;
+    if (isOpen) row += `<tr class="sec-expand"><td colspan="9">${renderIndustries(r.ticker, s, byT)}</td></tr>`;
+    return row;
+  }).join('');
+}
+
+function renderIndustries(etf, s, byT) {
+  if (!s) return `<div class="ind-wrap" style="color:var(--muted);font-size:10px;padding-bottom:10px">No scan data for this sector yet — run fetch_scan.py or wait for the nightly Action.</div>`;
+  const inds = Object.entries(s.industries || {});
+  const rows = inds.map(([name, g]) => {
+    const key = etf + '|' + name;
+    const isOpen = openInds.has(key);
+    let r = `<tr class="ind-row${isOpen ? ' open' : ''}" onclick="event.stopPropagation(); toggleIndustry('${key.replace(/'/g, "\\'")}')">
+      <td class="td-name" style="font-size:11px">${isOpen ? '▾' : '▸'} ${name} <span style="color:var(--muted);font-size:9px">(${g.n})</span></td>
+      <td>${strongCell(g.pct_strong)}</td>
+      <td>${g.avg_rs == null ? '—' : `<span class="${g.avg_rs >= 70 ? 'pos' : g.avg_rs >= 50 ? 'neu' : 'neg'}">${g.avg_rs.toFixed(0)}</span>`}</td>
+      <td>${pct(g.chg_1d_median)}</td>
+      <td><span class="${g.dna_pass ? 'pos' : ''}">${g.dna_pass}</span></td>
+      <td style="font-size:10px">${tickerChips(g.top, byT)}</td>
+    </tr>`;
+    if (isOpen) r += `<tr class="ind-expand"><td colspan="6">${renderIndustryNames(etf, name, byT)}</td></tr>`;
+    return r;
+  }).join('');
+  return `<div class="ind-wrap"><table>
+    <thead><tr><th>Industry group</th><th>% Strong</th><th>Avg RS</th><th>1D med</th><th>DNA ✓</th><th>Top by RS</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+function renderIndustryNames(etf, industry, byT) {
+  const rows = Object.values(byT).filter(r => r.etf === etf && (r.industry || 'Other') === industry)
+    .sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
+  if (!rows.length) return '';
+  return `<table><thead><tr>
+      <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th><th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th><th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+    </tr></thead><tbody>${rows.map(swRow).join('')}</tbody></table>`;
+}
+
+function toggleSector(etf) { openSectors.has(etf) ? openSectors.delete(etf) : openSectors.add(etf); renderSectors(); }
+function toggleIndustry(key) { openInds.has(key) ? openInds.delete(key) : openInds.add(key); renderSectors(); }
+
+// ── Market scan (all US stocks) ──
+let scData = null, scMode = 'pass';
+function scFilter(mode) {
+  scMode = mode;
+  ['pass', 'new', 'setup', 'all'].forEach(m => { const b = $('scf-' + m); if (b) b.className = 'dir-btn' + (m === mode ? ' active-long' : ''); });
+  renderScan();
+}
+function renderScan() {
+  const tb = $('sc-tbody'); if (!tb || !scData) return;
+  let rows = scData.leaders || [];
+  if (scMode === 'pass')  rows = rows.filter(r => r.dna_pass);
+  if (scMode === 'new')   rows = rows.filter(r => r.dna_pass && !r.in_universe);
+  if (scMode === 'setup') rows = rows.filter(r => r.stage === 2 && r.confluence_n >= 2);
+  rows = rows.slice(0, 150);
+  tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>';
+}
+async function loadScanData() {
+  try {
+    const res = await fetch(`data/market_scan.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    scData = await res.json();
+    const s = scData.stats || {};
+    if ($('sc-analysed')) $('sc-analysed').textContent = s.analysed ?? '—';
+    if ($('sc-analysed-sub')) $('sc-analysed-sub').textContent = `${s.liquid ?? '—'} liquid of ${s.symbols_listed ?? '—'} listed · ${s.runtime_s ? Math.round(s.runtime_s/60) + ' min' : ''}`;
+    if ($('sc-pass')) $('sc-pass').textContent = s.dna_pass ?? '—';
+    if ($('sc-pass-sub')) $('sc-pass-sub').textContent = `${s.new_vs_universe ?? '—'} not in my universe`;
+    if ($('sc-strong')) { $('sc-strong').textContent = (s.pct_strong ?? '—') + '%'; $('sc-strong').style.color = s.pct_strong >= 60 ? 'var(--green)' : s.pct_strong >= 40 ? 'var(--amber)' : 'var(--red)'; }
+    if ($('sc-stage2')) $('sc-stage2').textContent = (s.pct_stage2 ?? '—') + '%';
+    if ($('scan-updated')) $('scan-updated').textContent = scData.updated_at ? '· ' + scData.updated_at : '';
+    renderScan();
+    renderSectors();
+  } catch (err) {
+    const tb = $('sc-tbody');
+    if (tb) tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Market scan not available yet (${err.message}).</td></tr>`;
+  }
 }
 
 async function loadSwingData() {

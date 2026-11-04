@@ -1,0 +1,297 @@
+"""
+TRADERDECK — Full Market Scan
+==============================
+Scans every US-listed common stock (NASDAQ + NYSE + AMEX) through the same
+Stock DNA / confluence / behaviour analysis as fetch_swing.py, and keeps the
+leaders that are NOT already in the Carnivore + watchlist universe.
+
+Pipeline (to keep the nightly run under ~15 minutes):
+  1. Symbol directory + sector + industry + market cap from the Nasdaq screener (one call)
+  2. Drop ETFs, warrants, units, rights, preferreds, SPAC shells; market cap >= $1B
+  3. Quick liquidity pass on 60 days of data: avg $ volume >= 20M, price >= 5
+  4. Full 400-day analysis on the survivors (~1,000-1,500 names)
+  5. Save the top 150 by setup score + everything that passes all DNA filters
+
+Output: data/market_scan.json
+Run:    python fetch_scan.py
+"""
+
+import datetime as dt
+import json
+import os
+import sys
+import time
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
+from fetch_swing import (
+    DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw,
+)
+from sector_map import load_directory, yf_fallback, SECTOR_ETF
+
+MIN_MARKET_CAP = 1_000_000_000   # pre-filter before downloading (strategy hard filter is $2B; shown per row)
+
+OUTPUT_PATH = "data/market_scan.json"
+CACHE_DIR   = ".scan_cache"          # resumable download cache (git-ignored)
+TIME_BUDGET = float(os.environ.get("SCAN_TIME_BUDGET", "0") or 0)   # seconds; 0 = unlimited
+_T0 = time.time()
+
+
+class OutOfTime(Exception):
+    pass
+
+
+def budget_check():
+    if TIME_BUDGET and time.time() - _T0 > TIME_BUDGET:
+        raise OutOfTime()
+
+MIN_PRICE          = 5.0
+PREFILTER_VOL_USD  = 20_000_000     # quick pass; the DNA filter itself is 50M
+KEEP_TOP           = 150
+BATCH              = 150
+
+# ─────────────────────────────────────────────────────────
+#  DOWNLOAD IN BATCHES
+# ─────────────────────────────────────────────────────────
+def download(tickers, start, label):
+    """Batch download with on-disk resume: each finished batch is pickled to CACHE_DIR."""
+    import pickle
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    cache_file = os.path.join(CACHE_DIR, f"{label}_{dt.date.today().isoformat()}.pkl")
+    frames = {}
+    done_batches = set()
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "rb") as f:
+                saved = pickle.load(f)
+            frames, done_batches = saved["frames"], set(saved["done"])
+            print(f"    {label}: resuming, {len(frames)} frames cached", flush=True)
+        except Exception:
+            frames, done_batches = {}, set()
+
+    for i in range(0, len(tickers), BATCH):
+        if i in done_batches:
+            continue
+        budget_check()
+        chunk = tickers[i:i + BATCH]
+        data = None
+        for attempt in range(2):
+            try:
+                data = yf.download(chunk, start=start, interval="1d", group_by="ticker",
+                                   auto_adjust=True, progress=False, threads=True, timeout=25)
+                break
+            except Exception as e:
+                if attempt == 1:
+                    print(f"\n    batch {i//BATCH} failed: {e}")
+                time.sleep(5)
+        if data is not None and not data.empty:
+            lvl0 = set(data.columns.get_level_values(0)) if isinstance(data.columns, pd.MultiIndex) else set()
+            for t in chunk:
+                try:
+                    df = data[t] if t in lvl0 else (data if len(chunk) == 1 else None)
+                    if df is None:
+                        continue
+                    df = df.dropna(subset=["Close"])
+                    if not df.empty:
+                        frames[t] = df
+                except Exception:
+                    pass
+        done_batches.add(i)
+        with open(cache_file, "wb") as f:
+            pickle.dump({"frames": frames, "done": sorted(done_batches)}, f)
+        print(f"    {label}: {min(i+BATCH, len(tickers))}/{len(tickers)}", flush=True)
+    return frames
+
+
+# ─────────────────────────────────────────────────────────
+#  MAIN
+# ─────────────────────────────────────────────────────────
+def main():
+    t0 = time.time()
+    print("TRADERDECK — Full Market Scan")
+    universe, _ = load_universe()
+    sp500 = load_sp500()
+
+    directory = load_directory()
+    syms = {t: v for t, v in directory.items()
+            if (v.get("market_cap") or 0) >= MIN_MARKET_CAP and (v.get("last") or 0) >= MIN_PRICE}
+    print(f"  {len(syms)} names with market cap >= ${MIN_MARKET_CAP/1e9:.0f}B and price >= ${MIN_PRICE:.0f}")
+
+    # ── 3. Quick liquidity pass ──────────────────────────
+    start60 = (dt.date.today() - dt.timedelta(days=90)).strftime("%Y-%m-%d")
+    print("  Liquidity pre-filter (60d)...")
+    quick = download(sorted(syms), start60, "prefilter")
+    liquid = []
+    for t, df in quick.items():
+        if len(df) < 40:
+            continue
+        close = float(df["Close"].iloc[-1])
+        dvol = float((df["Close"] * df["Volume"]).iloc[-20:].mean())
+        if close >= MIN_PRICE and dvol >= PREFILTER_VOL_USD:
+            liquid.append(t)
+    print(f"  {len(liquid)} names pass liquidity (price >= ${MIN_PRICE:.0f}, $vol >= {PREFILTER_VOL_USD/1e6:.0f}M)")
+
+    # ── 3b. Sector / industry: from the directory; yfinance only for the unclassified few ──
+    smap = {t: dict(directory.get(t, {})) for t in liquid}
+    unclassified_t = [t for t in liquid if not smap[t].get("etf")]
+    if unclassified_t and not TIME_BUDGET:
+        print(f"  {len(unclassified_t)} liquid names without sector — yfinance fallback (max 200)")
+        for t, v in yf_fallback(unclassified_t, max_new=200).items():
+            smap[t].update(v)
+
+    # ── 4. Full analysis ─────────────────────────────────
+    start400 = (dt.date.today() - dt.timedelta(days=400)).strftime("%Y-%m-%d")
+    need = sorted(set(liquid) | set(sp500) | {"SPY"})
+    print(f"  Full history for {len(need)} names...")
+    full = download(need, start400, "full")
+
+    spy = full.get("SPY")
+    spy_chg = spy["Close"].pct_change() * 100 if spy is not None else None
+
+    # RS pool = S&P 500 + all liquid names (one consistent percentile for both scripts' output)
+    rs_pool = {}
+    for t in set(sp500) | set(liquid):
+        df = full.get(t)
+        if df is None or len(df) < 70:
+            continue
+        r = rs_raw(df["Close"].dropna())
+        if r is not None:
+            rs_pool[t] = r
+    pool_vals = np.array(sorted(rs_pool.values()))
+
+    def percentile(x):
+        if x is None or len(pool_vals) == 0:
+            return None
+        return int(max(1, min(99, round(np.searchsorted(pool_vals, x, side="right") / len(pool_vals) * 99))))
+
+    rows, n_analysed = [], 0
+    for t in liquid:
+        df = full.get(t)
+        if df is None:
+            continue
+        try:
+            m = analyse(t, df, spy_chg)
+        except Exception:
+            continue
+        if not m:
+            continue
+        n_analysed += 1
+        m["rs_rating"] = percentile(m.pop("rs_raw"))
+        sm = smap.get(t) or {}
+        m["name"] = (sm.get("name") or "")[:40]
+        m["sector"] = sm.get("sector")
+        m["industry"] = sm.get("industry")
+        m["etf"] = sm.get("etf")
+        m["market_cap"] = sm.get("market_cap")
+        checks = {
+            "adr":   (m["adr_pct"] or 0) >= DNA["adr_pct_min"],
+            "vol":   (m["avg_dollar_vol"] or 0) >= DNA["avg_dollar_vol_min"],
+            "rs":    (m["rs_rating"] or 0) >= DNA["rs_rating_min"],
+            "stage": m["stage"] == 2,
+            "high":  abs(m["off_52w_high"] or 100) <= DNA["off_52w_high_max"],
+            "ext":   (m["atr_mult_50"] if m["atr_mult_50"] is not None else 99) <= DNA["atr_mult_max"],
+        }
+        m["dna"] = checks
+        m["dna_pass"] = all(checks.values())
+        m["dna_score"] = sum(checks.values())
+        am = m["atr_mult_50"] or 0
+        m["extension"] = "reduce" if am > EXT_REDUCE else "caution" if am > EXT_CAUTION else "ok"
+        m["in_universe"] = t in universe
+        m["in_sp500"] = t in sp500
+        m["setup_score"] = (
+            m["dna_score"] + m["confluence_n"]
+            + (1 if (m["vol_ratio_5_20"] or 1) < 0.8 else 0)
+            + (1 if m["tight"] else 0) + (1 if m["pocket_pivot"] else 0)
+            + min(m["wis_count_20d"], 3)
+        )
+        rows.append(m)
+
+    rows.sort(key=lambda x: (x["dna_pass"], x["setup_score"], x["rs_rating"] or 0), reverse=True)
+    passed = [r for r in rows if r["dna_pass"]]
+    keep = {r["ticker"]: r for r in passed}
+    for r in rows:
+        if len(keep) >= max(KEEP_TOP, len(passed)):
+            break
+        keep.setdefault(r["ticker"], r)
+    out_rows = list(keep.values())
+
+    # Market-wide breadth with the same regime definition as the universe meter
+    strong = sum(1 for r in rows if r["above_ema9"] and r["above_ema21"] and r["ema9_rising"] and r["ema21_rising"])
+    stage2 = sum(1 for r in rows if r["stage"] == 2)
+
+    COMPACT = ("ticker", "name", "sector", "industry", "etf", "market_cap", "price", "chg_1d", "rs_rating", "stage",
+               "adr_pct", "atr_mult_50", "off_52w_high", "avg_dollar_vol", "lod_dist", "confluence",
+               "confluence_n", "dist_atr", "pocket_pivot", "tight", "vol_ratio_5_20", "wis_count_20d",
+               "wis_today", "dna", "dna_pass", "dna_score", "extension", "setup_score", "in_universe",
+               "above_ema9", "above_ema21", "ema9_rising", "ema21_rising")
+    all_rows = [{k: r.get(k) for k in COMPACT} for r in rows]
+
+    def is_strong(r):
+        return bool(r["above_ema9"] and r["above_ema21"] and r["ema9_rising"] and r["ema21_rising"])
+
+    def agg(group):
+        n = len(group)
+        rs_vals = [g["rs_rating"] for g in group if g["rs_rating"] is not None]
+        top = sorted(group, key=lambda g: (g["rs_rating"] or 0, g["setup_score"]), reverse=True)
+        return {
+            "n": n,
+            "pct_strong": round(sum(is_strong(g) for g in group) / n * 100, 1) if n else None,
+            "pct_stage2": round(sum(g["stage"] == 2 for g in group) / n * 100, 1) if n else None,
+            "avg_rs": round(sum(rs_vals) / len(rs_vals), 1) if rs_vals else None,
+            "dna_pass": sum(g["dna_pass"] for g in group),
+            "chg_1d_median": round(float(np.median([g["chg_1d"] for g in group if g["chg_1d"] is not None])), 2) if n else None,
+            "top": [g["ticker"] for g in top[:5]],
+        }
+
+    sectors = {}
+    for etf in SECTOR_ETF.values():
+        group = [r for r in all_rows if r["etf"] == etf]
+        if not group:
+            continue
+        sec = agg(group)
+        sec["sector"] = next((k for k, v in SECTOR_ETF.items() if v == etf), etf)
+        inds = {}
+        for name in sorted({g["industry"] or "Other" for g in group}):
+            ig = [g for g in group if (g["industry"] or "Other") == name]
+            inds[name] = agg(ig)
+        # industries ranked by avg RS, then % strong
+        sec["industries"] = dict(sorted(inds.items(), key=lambda kv: (kv[1]["avg_rs"] or 0, kv[1]["pct_strong"] or 0), reverse=True))
+        sectors[etf] = sec
+    unclassified = sum(1 for r in all_rows if not r["etf"])
+
+    payload = {
+        "updated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "updated_date": dt.date.today().isoformat(),
+        "stats": {
+            "symbols_listed": len(syms), "liquid": len(liquid), "analysed": n_analysed,
+            "dna_pass": len(passed), "kept": len(out_rows), "unclassified": unclassified,
+            "pct_strong": round(strong / n_analysed * 100, 1) if n_analysed else None,
+            "pct_stage2": round(stage2 / n_analysed * 100, 1) if n_analysed else None,
+            "new_vs_universe": sum(1 for r in passed if not r["in_universe"]),
+            "runtime_s": int(time.time() - t0),
+        },
+        "thresholds": {**DNA, "min_price": MIN_PRICE, "prefilter_vol_usd": PREFILTER_VOL_USD},
+        "leaders": [{k: r.get(k) for k in COMPACT} for r in out_rows],
+        "sectors": sectors,
+        "all": all_rows,
+    }
+    os.makedirs("data", exist_ok=True)
+    with open(OUTPUT_PATH, "w") as f:
+        json.dump(payload, f, separators=(",", ":"))
+
+    print(f"  Analysed {n_analysed} · DNA pass {len(passed)} "
+          f"({payload['stats']['new_vs_universe']} not in my universe) · "
+          f"market strong {payload['stats']['pct_strong']}% · {payload['stats']['runtime_s']}s")
+    print(f"  Sectors: " + ", ".join(f"{k} {v['pct_strong']}%/{v['dna_pass']}" for k, v in sectors.items()) + f" · unclassified {unclassified}")
+    print(f"  Top DNA pass: {', '.join(r['ticker'] for r in passed[:25])}")
+    print(f"  Saved {OUTPUT_PATH}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except OutOfTime:
+        print("  Time budget reached — progress cached, run again to resume.")
+        sys.exit(3)
