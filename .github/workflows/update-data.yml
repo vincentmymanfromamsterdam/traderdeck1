@@ -76,6 +76,8 @@ jobs:
           git add data/market_scan.json || true
           git add data/sector_map.json || true
           git add data/ticker_health.json || true
+          git add data/industry_history.json || true
+          git add data/earnings.json || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
