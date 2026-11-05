@@ -506,11 +506,27 @@
         <div class="gauge-val" id="sw-wis">—</div>
         <div class="gauge-sub" id="sw-wis-sub">green names on a red SPY day</div>
       </div>
+      <div class="gauge-cell" id="ibd-cell" style="display:none">
+        <div class="gauge-label">IBD outlook</div>
+        <div class="gauge-val" id="ibd-outlook" style="font-size:14px">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="ibd-band-bar" style="width:0%;background:var(--blue)"></div></div>
+        <div class="gauge-sub" id="ibd-band-sub">recommended exposure</div>
+      </div>
       <div class="gauge-cell">
         <div class="gauge-label">Market regime trend (60d)</div>
         <div class="gauge-val"><span class="spark-mini" id="sw-hist"></span></div>
         <div class="gauge-sub" id="sw-hist-sub">daily % strong</div>
       </div>
+    </div>
+
+    <!-- IBD BIG PICTURE -->
+    <div id="ibd-bigpic" style="margin:14px 0 0;border:1px solid var(--border2);background:var(--bg2);padding:10px 14px;display:none;font-size:11px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <div><span class="table-label" style="margin:0 10px 0 0;display:inline">IBD · The Big Picture</span><a id="ibd-bp-title" href="#" target="_blank" rel="noopener" style="color:var(--text);font-weight:600;text-decoration:none"></a></div>
+        <span id="ibd-bp-date" style="color:var(--muted);font-size:9px;letter-spacing:0.1em"></span>
+      </div>
+      <div id="ibd-bp-text" style="margin-top:6px;color:var(--muted);line-height:1.5"></div>
+      <div id="ibd-bp-hist" style="margin-top:6px;font-size:9px;color:var(--muted);letter-spacing:0.05em"></div>
     </div>
 
     <!-- SINCE LAST RUN -->
@@ -1513,6 +1529,35 @@ function activateLive(apiKey) {
 }
 
 
+// ── IBD Market Pulse ──
+let ibdData = null;
+async function loadIbd() {
+  try {
+    const res = await fetch(`data/ibd.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    ibdData = await res.json();
+    const o = ibdData.outlook, band = ibdData.exposure_band;
+    if (o || band) {
+      const cell = $('ibd-cell'); if (cell) cell.style.display = '';
+      const ol = (o || '').toLowerCase();
+      const col = ol.includes('confirmed') ? 'var(--green)' : ol.includes('pressure') || ol.includes('attempt') ? 'var(--amber)' : ol.includes('correction') ? 'var(--red)' : 'var(--text)';
+      if ($('ibd-outlook')) { $('ibd-outlook').textContent = o || '—'; $('ibd-outlook').style.color = col; }
+      if (band && $('ibd-band-bar')) { $('ibd-band-bar').style.width = band[1] + '%'; $('ibd-band-bar').style.background = col; }
+      if ($('ibd-band-sub')) $('ibd-band-sub').textContent = (band ? `${band[0]}–${band[1]}% invested` : 'exposure n/a') + (ibdData.stale_from ? ` · stale (${ibdData.stale_from})` : '') + ` · ${ibdData.updated_date || ''}`;
+    }
+    const bp = ibdData.big_picture;
+    if (bp && bp.title) {
+      const box = $('ibd-bigpic'); if (box) box.style.display = 'block';
+      $('ibd-bp-title').textContent = bp.title; $('ibd-bp-title').href = bp.url || '#';
+      $('ibd-bp-date').textContent = bp.date || '';
+      const txt = (bp.paragraphs && bp.paragraphs.length) ? bp.paragraphs.join(' ') : (bp.excerpt || '');
+      $('ibd-bp-text').textContent = txt.length > 600 ? txt.slice(0, 600) + '…' : txt;
+      const hist = (ibdData.outlook_history || []).slice(-5).reverse();
+      $('ibd-bp-hist').innerHTML = hist.length ? 'Outlook changes: ' + hist.map(x => `${x.date} → ${x.outlook}${x.band ? ` (${x.band[0]}–${x.band[1]}%)` : ''}`).join(' · ') : '';
+    }
+  } catch (err) { /* no IBD data yet — cell stays hidden */ }
+}
+
 // ── Theme ──
 function applyThemeBtn() {
   const light = document.documentElement.getAttribute('data-theme') === 'light';
@@ -1533,6 +1578,7 @@ loadData();
 loadCarnivorePortfolios();
 loadSwingData();
 loadScanData();
+loadIbd();
 calc();
 
 // Auto-load saved Finnhub key
