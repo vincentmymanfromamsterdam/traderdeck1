@@ -47,69 +47,115 @@ def load_prev():
     return {}
 
 
-def first_fill(page, selectors, value):
-    """Fill the first selector that exists."""
-    for sel in selectors:
+def all_frames(page):
+    return [page.main_frame] + [f for f in page.frames if f != page.main_frame]
+
+
+def find_input(page, selectors, timeout_ms=20000):
+    """Wait for the first matching visible input in any frame. Returns (frame, selector) or (None, None)."""
+    deadline = dt.datetime.now() + dt.timedelta(milliseconds=timeout_ms)
+    while dt.datetime.now() < deadline:
+        for fr in all_frames(page):
+            for sel in selectors:
+                try:
+                    loc = fr.locator(sel).first
+                    if loc.count() and loc.is_visible():
+                        return fr, sel
+                except Exception:
+                    continue
+        page.wait_for_timeout(500)
+    return None, None
+
+
+def diag(page, label):
+    """Log URL, title and every input on the page (all frames) — so a failed login is debuggable from the log."""
+    try:
+        log(f"{label}: url={page.url}")
+        log(f"{label}: title={page.title()!r}")
+        for fr in all_frames(page):
+            inputs = fr.evaluate("""() => Array.from(document.querySelectorAll('input,button')).slice(0,30).map(e =>
+                [e.tagName, e.type||'', e.name||'', e.id||'', (e.placeholder||e.innerText||'').slice(0,30), getComputedStyle(e).display!=='none'].join('|'))""")
+            if inputs:
+                log(f"{label}: frame={fr.url[:80]} → " + " ; ".join(inputs))
+    except Exception as e:
+        log(f"{label}: diag failed: {e}")
+
+
+def dismiss_banners(page):
+    for fr in all_frames(page):
+        for sel in ["#onetrust-accept-btn-handler", "button:has-text('Accept All')", "button:has-text('Accept')",
+                    "button:has-text('I Accept')", "button:has-text('Agree')", "button:has-text('YES, I AGREE')"]:
+            try:
+                b = fr.locator(sel).first
+                if b.count() and b.is_visible():
+                    b.click(timeout=2000)
+                    page.wait_for_timeout(600)
+                    return
+            except Exception:
+                pass
+
+
+EMAIL_SELECTORS = ["input[name='username']", "input#username", "input[type='email']", "input[name*='mail' i]",
+                   "input[id*='mail' i]", "input[name*='user' i]", "input[id*='user' i]",
+                   "input[autocomplete='username']", "input[type='text']"]
+PASSWORD_SELECTORS = ["input[type='password']", "input[name='password']", "input#password"]
+SUBMIT_SELECTORS = ["button[type='submit']", "input[type='submit']", "button:has-text('Continue')",
+                    "button:has-text('Sign In')", "button:has-text('Sign in')", "button:has-text('Log In')",
+                    "button:has-text('Next')"]
+
+
+def click_submit(fr, page):
+    for sel in SUBMIT_SELECTORS:
         try:
-            loc = page.locator(sel).first
-            if loc.count() and loc.is_visible():
-                loc.fill(value)
+            b = fr.locator(sel).first
+            if b.count() and b.is_visible():
+                b.click(timeout=3000)
                 return sel
         except Exception:
             continue
-    return None
+    page.keyboard.press("Enter")
+    return "Enter"
 
 
 def login(page, email, password):
     page.goto(SIGNIN_URL, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(2500)
-    # Cookie / consent banners
-    for sel in ["button:has-text('Accept')", "button:has-text('I Accept')", "#onetrust-accept-btn-handler",
-                "button:has-text('Agree')"]:
-        try:
-            b = page.locator(sel).first
-            if b.count() and b.is_visible():
-                b.click(timeout=2000)
-                page.wait_for_timeout(500)
-                break
-        except Exception:
-            pass
-
-    used = first_fill(page, ["input[type='email']", "input[name*='mail' i]", "input[id*='mail' i]",
-                             "input[name*='user' i]", "input[id*='user' i]", "input[type='text']"], email)
-    if not used:
-        raise RuntimeError("login: email field not found")
-    log(f"login: email field {used}")
-
-    pw = first_fill(page, ["input[type='password']"], password)
-    if not pw:
-        # Two-step forms: submit email first, then password appears
-        page.keyboard.press("Enter")
-        page.wait_for_timeout(2500)
-        pw = first_fill(page, ["input[type='password']"], password)
-    if not pw:
-        raise RuntimeError("login: password field not found")
-
-    clicked = False
-    for sel in ["button[type='submit']", "input[type='submit']", "button:has-text('Sign In')",
-                "button:has-text('Sign in')", "button:has-text('Log In')", "button:has-text('Continue')"]:
-        try:
-            b = page.locator(sel).first
-            if b.count() and b.is_visible():
-                b.click(timeout=3000)
-                clicked = True
-                break
-        except Exception:
-            continue
-    if not clicked:
-        page.keyboard.press("Enter")
     try:
-        page.wait_for_url(re.compile(r"investors\.com(?!.*signin)"), timeout=30000)
+        page.wait_for_load_state("networkidle", timeout=15000)
     except PWTimeout:
         pass
-    page.wait_for_timeout(2000)
-    if "signin" in page.url.lower():
-        raise RuntimeError(f"login: still on sign-in page ({page.url}) — check IBD_EMAIL / IBD_PASSWORD or bot check")
+    dismiss_banners(page)
+    diag(page, "signin page")
+
+    fr, sel = find_input(page, EMAIL_SELECTORS, timeout_ms=25000)
+    if not fr:
+        raise RuntimeError("login: email field not found")
+    fr.locator(sel).first.fill(email)
+    log(f"login: email field {sel} (frame {fr.url[:60]})")
+
+    # Password on the same step, or on a second step after submitting the username (Dow Jones SSO style)
+    pfr, psel = find_input(page, PASSWORD_SELECTORS, timeout_ms=2000)
+    if not pfr:
+        how = click_submit(fr, page)
+        log(f"login: submitted username via {how}, waiting for password step")
+        pfr, psel = find_input(page, PASSWORD_SELECTORS, timeout_ms=20000)
+        if not pfr:
+            diag(page, "after username")
+            raise RuntimeError("login: password field not found")
+    pfr.locator(psel).first.fill(password)
+    how = click_submit(pfr, page)
+    log(f"login: submitted password via {how}")
+    try:
+        page.wait_for_url(re.compile(r"investors\.com(?!.*sign)"), timeout=30000)
+    except PWTimeout:
+        pass
+    try:
+        page.wait_for_load_state("networkidle", timeout=10000)
+    except PWTimeout:
+        pass
+    page.wait_for_timeout(1500)
+    if re.search(r"sign-?in|login|sso\.accounts", page.url, re.I):
+        diag(page, "after password")
+        raise RuntimeError(f"login: still on sign-in page ({page.url}) — check IBD_EMAIL / IBD_PASSWORD or a bot/2FA check")
     log(f"login: ok → {page.url}")
 
 
@@ -220,8 +266,10 @@ def main():
             log(f"ERROR: {e}")
             try:
                 os.makedirs("data", exist_ok=True)
-                page.screenshot(path="data/ibd_debug.png", full_page=False)
-                log("saved data/ibd_debug.png")
+                page.screenshot(path="data/ibd_debug.png", full_page=True)
+                with open("data/ibd_debug.html", "w", encoding="utf-8") as f:
+                    f.write(page.content())
+                log(f"saved data/ibd_debug.png + ibd_debug.html (url={page.url})")
             except Exception:
                 pass
             result["error"] = str(e)
