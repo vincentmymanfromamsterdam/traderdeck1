@@ -88,6 +88,7 @@ jobs:
           git add data/industry_history.json || true
           git add data/earnings.json || true
           git add data/ibd.json || true
+          git add data/ibd_debug.png data/ibd_debug.html 2>/dev/null || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
