@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TRADERDECK — Position & Swing</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>
+  (function(){ try { if (localStorage.getItem('td_theme') === 'light') document.documentElement.setAttribute('data-theme','light'); } catch(e){} })();
+</script>
 <style>
   :root {
     --bg: #060A0F;
@@ -29,7 +32,7 @@
   body { background:var(--bg); color:var(--text); font-family:var(--mono); font-size:12px; line-height:1.6; overflow-x:hidden; }
 
   /* HEADER */
-  header { position:sticky; top:0; z-index:100; background:rgba(6,10,15,0.96); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:52px; }
+  header { position:sticky; top:0; z-index:100; background:var(--header-bg, rgba(6,10,15,0.96)); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:52px; }
   .logo { font-size:13px; font-weight:700; letter-spacing:0.25em; color:var(--accent); text-transform:uppercase; }
   .logo span { color:var(--muted); font-weight:300; }
   .nav { display:flex; gap:2px; }
@@ -39,13 +42,6 @@
   #live-clock { color:var(--text); font-weight:500; }
   .clock-label { font-size:9px; letter-spacing:0.1em; }
 
-  /* TAPE */
-  .tape-wrap { overflow:hidden; border-bottom:1px solid var(--border); background:var(--bg2); padding:7px 0; }
-  .tape-inner { display:flex; animation:scroll-tape 50s linear infinite; white-space:nowrap; }
-  @keyframes scroll-tape { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-  .tape-item { display:inline-flex; align-items:center; gap:8px; padding:0 20px; font-size:11px; border-right:1px solid var(--border); }
-  .tape-sym { color:var(--muted); font-size:10px; letter-spacing:0.1em; }
-  .tape-price { color:var(--text); font-weight:500; }
 
   /* HERO */
   .hero { padding:40px 24px 28px; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
@@ -199,6 +195,24 @@
   tr.ind-row.open td:first-child { color:var(--accent); }
   tr.ind-expand > td { padding:4px 0 10px 22px !important; }
   .mini-bar { display:inline-block; height:6px; background:var(--dim); vertical-align:middle; margin-left:6px; }
+
+  /* ── LIGHT MODE ── */
+  html[data-theme="light"] {
+    --bg: #F6F7F9; --bg2: #FFFFFF; --bg3: #EEF1F5;
+    --border: #D9DEE5; --border2: #C9D0DA;
+    --text: #1B2430; --muted: #5F6E7D; --dim: #AEB8C4;
+    --green: #0E9F5A; --green2: #0B8A4E; --red: #D92D3B; --amber: #B7791F; --blue: #1A73C9;
+    --accent: #0E9F5A;
+    --header-bg: rgba(255,255,255,0.94);
+  }
+  html[data-theme="light"] .regime-green  { background:rgba(14,159,90,0.10); }
+  html[data-theme="light"] .regime-yellow { background:rgba(183,121,31,0.10); }
+  html[data-theme="light"] .regime-red    { background:rgba(217,45,59,0.10); }
+  html[data-theme="light"] .dna-dot { background:#D5DBE3; }
+  html[data-theme="light"] .dna-dot.ok { background:var(--green); }
+  html[data-theme="light"] tr.sec-row:hover td, html[data-theme="light"] tr.ind-row:hover td { background:#EEF1F5; }
+  .theme-btn { font-family:var(--mono); font-size:9px; letter-spacing:0.15em; padding:4px 9px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; margin-left:14px; }
+  .theme-btn:hover { color:var(--accent); border-color:var(--accent); }
 </style>
 </head>
 <body>
@@ -212,15 +226,15 @@
     <a href="#swing">SWING</a>
     <a href="#calc">CALC</a>
   </nav>
-  <div class="clock-wrap">
-    <div id="live-clock">—</div>
-    <div class="clock-label">AMSTERDAM · CET</div>
+  <div class="clock-wrap" style="display:flex;align-items:center">
+    <div>
+      <div id="live-clock">—</div>
+      <div class="clock-label">AMSTERDAM · CET</div>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Switch light / dark">☾ DARK</button>
   </div>
 </header>
 
-<div class="tape-wrap">
-  <div class="tape-inner" id="tape"><span style="color:var(--muted);padding:0 20px;font-size:11px">Loading market data...</span></div>
-</div>
 
 <div id="live-status-bar">
   <span id="live-badge" class="live-badge offline"><span class="live-dot"></span>LIVE PRICES</span>
@@ -504,6 +518,7 @@
       <button class="dir-btn" id="swf-sr"   onclick="swFilter('sr')">CARNIVORE SR</button>
       <button class="dir-btn" id="swf-lt"   onclick="swFilter('lt')">CARNIVORE LT</button>
       <button class="dir-btn" id="swf-wl"   onclick="swFilter('wl')">WATCHLIST</button>
+      <button class="dir-btn" id="swf-mkt"  onclick="swFilter('mkt')">+ MARKET DNA PASS</button>
     </div>
 
     <div class="table-wrap"><table>
@@ -516,9 +531,9 @@
     </table></div>
 
     <div class="collapsible-head" onclick="toggle(this)" style="margin-top:18px">
-      <span class="caret">▸</span><span class="collapsible-title">Market Scan — DNA leaders across all US stocks <span id="scan-updated" style="color:var(--muted);font-weight:400"></span></span>
+      <span class="caret open">▸</span><span class="collapsible-title">Market Scan — DNA leaders across all US stocks <span id="scan-updated" style="color:var(--muted);font-weight:400"></span></span>
     </div>
-    <div class="collapsible-body">
+    <div class="collapsible-body open">
       <div class="gauge-grid" style="margin-bottom:10px">
         <div class="gauge-cell"><div class="gauge-label">Stocks analysed</div><div class="gauge-val" id="sc-analysed">—</div><div class="gauge-sub" id="sc-analysed-sub">liquid US common stocks</div></div>
         <div class="gauge-cell"><div class="gauge-label">Pass all DNA filters</div><div class="gauge-val pos" id="sc-pass">—</div><div class="gauge-sub" id="sc-pass-sub">of which not in my universe</div></div>
@@ -526,8 +541,8 @@
         <div class="gauge-cell"><div class="gauge-label">Market Stage 2</div><div class="gauge-val" id="sc-stage2">—</div><div class="gauge-sub">above rising EMA50 and SMA200</div></div>
       </div>
       <div class="swing-filters">
-        <button class="dir-btn active-long" id="scf-pass" onclick="scFilter('pass')">DNA PASS</button>
-        <button class="dir-btn" id="scf-new"  onclick="scFilter('new')">NEW (NOT IN MY UNIVERSE)</button>
+        <button class="dir-btn active-long" id="scf-new"  onclick="scFilter('new')">NEW (NOT IN MY UNIVERSE)</button>
+        <button class="dir-btn" id="scf-pass" onclick="scFilter('pass')">DNA PASS (ALL)</button>
         <button class="dir-btn" id="scf-setup" onclick="scFilter('setup')">SETUP (CONFLUENCE ≥2)</button>
         <button class="dir-btn" id="scf-all"  onclick="scFilter('all')">TOP 150</button>
       </div>
@@ -749,18 +764,6 @@ async function loadData() {
     if (dxy) { $('hs-dxy').textContent = fmtPrice(dxy.price); $('hs-dxy').className = 'hero-stat-value ' + pctChgClass(dxy.chg_1d); }
     if (y10) { $('hs-10y').textContent = y10.yield_pct.toFixed(2) + '%'; $('hs-10y').className = 'hero-stat-value neu'; }
 
-    // TAPE
-    const tapeItems = [...(d.futures||[]), ...(d.vol_dollar||[]), ...(d.metals||[]), ...(d.energy||[])];
-    if (tapeItems.length) {
-      const html = [...tapeItems, ...tapeItems].map(i =>
-        `<div class="tape-item">
-          <span class="tape-sym">${i.ticker}</span>
-          <span class="tape-price">${fmtPrice(i.price)}</span>
-          <span class="${pctChgClass(i.chg_1d)}">${i.chg_1d > 0 ? '+' : ''}${Number(i.chg_1d).toFixed(2)}%</span>
-        </div>`
-      ).join('');
-      $('tape').innerHTML = html;
-    }
 
     // Standard macro tables
     renderStdTable('tb-futures', d.futures);
@@ -1273,24 +1276,6 @@ function applyLiveQuotes() {
     $('hs-vix').textContent = fmtPrice(liveQuotes['VIXY'].c);
   }
 
-  // ── Tape — rebuild with live prices ──
-  const tapeEl = $('tape');
-  if (tapeEl && tapeEl.children.length > 0) {
-    const tapeItems = tapeEl.querySelectorAll('.tape-item');
-    tapeItems.forEach(item => {
-      const symEl = item.querySelector('.tape-sym');
-      const priceEl = item.querySelector('.tape-price');
-      const chgEl = item.querySelector('span:last-child');
-      if (!symEl || !priceEl || !chgEl) return;
-      const ticker = symEl.textContent.trim();
-      const q = liveQuotes[ticker];
-      if (!q) return;
-      priceEl.textContent = fmtPrice(q.c);
-      const chg = q.dp;
-      chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
-      chgEl.className = chg >= 0 ? 'pos' : 'neg';
-    });
-  }
 
   // ── Sector table — update price + 1D% ──
   const sectorTbody = $('tb-sectors');
@@ -1495,6 +1480,20 @@ function activateLive(apiKey) {
   liveRefresh(apiKey);
 }
 
+
+// ── Theme ──
+function applyThemeBtn() {
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  const b = $('theme-btn'); if (b) b.textContent = light ? '☀ LIGHT' : '☾ DARK';
+}
+function toggleTheme() {
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  if (light) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'light');
+  try { localStorage.setItem('td_theme', light ? 'dark' : 'light'); } catch(e) {}
+  applyThemeBtn();
+}
+applyThemeBtn();
+
 // ────────────────────────────────────────────────
 //  INIT
 // ────────────────────────────────────────────────
@@ -1524,7 +1523,7 @@ const STAGE_LABEL = {1: 'S1 base', 2: 'S2 up', 3: 'S3 top', 4: 'S4 down'};
 
 function swFilter(mode) {
   swMode = mode;
-  ['all', 'pass', 'setup', 'sr', 'lt', 'wl'].forEach(m => {
+  ['all', 'pass', 'setup', 'sr', 'lt', 'wl', 'mkt'].forEach(m => {
     const b = $('swf-' + m); if (b) b.className = 'dir-btn' + (m === mode ? ' active-long' : '');
   });
   renderSwing();
@@ -1538,6 +1537,11 @@ function renderSwing() {
   if (swMode === 'sr')    rows = rows.filter(r => r.in_sr);
   if (swMode === 'lt')    rows = rows.filter(r => r.in_lt);
   if (swMode === 'wl')    rows = rows.filter(r => r.in_watchlist);
+  if (swMode === 'mkt') {
+    const mine = new Set(rows.map(r => r.ticker));
+    const extra = ((scData && scData.leaders) || []).filter(r => r.dna_pass && !mine.has(r.ticker));
+    rows = [...rows.filter(r => r.dna_pass), ...extra].sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
+  }
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>'; return; }
 
   tb.innerHTML = rows.map(swRow).join('');
@@ -1663,7 +1667,7 @@ function toggleSector(etf) { openSectors.has(etf) ? openSectors.delete(etf) : op
 function toggleIndustry(key) { openInds.has(key) ? openInds.delete(key) : openInds.add(key); renderSectors(); }
 
 // ── Market scan (all US stocks) ──
-let scData = null, scMode = 'pass';
+let scData = null, scMode = 'new';
 function scFilter(mode) {
   scMode = mode;
   ['pass', 'new', 'setup', 'all'].forEach(m => { const b = $('scf-' + m); if (b) b.className = 'dir-btn' + (m === mode ? ' active-long' : ''); });
