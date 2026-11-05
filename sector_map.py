@@ -240,3 +240,53 @@ def get_benchmark_tickers(n=500, fallback=None):
     except Exception as e:
         print(f"  (benchmark from directory failed: {e})")
     return exclude_dead(list(fallback or []), label="benchmark")
+
+
+# ─────────────────────────────────────────────────────────
+#  EARNINGS CALENDAR — Nasdaq, one request per day ahead
+# ─────────────────────────────────────────────────────────
+EARNINGS_PATH = "data/earnings.json"
+EARNINGS_URL = "https://api.nasdaq.com/api/calendar/earnings?date={d}"
+EARNINGS_DAYS_AHEAD = 21
+
+
+def load_earnings(verbose=True):
+    """Return {ticker: 'YYYY-MM-DD'} for the next ~3 weeks. Cached per day."""
+    today = dt.date.today()
+    cache = {}
+    if os.path.exists(EARNINGS_PATH):
+        try:
+            with open(EARNINGS_PATH) as f:
+                cache = json.load(f)
+        except Exception:
+            cache = {}
+    if cache.get("_date") == today.isoformat() and cache.get("by_ticker"):
+        return cache["by_ticker"]
+    by_ticker, days_ok = {}, 0
+    for i in range(EARNINGS_DAYS_AHEAD):
+        d = today + dt.timedelta(days=i)
+        if d.weekday() >= 5:
+            continue
+        try:
+            r = requests.get(EARNINGS_URL.format(d=d.isoformat()), headers=HEADERS, timeout=20)
+            r.raise_for_status()
+            rows = ((r.json() or {}).get("data") or {}).get("rows") or []
+            for x in rows:
+                sym = (x.get("symbol") or "").strip()
+                if sym and sym not in by_ticker:
+                    by_ticker[sym] = d.isoformat()
+            days_ok += 1
+        except Exception as e:
+            if verbose:
+                print(f"    earnings {d}: {e}")
+        time.sleep(0.4)
+    if days_ok >= 5:
+        os.makedirs("data", exist_ok=True)
+        with open(EARNINGS_PATH, "w") as f:
+            json.dump({"_date": today.isoformat(), "days_fetched": days_ok, "by_ticker": by_ticker}, f, separators=(",", ":"))
+        if verbose:
+            print(f"  Earnings calendar: {len(by_ticker)} tickers over {days_ok} trading days")
+        return by_ticker
+    if verbose:
+        print("  Earnings calendar: fetch failed, using cache" if cache.get("by_ticker") else "  Earnings calendar: unavailable")
+    return cache.get("by_ticker", {})

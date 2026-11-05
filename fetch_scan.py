@@ -29,7 +29,9 @@ import yfinance as yf
 from fetch_swing import (
     DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw,
 )
-from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results
+from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results, load_earnings
+
+INDUSTRY_HISTORY_PATH = "data/industry_history.json"
 
 MIN_MARKET_CAP = 1_000_000_000   # pre-filter before downloading (strategy hard filter is $2B; shown per row)
 
@@ -168,6 +170,11 @@ def main():
             return None
         return int(max(1, min(99, round(np.searchsorted(pool_vals, x, side="right") / len(pool_vals) * 99))))
 
+    try:
+        earnings = load_earnings()
+    except Exception as e:
+        print(f"  (earnings calendar unavailable: {e})"); earnings = {}
+
     rows, n_analysed = [], 0
     for t in liquid:
         df = full.get(t)
@@ -187,6 +194,9 @@ def main():
         m["industry"] = sm.get("industry")
         m["etf"] = sm.get("etf")
         m["market_cap"] = sm.get("market_cap")
+        er = earnings.get(t)
+        m["earnings_date"] = er
+        m["earnings_days"] = (dt.date.fromisoformat(er) - dt.date.today()).days if er else None
         checks = {
             "adr":   (m["adr_pct"] or 0) >= DNA["adr_pct_min"],
             "vol":   (m["avg_dollar_vol"] or 0) >= DNA["avg_dollar_vol_min"],
@@ -227,7 +237,9 @@ def main():
                "adr_pct", "atr_mult_50", "off_52w_high", "avg_dollar_vol", "lod_dist", "confluence",
                "confluence_n", "dist_atr", "pocket_pivot", "tight", "vol_ratio_5_20", "wis_count_20d",
                "wis_today", "dna", "dna_pass", "dna_score", "extension", "setup_score", "in_universe",
-               "above_ema9", "above_ema21", "ema9_rising", "ema21_rising")
+               "above_ema9", "above_ema21", "ema9_rising", "ema21_rising",
+               "rvol", "earnings_date", "earnings_days",
+               "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi")
     all_rows = [{k: r.get(k) for k in COMPACT} for r in rows]
 
     def is_strong(r):
@@ -262,6 +274,85 @@ def main():
         sec["industries"] = dict(sorted(inds.items(), key=lambda kv: (kv[1]["avg_rs"] or 0, kv[1]["pct_strong"] or 0), reverse=True))
         sectors[etf] = sec
     unclassified = sum(1 for r in all_rows if not r["etf"])
+    today_s = dt.date.today().isoformat()
+
+    # ── Industry / sector history (30 days) → 5-day change in % strong ──
+    hist = {}
+    if os.path.exists(INDUSTRY_HISTORY_PATH):
+        try:
+            with open(INDUSTRY_HISTORY_PATH) as f:
+                hist = json.load(f)
+        except Exception:
+            hist = {}
+    snap = {}
+    for etf, sec in sectors.items():
+        snap[etf] = {"ps": sec["pct_strong"], "rs": sec["avg_rs"]}
+        for name, g in sec["industries"].items():
+            snap[f"{etf}|{name}"] = {"ps": g["pct_strong"], "rs": g["avg_rs"]}
+    hist[today_s] = snap
+    dates = sorted(hist)[-30:]
+    hist = {d: hist[d] for d in dates}
+    with open(INDUSTRY_HISTORY_PATH, "w") as f:
+        json.dump(hist, f, separators=(",", ":"))
+
+    def change(key, n=5):
+        past = [d for d in dates if d < today_s]
+        if len(past) < 1:
+            return None, None
+        ref = hist[past[-n]] if len(past) >= n else hist[past[0]]
+        prev = hist[past[-1]]
+        now = snap.get(key) or {}
+        r5 = ref.get(key) or {}
+        r1 = prev.get(key) or {}
+        d5 = round(now["ps"] - r5["ps"], 1) if now.get("ps") is not None and r5.get("ps") is not None else None
+        d1 = round(now["ps"] - r1["ps"], 1) if now.get("ps") is not None and r1.get("ps") is not None else None
+        return d5, d1
+    for etf, sec in sectors.items():
+        sec["ps_chg_5d"], sec["ps_chg_1d"] = change(etf)
+        for name, g in sec["industries"].items():
+            g["ps_chg_5d"], g["ps_chg_1d"] = change(f"{etf}|{name}")
+
+    # ── Market regime history (60 days) ──
+    pct_strong_mkt = round(strong / n_analysed * 100, 1) if n_analysed else None
+    regime_mkt = (("green" if pct_strong_mkt >= 60 else "yellow" if pct_strong_mkt >= 40 else "red") if pct_strong_mkt is not None else None)
+    prev_payload = {}
+    if os.path.exists(OUTPUT_PATH):
+        try:
+            with open(OUTPUT_PATH) as f:
+                prev_payload = json.load(f)
+        except Exception:
+            prev_payload = {}
+    mkt_hist = [h for h in (prev_payload.get("regime_history") or []) if h.get("date") != today_s]
+    mkt_hist.append({"date": today_s, "pct_strong": pct_strong_mkt, "regime": regime_mkt,
+                     "dna_pass": len(passed), "pct_stage2": round(stage2 / n_analysed * 100, 1) if n_analysed else None})
+    mkt_hist = mkt_hist[-60:]
+
+    # ── What changed since the previous run ──
+    prev_rows = {r["ticker"]: r for r in (prev_payload.get("all") or [])}
+    prev_pass = {t for t, r in prev_rows.items() if r.get("dna_pass")}
+    now_pass = {r["ticker"] for r in passed}
+    prev_date = prev_payload.get("updated_date")
+    prev_regime = (prev_payload.get("stats") or {}).get("regime")
+    def brief(t):
+        r = next((x for x in all_rows if x["ticker"] == t), None) or prev_rows.get(t) or {}
+        return {"ticker": t, "name": r.get("name"), "etf": r.get("etf"), "industry": r.get("industry"),
+                "rs_rating": r.get("rs_rating"), "setup_score": r.get("setup_score"), "chg_1d": r.get("chg_1d")}
+    ind_moves = []
+    for etf, sec in sectors.items():
+        for name, g in sec["industries"].items():
+            if g.get("ps_chg_5d") is not None and abs(g["ps_chg_5d"]) >= 15 and g["n"] >= 4:
+                ind_moves.append({"etf": etf, "industry": name, "n": g["n"], "pct_strong": g["pct_strong"], "chg_5d": g["ps_chg_5d"], "avg_rs": g["avg_rs"]})
+    ind_moves.sort(key=lambda x: -abs(x["chg_5d"]))
+    changes = {
+        "since": prev_date,
+        "regime_prev": prev_regime, "regime_now": regime_mkt,
+        "new_dna_pass": sorted([brief(t) for t in now_pass - prev_pass], key=lambda x: -(x["rs_rating"] or 0)),
+        "dropped_dna_pass": sorted([brief(t) for t in prev_pass - now_pass], key=lambda x: -(x["rs_rating"] or 0)),
+        "industry_moves": ind_moves[:12],
+        "earnings_soon": sorted([brief(r["ticker"]) | {"earnings_days": r["earnings_days"], "earnings_date": r["earnings_date"]}
+                                 for r in passed if r.get("earnings_days") is not None and r["earnings_days"] <= 7],
+                                key=lambda x: x["earnings_days"]),
+    }
 
     payload = {
         "updated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -269,14 +360,17 @@ def main():
         "stats": {
             "symbols_listed": len(syms), "liquid": len(liquid), "analysed": n_analysed,
             "dna_pass": len(passed), "kept": len(out_rows), "unclassified": unclassified,
-            "pct_strong": round(strong / n_analysed * 100, 1) if n_analysed else None,
+            "pct_strong": pct_strong_mkt, "regime": regime_mkt,
             "pct_stage2": round(stage2 / n_analysed * 100, 1) if n_analysed else None,
             "new_vs_universe": sum(1 for r in passed if not r["in_universe"]),
+            "earnings_tickers": len(earnings),
             "runtime_s": int(time.time() - t0),
         },
         "thresholds": {**DNA, "min_price": MIN_PRICE, "prefilter_vol_usd": PREFILTER_VOL_USD},
         "leaders": [{k: r.get(k) for k in COMPACT} for r in out_rows],
         "sectors": sectors,
+        "regime_history": mkt_hist,
+        "changes": changes,
         "all": all_rows,
     }
     os.makedirs("data", exist_ok=True)

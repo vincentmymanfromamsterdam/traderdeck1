@@ -208,9 +208,24 @@ def analyse(ticker, df, spy_chg):
     dist_atr = {k: ((close - lv) / atr_now if lv else None) for k, lv in levels.items()}
     confluence = [k for k, d in dist_atr.items() if d is not None and abs(d) <= 1.0]
 
+    # ── Trade plan: stop under the structure, entry zone = structure..price ──
+    # Support = levels at or below price within 1.5 ATR (the zone a pullback is landing on).
+    support = {k: lv for k, lv in levels.items() if lv and 0 <= (close - lv) / atr_now <= 1.5}
+    if support:
+        stop_basis = min(support, key=support.get)
+        plan_stop = support[stop_basis] - 0.3 * atr_now
+        plan_entry_lo = min(support.values())
+        plan_entry_hi = close
+    else:
+        stop_basis = "atr"
+        plan_stop = close - 1.5 * atr_now
+        plan_entry_lo = plan_entry_hi = close
+    plan_stop_pct = (close - plan_stop) / close * 100 if close else None
+
     # ── Behaviour ─────────────────────────────────────────
     vol5, vol20 = float(v.iloc[-5:].mean()), float(v.iloc[-20:].mean())
     vol_ratio = vol5 / vol20 if vol20 else None
+    rvol = float(v.iloc[-1]) / vol20 if vol20 else None          # today's volume vs 20-day average
 
     last10 = df.iloc[-11:-1]
     down_vols = last10.loc[last10["Close"] < last10["Close"].shift(1).fillna(last10["Close"]), "Volume"]
@@ -251,7 +266,10 @@ def analyse(ticker, df, spy_chg):
         "dist_atr": {k: r2(d) for k, d in dist_atr.items()},
         "confluence": confluence, "confluence_n": len(confluence),
         # behaviour
-        "vol_ratio_5_20": r2(vol_ratio), "pocket_pivot": pocket_pivot, "tight": tight,
+        "vol_ratio_5_20": r2(vol_ratio), "rvol": r2(rvol), "pocket_pivot": pocket_pivot, "tight": tight,
+        # trade plan
+        "plan_stop": r2(plan_stop), "plan_stop_pct": r2(plan_stop_pct), "plan_stop_basis": stop_basis,
+        "plan_entry_lo": r2(plan_entry_lo), "plan_entry_hi": r2(plan_entry_hi),
         "days_since_20d_high": days_since_20d_high,
         "wis_count_20d": wis_count, "wis_today": wis_today,
     }
@@ -304,6 +322,12 @@ def main():
             return None
         return int(max(1, min(99, round(np.searchsorted(pool_vals, x, side="right") / len(pool_vals) * 99))))
 
+    try:
+        from sector_map import load_earnings
+        earnings = load_earnings()
+    except Exception as e:
+        print(f"  (earnings calendar unavailable: {e})"); earnings = {}
+
     rows = []
     for t in universe:
         df = frame(t)
@@ -318,6 +342,9 @@ def main():
         if not m:
             continue
         m["rs_rating"] = percentile(m.pop("rs_raw"))
+        er = earnings.get(t)
+        m["earnings_date"] = er
+        m["earnings_days"] = (dt.date.fromisoformat(er) - dt.date.today()).days if er else None
 
         # DNA pass/fail per filter
         checks = {

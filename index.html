@@ -180,6 +180,8 @@
   .swing-filters .dir-btn { font-size:10px; }
   .spark-mini { display:inline-flex; align-items:flex-end; gap:1px; height:14px; }
   .spark-mini i { display:block; width:3px; background:var(--dim); }
+  .chg-wrap { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; }
+  .chg-chip { white-space:nowrap; }
   .calc-warn { margin-top:10px; font-size:10px; letter-spacing:0.05em; color:var(--amber); display:none; }
   .calc-warn.on { display:block; }
 
@@ -419,8 +421,8 @@
       <div id="carnivore-sr-summary" style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--border)"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unreal. P&amp;L</th><th>Return %</th><th>Weight</th></tr></thead>
-          <tbody id="tb-carnivore-sr"><tr><td colspan="10" class="loading-msg">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unreal. P&amp;L</th><th>Return %</th><th>Weight</th><th>DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
+          <tbody id="tb-carnivore-sr"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -435,8 +437,8 @@
       <div id="carnivore-lt-summary" style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--border)"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Entry Date</th><th>Avg Cost</th><th>Current</th><th>Stop Loss</th><th>Buy Up To</th><th>Return %</th><th>Stop Dist.</th><th>Upside</th></tr></thead>
-          <tbody id="tb-carnivore-lt"><tr><td colspan="10" class="loading-msg">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Entry Date</th><th>Avg Cost</th><th>Current</th><th>Stop Loss</th><th>Buy Up To</th><th>Return %</th><th>Stop Dist.</th><th>Upside</th><th>DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
+          <tbody id="tb-carnivore-lt"><tr><td colspan="15" class="loading-msg">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -478,26 +480,26 @@
 
     <div class="gauge-grid">
       <div class="gauge-cell">
-        <div class="gauge-label">Regime (watchlist breadth)</div>
+        <div class="gauge-label">Market regime</div>
         <div class="gauge-val" id="sw-regime">—</div>
-        <div class="gauge-sub" id="sw-regime-sub">% above rising EMA9 + EMA21</div>
+        <div class="gauge-sub" id="sw-regime-sub">% of liquid US stocks above rising EMA9 + EMA21</div>
       </div>
       <div class="gauge-cell">
-        <div class="gauge-label">Universe strong</div>
+        <div class="gauge-label">Market strong</div>
         <div class="gauge-val" id="sw-pct">—</div>
         <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="sw-pct-bar" style="width:0%"></div></div>
-        <div class="gauge-sub" id="sw-pct-sub">green ≥60 · yellow 40–60 · red &lt;40</div>
+        <div class="gauge-sub">green ≥60 · yellow 40–60 · red &lt;40</div>
       </div>
       <div class="gauge-cell">
-        <div class="gauge-label">S&amp;P 500 strong (same test)</div>
-        <div class="gauge-val" id="sw-sp">—</div>
-        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="sw-sp-bar" style="width:0%;background:var(--blue)"></div></div>
-        <div class="gauge-sub">reference: broad market</div>
+        <div class="gauge-label">My book strong</div>
+        <div class="gauge-val" id="sw-book">—</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar-fill" id="sw-book-bar" style="width:0%;background:var(--blue)"></div></div>
+        <div class="gauge-sub" id="sw-book-sub">Carnivore + watchlist</div>
       </div>
       <div class="gauge-cell">
-        <div class="gauge-label">Stage 2 in universe</div>
-        <div class="gauge-val" id="sw-stage2">—</div>
-        <div class="gauge-sub" id="sw-stage2-sub">above rising EMA50 and SMA200</div>
+        <div class="gauge-label">DNA pass (market)</div>
+        <div class="gauge-val pos" id="sw-dna">—</div>
+        <div class="gauge-sub" id="sw-dna-sub">of liquid stocks · Stage 2 share</div>
       </div>
       <div class="gauge-cell">
         <div class="gauge-label">Weakness in strength</div>
@@ -505,10 +507,16 @@
         <div class="gauge-sub" id="sw-wis-sub">green names on a red SPY day</div>
       </div>
       <div class="gauge-cell">
-        <div class="gauge-label">Regime trend (60d)</div>
+        <div class="gauge-label">Market regime trend (60d)</div>
         <div class="gauge-val"><span class="spark-mini" id="sw-hist"></span></div>
         <div class="gauge-sub" id="sw-hist-sub">daily % strong</div>
       </div>
+    </div>
+
+    <!-- SINCE LAST RUN -->
+    <div id="sw-changes" style="margin:14px 0 4px;border:1px solid var(--border2);background:var(--bg2);padding:12px 14px;display:none">
+      <div class="table-label" style="display:flex;justify-content:space-between"><span>Since last run</span><span id="sw-changes-since" style="color:var(--muted)"></span></div>
+      <div id="sw-changes-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 22px;font-size:11px;align-items:start"></div>
     </div>
 
     <div class="swing-filters">
@@ -525,9 +533,9 @@
       <thead><tr>
         <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
         <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
-        <th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+        <th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
       </tr></thead>
-      <tbody id="sw-tbody"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
+      <tbody id="sw-tbody"><tr><td colspan="17" class="loading-msg">Loading...</td></tr></tbody>
     </table></div>
 
     <div class="collapsible-head" onclick="toggle(this)" style="margin-top:18px">
@@ -550,9 +558,9 @@
         <thead><tr>
           <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
           <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
-          <th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+          <th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
         </tr></thead>
-        <tbody id="sc-tbody"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
+        <tbody id="sc-tbody"><tr><td colspan="17" class="loading-msg">Loading...</td></tr></tbody>
       </table></div>
     </div>
 
@@ -568,7 +576,7 @@
   <div class="section" id="calc">
     <div class="section-header">
       <div class="section-num">04</div>
-      <div class="section-title">Position Sizing Calculator</div>
+      <div class="section-title">Position Sizing Calculator <span id="calc-ticker" style="color:var(--accent);margin-left:10px"></span></div>
       <div class="section-subtitle">RISK-BASED · STAGGERED STOPS</div>
     </div>
 
@@ -1012,6 +1020,26 @@ function renderPortfolioSummary(containerId, positions) {
   `;
 }
 
+// Technical status of a Carnivore position, from the swing screener data
+let lastCarnivore = null;
+function techCells(ticker) {
+  const r = swData && (swData.universe || []).find(x => x.ticker === ticker);
+  if (!r) return '<td colspan="4" style="color:var(--dim);font-size:9px">—</td>';
+  const dots = ['adr','vol','rs','stage','high','ext'].map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
+  const am = r.atr_mult_50; const extCls = 'ext-' + (r.extension || 'ok');
+  const sig = [];
+  if (r.stage === 4) sig.push('<span class="neg">S4</span>'); else if (r.stage !== 2) sig.push(`<span class="neu">S${r.stage}</span>`);
+  if (!r.above_ema21) sig.push('<span class="neg">&lt;EMA21</span>');
+  if (am != null && am < -2) sig.push('<span class="neg">&lt;EMA50</span>');
+  if (r.pocket_pivot) sig.push('<span class="pos">PP</span>');
+  if (r.tight) sig.push('<span style="color:var(--blue)">TIGHT</span>');
+  if (r.wis_count_20d) sig.push(`<span class="${r.wis_today ? 'pos' : ''}">WIS ${r.wis_count_20d}</span>`);
+  return `<td><span class="dna-dots" title="RS ${r.rs_rating} · ADR ${r.adr_pct}% · ${r.off_52w_high}% off high">${dots}</span></td>
+    <td class="${extCls}">${am == null ? '—' : (am > 0 ? '+' : '') + am.toFixed(1)}</td>
+    <td style="font-size:9px;letter-spacing:0.05em">${sig.join(' ') || '<span class="pos">OK</span>'}</td>
+    <td>${erCell(r)}</td>`;
+}
+
 function renderPortfolioTable(tbodyId, positions) {
   if (!positions || !positions.length) {
     $(tbodyId).innerHTML = `<tr><td colspan="10" style="color:var(--muted);padding:20px 10px;font-size:11px">
@@ -1041,6 +1069,7 @@ function renderPortfolioTable(tbodyId, positions) {
       <td class="${pnlC}">${pnl != null ? (pnl >= 0 ? '+' : '') + '$' + fmt(pnl, 0) : '—'}</td>
       <td class="${retC}">${ret != null ? (ret >= 0 ? '+' : '') + ret.toFixed(1) + '%' : '—'}</td>
       <td style="color:var(--muted)">${weight != null ? weight.toFixed(1) + '%' : '—'}</td>
+      ${techCells(p.ticker)}
     </tr>`;
   }).join('');
 }
@@ -1075,6 +1104,7 @@ function renderLongTermTable(tbodyId, positions) {
       <td class="${retC}">${ret != null ? (ret >= 0 ? '+' : '') + ret.toFixed(1) + '%' : '—'}</td>
       <td class="${stopDistC}">${p.stop_distance_pct != null ? p.stop_distance_pct.toFixed(1) + '%' : '—'}</td>
       <td class="${upsideC}">${p.upside_to_target_pct != null ? '+' + p.upside_to_target_pct.toFixed(1) + '%' : '—'}</td>
+      ${techCells(p.ticker)}
     </tr>`;
   }).join('');
 }
@@ -1105,6 +1135,7 @@ async function loadCarnivorePortfolios() {
       ? `<span style="color:var(--green)">${sr.length} positions</span>`
       : `<span style="color:var(--amber)">pending first scrape</span>`;
     if (sr.length) renderPortfolioSummary('carnivore-sr-summary', sr);
+    lastCarnivore = Object.assign(lastCarnivore || {}, { sr });
     renderPortfolioTable('tb-carnivore-sr', sr);
     const ltBadge = $('carnivore-lt-badge');
     if (ltBadge) ltBadge.innerHTML = lt.length
@@ -1133,6 +1164,7 @@ async function loadCarnivorePortfolios() {
         </div>
       `;
     }
+    lastCarnivore = Object.assign(lastCarnivore || {}, { lt });
     renderLongTermTable('tb-carnivore-lt', lt);
 
   } catch (err) {
@@ -1542,9 +1574,31 @@ function renderSwing() {
     const extra = ((scData && scData.leaders) || []).filter(r => r.dna_pass && !mine.has(r.ticker));
     rows = [...rows.filter(r => r.dna_pass), ...extra].sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
   }
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="17" class="loading-msg">No tickers match</td></tr>'; return; }
 
   tb.innerHTML = rows.map(swRow).join('');
+}
+
+function erCell(r) {
+  const d = r.earnings_days;
+  if (d == null) return '<span style="color:var(--dim)">—</span>';
+  const c = d <= 5 ? 'var(--red)' : d <= 10 ? 'var(--amber)' : 'var(--muted)';
+  const t = d === 0 ? 'today' : d + 'd';
+  return `<span style="color:${c};font-weight:${d <= 5 ? 700 : 400}" title="earnings ${r.earnings_date}">${d <= 5 ? '⚠ ' : ''}${t}</span>`;
+}
+function planCell(r) {
+  if (r.plan_stop == null) return '—';
+  const pct = r.plan_stop_pct;
+  const c = pct <= 3 ? 'var(--green)' : pct <= 5 ? 'var(--amber)' : 'var(--red)';
+  const basis = r.plan_stop_basis === 'atr' ? 'no structure within 1.5 ATR · 1.5 ATR stop' : 'under ' + r.plan_stop_basis.toUpperCase() + ' − 0.3 ATR';
+  return `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" title="${basis} · entry zone $${fmtPrice(r.plan_entry_lo)}–$${fmtPrice(r.plan_entry_hi)} · click to load in calculator" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.plan_entry_hi}, ${r.plan_stop})">$${fmtPrice(r.plan_stop)} <span style="color:${c}">${pct.toFixed(1)}%</span></span>`;
+}
+function loadPlan(ticker, entry, stop) {
+  $('entry').value = entry; $('stop').value = stop;
+  if (typeof setDir === 'function') setDir('long');
+  const t = $('calc-ticker'); if (t) t.textContent = ticker;
+  calc();
+  document.getElementById('calc').scrollIntoView({ behavior: 'smooth' });
 }
 
 function swRow(r) {
@@ -1581,6 +1635,9 @@ function swRow(r) {
       <td>${lod}</td>
       <td>${conf}</td>
       <td style="font-size:9px;letter-spacing:0.05em">${sig.join(' ') || '<span class="neu">—</span>'}</td>
+      <td class="${r.rvol == null ? 'neu' : r.rvol >= 1.5 ? 'pos' : r.rvol < 0.7 ? '' : ''}" style="${r.rvol != null && r.rvol < 0.7 ? 'color:var(--muted)' : ''}">${r.rvol == null ? '—' : r.rvol.toFixed(1) + '×'}</td>
+      <td>${erCell(r)}</td>
+      <td>${planCell(r)}</td>
       <td style="font-weight:600">${r.setup_score}</td>
     </tr>`;
   }
@@ -1592,6 +1649,11 @@ function swRow(r) {
 let sectorRows = [];
 const openSectors = new Set(), openInds = new Set();
 
+function deltaCell(d, small) {
+  if (d == null) return small ? '' : '<span style="color:var(--dim)">—</span>';
+  const c = d >= 10 ? 'var(--green)' : d <= -10 ? 'var(--red)' : 'var(--muted)';
+  return `<span style="color:${c};font-size:${small ? 9 : 11}px" title="5-day change in % strong">${d > 0 ? '▲' : d < 0 ? '▼' : '·'}${Math.abs(d).toFixed(0)}</span>`;
+}
 function strongCol(v) { return v == null ? 'var(--muted)' : v >= 60 ? 'var(--green)' : v >= 40 ? 'var(--amber)' : 'var(--red)'; }
 function strongCell(v) {
   if (v == null) return '<span class="neu">—</span>';
@@ -1622,7 +1684,7 @@ function renderSectors() {
       <td>${pct(r.chg_1d)}</td>
       <td>${pct(r.chg_1w)} <div class="perf-bar-wrap"><div class="perf-bar-fill" style="width:${barW}px;background:${barCol}"></div></div></td>
       <td>${pct(r.chg_ytd)}</td>
-      <td>${s ? strongCell(s.pct_strong) : '<span class="neu">—</span>'}</td>
+      <td>${s ? strongCell(s.pct_strong) + ' ' + deltaCell(s.ps_chg_5d, true) : '<span class="neu">—</span>'}</td>
       <td>${s ? `<span class="${s.dna_pass ? 'pos' : 'neu'}">${s.dna_pass}</span><span style="color:var(--muted);font-size:9px"> /${s.n}</span>` : '<span class="neu">—</span>'}</td>
       <td style="font-size:10px">${s ? tickerChips(s.top.slice(0,3), byT) : ''}</td>
       <td>${spark(r.spark)}</td>
@@ -1641,16 +1703,17 @@ function renderIndustries(etf, s, byT) {
     let r = `<tr class="ind-row${isOpen ? ' open' : ''}" onclick="event.stopPropagation(); toggleIndustry('${key.replace(/'/g, "\\'")}')">
       <td class="td-name" style="font-size:11px">${isOpen ? '▾' : '▸'} ${name} <span style="color:var(--muted);font-size:9px">(${g.n})</span></td>
       <td>${strongCell(g.pct_strong)}</td>
+      <td>${deltaCell(g.ps_chg_5d)}</td>
       <td>${g.avg_rs == null ? '—' : `<span class="${g.avg_rs >= 70 ? 'pos' : g.avg_rs >= 50 ? 'neu' : 'neg'}">${g.avg_rs.toFixed(0)}</span>`}</td>
       <td>${pct(g.chg_1d_median)}</td>
       <td><span class="${g.dna_pass ? 'pos' : ''}">${g.dna_pass}</span></td>
       <td style="font-size:10px">${tickerChips(g.top, byT)}</td>
     </tr>`;
-    if (isOpen) r += `<tr class="ind-expand"><td colspan="6">${renderIndustryNames(etf, name, byT)}</td></tr>`;
+    if (isOpen) r += `<tr class="ind-expand"><td colspan="7">${renderIndustryNames(etf, name, byT)}</td></tr>`;
     return r;
   }).join('');
   return `<div class="ind-wrap"><table>
-    <thead><tr><th>Industry group</th><th>% Strong</th><th>Avg RS</th><th>1D med</th><th>DNA ✓</th><th>Top by RS</th></tr></thead>
+    <thead><tr><th>Industry group</th><th>% Strong</th><th title="change in % strong over 5 trading days">5D Δ</th><th>Avg RS</th><th>1D med</th><th>DNA ✓</th><th>Top by RS</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 
@@ -1659,7 +1722,7 @@ function renderIndustryNames(etf, industry, byT) {
     .sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
   if (!rows.length) return '';
   return `<table><thead><tr>
-      <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th><th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th><th>Confluence (≤1 ATR)</th><th>Signals</th><th>Score</th>
+      <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th><th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th><th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
     </tr></thead><tbody>${rows.map(swRow).join('')}</tbody></table>`;
 }
 
@@ -1680,7 +1743,7 @@ function renderScan() {
   if (scMode === 'new')   rows = rows.filter(r => r.dna_pass && !r.in_universe);
   if (scMode === 'setup') rows = rows.filter(r => r.stage === 2 && r.confluence_n >= 2);
   rows = rows.slice(0, 150);
-  tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="14" class="loading-msg">No tickers match</td></tr>';
+  tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="17" class="loading-msg">No tickers match</td></tr>';
 }
 async function loadScanData() {
   try {
@@ -1688,19 +1751,56 @@ async function loadScanData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     scData = await res.json();
     const s = scData.stats || {};
+    // Market regime gauges
+    const lab = (s.regime || '—').toUpperCase();
+    const col = s.regime === 'green' ? 'var(--green)' : s.regime === 'yellow' ? 'var(--amber)' : 'var(--red)';
+    if ($('sw-regime')) $('sw-regime').innerHTML = `<span class="regime-pill regime-${s.regime || 'red'}">${lab}</span>`;
+    if ($('sw-regime-sub')) $('sw-regime-sub').textContent = `${s.analysed ?? '—'} liquid US stocks above rising EMA9 + EMA21`;
+    if ($('sw-pct')) { $('sw-pct').textContent = (s.pct_strong ?? '—') + '%'; $('sw-pct').style.color = col; }
+    if ($('sw-pct-bar')) { $('sw-pct-bar').style.width = (s.pct_strong || 0) + '%'; $('sw-pct-bar').style.background = col; }
+    if ($('sw-dna')) $('sw-dna').textContent = s.dna_pass ?? '—';
+    if ($('sw-dna-sub')) $('sw-dna-sub').textContent = `of ${s.analysed ?? '—'} · ${s.pct_stage2 ?? '—'}% in Stage 2 · ${s.new_vs_universe ?? '—'} outside my book`;
+    const hh = scData.regime_history || [];
+    if ($('sw-hist')) $('sw-hist').innerHTML = hh.map(x => {
+      const v = x.pct_strong || 0; const c = v >= 60 ? 'var(--green)' : v >= 40 ? 'var(--amber)' : 'var(--red)';
+      return `<i style="height:${Math.max(2, v / 100 * 14)}px;background:${c}" title="${x.date}: ${v}% · ${x.dna_pass} DNA pass"></i>`;
+    }).join('');
+    if ($('sw-hist-sub')) $('sw-hist-sub').textContent = `${hh.length} days · latest ${hh.length ? hh[hh.length - 1].date : '—'}`;
+    // Market scan block
     if ($('sc-analysed')) $('sc-analysed').textContent = s.analysed ?? '—';
     if ($('sc-analysed-sub')) $('sc-analysed-sub').textContent = `${s.liquid ?? '—'} liquid of ${s.symbols_listed ?? '—'} listed · ${s.runtime_s ? Math.round(s.runtime_s/60) + ' min' : ''}`;
     if ($('sc-pass')) $('sc-pass').textContent = s.dna_pass ?? '—';
     if ($('sc-pass-sub')) $('sc-pass-sub').textContent = `${s.new_vs_universe ?? '—'} not in my universe`;
-    if ($('sc-strong')) { $('sc-strong').textContent = (s.pct_strong ?? '—') + '%'; $('sc-strong').style.color = s.pct_strong >= 60 ? 'var(--green)' : s.pct_strong >= 40 ? 'var(--amber)' : 'var(--red)'; }
+    if ($('sc-strong')) { $('sc-strong').textContent = (s.pct_strong ?? '—') + '%'; $('sc-strong').style.color = col; }
     if ($('sc-stage2')) $('sc-stage2').textContent = (s.pct_stage2 ?? '—') + '%';
     if ($('scan-updated')) $('scan-updated').textContent = scData.updated_at ? '· ' + scData.updated_at : '';
+    renderChanges();
     renderScan();
     renderSectors();
+    renderSwing();
+    if (typeof lastCarnivore !== 'undefined' && lastCarnivore) { renderPortfolioTable('tb-carnivore-sr', lastCarnivore.sr); renderLongTermTable('tb-carnivore-lt', lastCarnivore.lt); }
   } catch (err) {
     const tb = $('sc-tbody');
-    if (tb) tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Market scan not available yet (${err.message}).</td></tr>`;
+    if (tb) tb.innerHTML = `<tr><td colspan="17" class="loading-msg">Market scan not available yet (${err.message}).</td></tr>`;
   }
+}
+
+function renderChanges() {
+  const c = scData && scData.changes; const box = $('sw-changes'); if (!box || !c) return;
+  const chip = (x) => `<span class="chg-chip" title="${x.name || ''} · ${x.industry || ''}"><span style="color:var(--accent);font-weight:600">${x.ticker}</span> <span style="color:var(--muted);font-size:9px">RS ${x.rs_rating ?? '—'}</span></span>`;
+  const wrap = (inner) => `<div class="chg-wrap">${inner}</div>`;
+  const cols = [];
+  if (c.regime_prev && c.regime_now && c.regime_prev !== c.regime_now)
+    cols.push(`<div><div class="gauge-label">Regime flip</div><span class="regime-pill regime-${c.regime_prev}">${c.regime_prev.toUpperCase()}</span> → <span class="regime-pill regime-${c.regime_now}">${c.regime_now.toUpperCase()}</span></div>`);
+  cols.push(`<div><div class="gauge-label">New DNA pass <span class="pos">(${(c.new_dna_pass||[]).length})</span></div>${wrap((c.new_dna_pass||[]).slice(0,16).map(chip).join('') || '<span class="neu">none</span>')}</div>`);
+  cols.push(`<div><div class="gauge-label">Dropped out <span class="neg">(${(c.dropped_dna_pass||[]).length})</span></div>${wrap((c.dropped_dna_pass||[]).slice(0,16).map(chip).join('') || '<span class="neu">none</span>')}</div>`);
+  const er = (c.earnings_soon || []);
+  cols.push(`<div><div class="gauge-label">DNA pass with earnings ≤7d <span class="neg">(${er.length})</span></div>${wrap(er.slice(0,16).map(x => `<span class="chg-chip"><span style="color:var(--accent);font-weight:600">${x.ticker}</span> <span style="color:var(--red);font-size:9px">${x.earnings_days === 0 ? 'today' : x.earnings_days + 'd'}</span></span>`).join('') || '<span class="neu">none</span>')}</div>`);
+  const im = (c.industry_moves || []);
+  cols.push(`<div><div class="gauge-label">Industry moves (5d, ≥15 pts)</div>${im.slice(0,8).map(x => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${x.industry} <span style="color:var(--muted);font-size:9px">${x.etf}</span></span><span class="${x.chg_5d > 0 ? 'pos' : 'neg'}">${x.chg_5d > 0 ? '▲' : '▼'} ${Math.abs(x.chg_5d).toFixed(0)} → ${x.pct_strong.toFixed(0)}%</span></div>`).join('') || '<span class="neu">no big rotations yet — needs 2+ days of history</span>'}</div>`);
+  $('sw-changes-body').innerHTML = cols.join('');
+  $('sw-changes-since').textContent = c.since ? `vs ${c.since}` : 'first run';
+  box.style.display = 'block';
 }
 
 async function loadSwingData() {
@@ -1709,30 +1809,19 @@ async function loadSwingData() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     swData = await res.json();
     const g = swData.regime || {};
-    const lab = (g.label || '—').toUpperCase();
-    const el = $('sw-regime');
-    if (el) el.innerHTML = `<span class="regime-pill regime-${g.label || 'red'}">${lab}</span>`;
-    if ($('sw-regime-sub')) $('sw-regime-sub').textContent = `${g.universe_n ?? '—'} tickers · SPY ${g.spy_chg_1d > 0 ? '+' : ''}${g.spy_chg_1d ?? '—'}% today`;
     const col = g.label === 'green' ? 'var(--green)' : g.label === 'yellow' ? 'var(--amber)' : 'var(--red)';
-    if ($('sw-pct')) { $('sw-pct').textContent = (g.pct_strong ?? '—') + '%'; $('sw-pct').style.color = col; }
-    if ($('sw-pct-bar')) { $('sw-pct-bar').style.width = (g.pct_strong || 0) + '%'; $('sw-pct-bar').style.background = col; }
-    if ($('sw-sp')) $('sw-sp').textContent = (g.sp500_pct_strong ?? '—') + '%';
-    if ($('sw-sp-bar')) $('sw-sp-bar').style.width = (g.sp500_pct_strong || 0) + '%';
-    if ($('sw-stage2')) $('sw-stage2').textContent = (g.pct_stage2 ?? '—') + '%';
+    if ($('sw-book')) { $('sw-book').textContent = (g.pct_strong ?? '—') + '%'; $('sw-book').style.color = col; }
+    if ($('sw-book-bar')) { $('sw-book-bar').style.width = (g.pct_strong || 0) + '%'; $('sw-book-bar').style.background = col; }
+    if ($('sw-book-sub')) $('sw-book-sub').textContent = `${g.universe_n ?? '—'} tickers · Carnivore + watchlist · ${g.pct_stage2 ?? '—'}% Stage 2`;
     const wis = g.wis_today || [];
     if ($('sw-wis')) $('sw-wis').textContent = (g.spy_chg_1d != null && g.spy_chg_1d < -0.5) ? String(wis.length) : 'n/a';
-    if ($('sw-wis-sub')) $('sw-wis-sub').textContent = (g.spy_chg_1d != null && g.spy_chg_1d < -0.5) ? (wis.join(', ') || 'none') : 'SPY not red today';
-    const h = g.history || [];
-    if ($('sw-hist')) $('sw-hist').innerHTML = h.map(x => {
-      const v = x.pct_strong || 0; const c = v >= 60 ? 'var(--green)' : v >= 40 ? 'var(--amber)' : 'var(--red)';
-      return `<i style="height:${Math.max(2, v / 100 * 14)}px;background:${c}" title="${x.date}: ${v}%"></i>`;
-    }).join('');
-    if ($('sw-hist-sub')) $('sw-hist-sub').textContent = `${h.length} days · latest ${h.length ? h[h.length - 1].date : '—'}`;
+    if ($('sw-wis-sub')) $('sw-wis-sub').textContent = (g.spy_chg_1d != null && g.spy_chg_1d < -0.5) ? (wis.join(', ') || 'none') : `SPY ${g.spy_chg_1d > 0 ? '+' : ''}${g.spy_chg_1d ?? '—'}% today — not a red day`;
     if ($('swing-updated')) $('swing-updated').textContent = swData.updated_at ? '· ' + swData.updated_at : '';
     renderSwing();
+    if (typeof lastCarnivore !== 'undefined' && lastCarnivore) { renderPortfolioTable('tb-carnivore-sr', lastCarnivore.sr); renderLongTermTable('tb-carnivore-lt', lastCarnivore.lt); }
   } catch (err) {
     const tb = $('sw-tbody');
-    if (tb) tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Swing data not available yet (${err.message}). Run fetch_swing.py or wait for the nightly Action.</td></tr>`;
+    if (tb) tb.innerHTML = `<tr><td colspan="17" class="loading-msg">Swing data not available yet (${err.message}). Run fetch_swing.py or wait for the nightly Action.</td></tr>`;
   }
 }
 
