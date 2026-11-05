@@ -65,6 +65,15 @@ jobs:
           python fetch_scan.py
         continue-on-error: true
 
+      # ── STEP 3d: IBD Market Pulse (needs IBD_EMAIL / IBD_PASSWORD secrets) ──
+      - name: Scrape IBD market exposure + Big Picture
+        env:
+          IBD_EMAIL: ${{ secrets.IBD_EMAIL }}
+          IBD_PASSWORD: ${{ secrets.IBD_PASSWORD }}
+        run: |
+          python scrape_ibd.py
+        continue-on-error: true
+
       # ── STEP 4: Commit everything ─────────────────────────
       - name: Commit and push data
         run: |
@@ -78,6 +87,7 @@ jobs:
           git add data/ticker_health.json || true
           git add data/industry_history.json || true
           git add data/earnings.json || true
+          git add data/ibd.json || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
