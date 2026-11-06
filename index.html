@@ -1728,7 +1728,9 @@ function chDraw(box, bars, m) {
   const NS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const add = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
   const mono = chCss('--mono'), muted = chCss('--muted'), border = chCss('--border');
-  for (let i = 0; i <= 5; i++) { const v = lo + (hi - lo) * i / 5; add('line', { x1:PL, x2:W-PR, y1:y(v), y2:y(v), stroke:border, 'stroke-width':1 }); add('text', { x:W-PR+6, y:y(v)+3.5, fill:muted, 'font-size':10, 'font-family':mono }, v.toFixed(v > 100 ? 0 : 2)); }
+  const rawStep = (hi - lo) / 5, mag = Math.pow(10, Math.floor(Math.log10(rawStep))), nice = [1, 2, 2.5, 5, 10].find(s => s * mag >= rawStep) * mag;
+  const dec = nice < 1 ? 2 : nice < 10 ? 1 : 0;
+  for (let v = Math.ceil(lo / nice) * nice; v <= hi; v += nice) { add('line', { x1:PL, x2:W-PR, y1:y(v), y2:y(v), stroke:border, 'stroke-width':1 }); add('text', { x:W-PR+6, y:y(v)+3.5, fill:muted, 'font-size':10, 'font-family':mono }, v.toFixed(dec)); }
   let lastM = '';
   bars.forEach((b, i) => { const mo = b.d.slice(0, 7); if (mo !== lastM) { lastM = mo; add('line', { x1:x(i), x2:x(i), y1:PT, y2:H-PB, stroke:border, 'stroke-width':1, 'stroke-dasharray':'2 4' }); add('text', { x:x(i)+3, y:H-6, fill:muted, 'font-size':10, 'font-family':mono }, new Date(b.d).toLocaleString('en', { month:'short' }).toUpperCase()); } });
   if (chLayers.plan) {
