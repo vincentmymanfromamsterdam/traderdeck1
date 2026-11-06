@@ -215,6 +215,41 @@
   html[data-theme="light"] tr.sec-row:hover td, html[data-theme="light"] tr.ind-row:hover td { background:#EEF1F5; }
   .theme-btn { font-family:var(--mono); font-size:9px; letter-spacing:0.15em; padding:4px 9px; border:1px solid var(--border2); background:transparent; color:var(--muted); cursor:pointer; margin-left:14px; }
   .theme-btn:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ── 06 Charts ── */
+  :root { --ch-purple:#B388FF; --ch-stopzone:rgba(255,23,68,0.10); --ch-entryzone:rgba(0,230,118,0.10); }
+  html[data-theme="light"] { --ch-purple:#6A3FD6; --ch-stopzone:rgba(217,45,59,0.08); --ch-entryzone:rgba(14,159,90,0.08); }
+  .ch-toolbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:14px; }
+  .ch-toolbar .ch-lbl { font-size:9px; letter-spacing:0.15em; color:var(--muted); margin:0 4px 0 10px; }
+  .ch-toolbar .dir-btn { flex:0 0 auto; padding:6px 10px; font-size:10px; }
+  .ch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(540px,1fr)); gap:14px; }
+  .ch-card { background:var(--bg2); border:1px solid var(--border); overflow:hidden; }
+  .ch-card.expanded { grid-column:1/-1; }
+  .ch-hd { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .ch-tk { font-family:var(--mono); font-size:16px; font-weight:600; cursor:pointer; }
+  .ch-nm { color:var(--muted); font-size:11px; max-width:220px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .ch-px { font-family:var(--mono); font-size:13px; margin-left:auto; }
+  .ch-chg { font-family:var(--mono); font-size:11px; padding:2px 6px; }
+  .ch-chg.up { color:var(--green); background:rgba(0,230,118,0.10); } .ch-chg.dn { color:var(--red); background:rgba(255,23,68,0.10); }
+  .ch-dna { display:flex; gap:4px; align-items:center; }
+  .ch-dna span { font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:4px; }
+  .ch-stats { display:flex; gap:14px; padding:6px 12px; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:10.5px; color:var(--muted); flex-wrap:wrap; }
+  .ch-stats b { color:var(--text); font-weight:500; } .ch-stats .warn { color:var(--amber); } .ch-stats .good { color:var(--green); }
+  .ch-chart { position:relative; width:100%; height:300px; } .ch-card.expanded .ch-chart { height:520px; }
+  .ch-chart svg { display:block; width:100%; height:100%; }
+  .ch-legend { display:flex; gap:12px; padding:6px 12px; font-family:var(--mono); font-size:10px; color:var(--muted); border-top:1px solid var(--border); flex-wrap:wrap; }
+  .ch-legend i { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:4px; }
+  .ch-plan { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--border); }
+  .ch-plan div { padding:8px 12px; border-right:1px solid var(--border); font-family:var(--mono); font-size:11px; }
+  .ch-plan div:last-child { border-right:0; }
+  .ch-plan small { display:block; color:var(--muted); font-size:9.5px; letter-spacing:0.1em; margin-bottom:3px; }
+  .ch-plan .v { font-size:13px; color:var(--text); } .ch-plan .stop .v { color:var(--red); } .ch-plan .entry .v { color:var(--green); }
+  .ch-plan .calc { cursor:pointer; } .ch-plan .calc:hover { background:var(--bg3); }
+  .ch-tip { position:absolute; pointer-events:none; background:var(--bg3); border:1px solid var(--border2); padding:6px 8px; font-family:var(--mono); font-size:10.5px; color:var(--text); display:none; z-index:3; white-space:nowrap; }
+  .ch-tip .r { color:var(--muted); }
+  .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
+  .ch-ic:hover { color:var(--text); }
+  @media (max-width:600px) { .ch-grid { grid-template-columns:1fr; } .ch-plan { grid-template-columns:repeat(2,1fr); } }
 </style>
 </head>
 <body>
@@ -226,6 +261,7 @@
     <a href="#macro">MACRO</a>
     <a href="#equities">EQUITIES</a>
     <a href="#swing">SWING</a>
+    <a href="#charts">CHARTS</a>
     <a href="#calc">CALC</a>
   </nav>
   <div class="clock-wrap" style="display:flex;align-items:center">
@@ -589,6 +625,35 @@
   </div>
 
     <!-- 04 POSITION CALC -->
+
+  <div class="section" id="charts">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title">Charts — DNA Pass</div>
+      <div class="section-subtitle">9/21/50 EMA · 10W MA · AVWAP · PLAN STOP &amp; ENTRY ZONE · DAILY <span id="charts-updated" style="color:var(--muted)"></span></div>
+    </div>
+    <div class="ch-toolbar">
+      <span class="ch-lbl" style="margin-left:0">OVERLAYS</span>
+      <button class="dir-btn active-long" data-chl="e9" onclick="chLayer(this)">EMA 9</button>
+      <button class="dir-btn active-long" data-chl="e21" onclick="chLayer(this)">EMA 21</button>
+      <button class="dir-btn active-long" data-chl="e50" onclick="chLayer(this)">EMA 50</button>
+      <button class="dir-btn" data-chl="m10w" onclick="chLayer(this)">10W MA</button>
+      <button class="dir-btn active-long" data-chl="av" onclick="chLayer(this)">AVWAP</button>
+      <button class="dir-btn active-long" data-chl="plan" onclick="chLayer(this)">PLAN</button>
+      <span class="ch-lbl">RANGE</span>
+      <button class="dir-btn" data-chn="60" onclick="chRange(this)">3M</button>
+      <button class="dir-btn active-long" data-chn="130" onclick="chRange(this)">6M</button>
+      <span class="ch-lbl">SORT</span>
+      <button class="dir-btn active-long" data-chs="setup_score" onclick="chSort(this)">SETUP</button>
+      <button class="dir-btn" data-chs="rs_rating" onclick="chSort(this)">RS</button>
+      <span class="ch-lbl">SHOW</span>
+      <button class="dir-btn active-long" data-chf="all" onclick="chShow(this)">ALL</button>
+      <button class="dir-btn" data-chf="new" onclick="chShow(this)">NEW ONLY</button>
+      <button class="dir-btn" data-chf="uni" onclick="chShow(this)">MY UNIVERSE</button>
+    </div>
+    <div class="ch-grid" id="ch-grid"><div class="loading-msg">Loading charts...</div></div>
+  </div>
+
   <div class="section" id="calc">
     <div class="section-header">
       <div class="section-num">04</div>
@@ -1568,8 +1633,130 @@ function toggleTheme() {
   if (light) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', 'light');
   try { localStorage.setItem('td_theme', light ? 'dark' : 'light'); } catch(e) {}
   applyThemeBtn();
+  if (typeof chRender === 'function') chRender();
 }
 applyThemeBtn();
+
+
+// ────────────────────────────────────────────────
+//  06 CHARTS — DNA pass
+// ────────────────────────────────────────────────
+let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'setup_score', chFilter = 'all';
+const chF  = (x, d=2) => x == null ? '—' : Number(x).toFixed(d);
+const chFV = v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v;
+const chCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function chSetActive(btns, b) { btns.forEach(x => x.classList.toggle('active-long', x === b)); }
+function chLayer(b) { chLayers[b.dataset.chl] = !chLayers[b.dataset.chl]; b.classList.toggle('active-long'); chRender(); }
+function chRange(b) { chN = +b.dataset.chn; chSetActive(document.querySelectorAll('[data-chn]'), b); chRender(); }
+function chSort(b)  { chSortKey = b.dataset.chs; chSetActive(document.querySelectorAll('[data-chs]'), b); chRender(); }
+function chShow(b)  { chFilter = b.dataset.chf; chSetActive(document.querySelectorAll('[data-chf]'), b); chRender(); }
+
+async function loadChartData() {
+  try {
+    const r = await fetch('data/chart_data.json?t=' + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    chData = await r.json();
+    $('charts-updated').textContent = '· ' + (chData.updated || '').replace('T', ' ').slice(0, 16) + ' UTC';
+    chRender();
+  } catch (err) {
+    $('ch-grid').innerHTML = '<div class="loading-msg">No chart data yet — appears after the next nightly run.</div>';
+  }
+}
+function chRender() {
+  if (!chData) return;
+  const g = $('ch-grid'); g.innerHTML = '';
+  let items = Object.values(chData.charts);
+  if (chFilter === 'new') items = items.filter(i => !i.meta.in_universe);
+  if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
+  items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
+  if (!items.length) { g.innerHTML = '<div class="loading-msg">No tickers match.</div>'; return; }
+  items.forEach(it => g.appendChild(chCard(it)));
+}
+function chCard(it) {
+  const m = it.meta, bars = it.bars.slice(-chN), last = bars[bars.length - 1], prev = bars[bars.length - 2] || last;
+  const chg = (last.c / prev.c - 1) * 100;
+  const el = document.createElement('div'); el.className = 'ch-card';
+  const keys = ['adr','vol','rs','stage','high','ext'];
+  const titles = { adr:'ADR ≥3%', vol:'$vol ≥50M', rs:'RS ≥85', stage:'Stage 2', high:'≤25% off high', ext:'ATR-mult ≤10' };
+  const r3 = m.plan_stop && m.plan_entry_hi ? m.plan_entry_hi + 3 * (m.plan_entry_hi - m.plan_stop) : null;
+  el.innerHTML = `
+    <div class="ch-hd">
+      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>
+      <span class="ch-nm" title="${m.name || ''}">${m.name || ''}</span>
+      <span class="ch-dna">${keys.map(k => `<span class="dna-dot ${m.dna && m.dna[k] ? 'ok' : ''}" title="${titles[k]}" style="margin:0"></span>`).join('')}<span>SETUP ${m.setup_score}</span></span>
+      ${m.in_universe ? '' : '<span class="ch-chg" style="color:var(--blue);background:rgba(64,196,255,0.10)">NEW</span>'}
+      <span class="ch-px">${chF(last.c)}</span><span class="ch-chg ${chg >= 0 ? 'up' : 'dn'}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
+      <span class="ch-ic" title="expand">⤢</span>
+    </div>
+    <div class="ch-stats">
+      <span>RS <b>${m.rs_rating ?? '—'}</b></span><span>STAGE <b>${m.stage ?? '—'}</b></span><span>ADR <b>${chF(m.adr_pct, 1)}%</b></span>
+      <span>ATR×50 <b class="${m.atr_mult_50 > 6 ? 'warn' : ''}">${chF(m.atr_mult_50, 1)}</b></span>
+      <span>OFF HIGH <b>${chF(m.off_52w_high, 1)}%</b></span>
+      <span>RVOL <b class="${last.rv >= 1.5 ? 'good' : ''}">${chF(last.rv)}</b></span>
+      <span>CONFL <b>${(m.confluence || []).join('/') || '—'}</b></span>
+      ${m.pocket_pivot ? '<span class="good">● POCKET PIVOT</span>' : ''}${m.tight ? '<span>● TIGHT</span>' : ''}
+      ${m.earnings_days != null && m.earnings_days <= 10 ? `<span class="warn">⚠ EARNINGS ${m.earnings_date} (${m.earnings_days}d)</span>` : ''}
+    </div>
+    <div class="ch-chart"><div class="ch-tip"></div></div>
+    <div class="ch-legend">
+      <span><i style="background:var(--blue)"></i>EMA9</span><span><i style="background:var(--amber)"></i>EMA21</span>
+      <span><i style="background:var(--red)"></i>EMA50</span><span><i style="background:var(--muted)"></i>10W MA</span>
+      <span><i style="background:var(--ch-purple)"></i>AVWAP</span><span><i style="border-top:1px dashed var(--red);height:0"></i>plan stop</span>
+      <span><i style="background:var(--ch-entryzone);height:8px"></i>entry zone</span><span><i style="border-top:1px dashed var(--amber);height:0"></i>earnings</span>
+    </div>
+    <div class="ch-plan">
+      <div class="entry"><small>ENTRY ZONE</small><span class="v">${chF(m.plan_entry_lo)} – ${chF(m.plan_entry_hi)}</span></div>
+      <div class="stop"><small>PLAN STOP (${m.plan_stop_basis || '—'})</small><span class="v">${chF(m.plan_stop)} · −${chF(m.plan_stop_pct, 1)}%</span></div>
+      <div><small>+3R TARGET</small><span class="v">${r3 ? chF(r3) : '—'}</span></div>
+      <div class="calc" title="load entry & stop in the calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})"><small>POSITION</small><span class="v" style="color:var(--accent)">→ CALCULATOR</span></div>
+    </div>`;
+  const box = el.querySelector('.ch-chart');
+  el.querySelector('.ch-ic').onclick = () => { el.classList.toggle('expanded'); chDraw(box, bars, m); };
+  requestAnimationFrame(() => chDraw(box, bars, m));
+  return el;
+}
+function chDraw(box, bars, m) {
+  box.querySelectorAll('svg').forEach(s => s.remove());
+  const W = box.clientWidth || 540, H = box.clientHeight || 300, PL = 8, PR = 58, PT = 10, PB = 22, VH = Math.round(H * 0.18);
+  const ph = H - PT - PB - VH - 6, pw = W - PL - PR, n = bars.length, bw = pw / n, cw = Math.max(1, bw * 0.62);
+  let lo = Infinity, hi = -Infinity;
+  bars.forEach(b => { lo = Math.min(lo, b.l); hi = Math.max(hi, b.h); ['e9','e21','e50','m10w','av'].forEach(k => { if (chLayers[k] && b[k] != null) { lo = Math.min(lo, b[k]); hi = Math.max(hi, b[k]); } }); });
+  if (chLayers.plan && m.plan_stop) lo = Math.min(lo, m.plan_stop);
+  const pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
+  const y = v => PT + (hi - v) / (hi - lo) * ph, x = i => PL + i * bw + bw / 2;
+  const vmax = Math.max(...bars.map(b => b.v)) || 1; const vy = v => H - PB - (v / vmax) * VH;
+  const NS = 'http://www.w3.org/2000/svg'; const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const add = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
+  const mono = chCss('--mono'), muted = chCss('--muted'), border = chCss('--border');
+  for (let i = 0; i <= 5; i++) { const v = lo + (hi - lo) * i / 5; add('line', { x1:PL, x2:W-PR, y1:y(v), y2:y(v), stroke:border, 'stroke-width':1 }); add('text', { x:W-PR+6, y:y(v)+3.5, fill:muted, 'font-size':10, 'font-family':mono }, v.toFixed(v > 100 ? 0 : 2)); }
+  let lastM = '';
+  bars.forEach((b, i) => { const mo = b.d.slice(0, 7); if (mo !== lastM) { lastM = mo; add('line', { x1:x(i), x2:x(i), y1:PT, y2:H-PB, stroke:border, 'stroke-width':1, 'stroke-dasharray':'2 4' }); add('text', { x:x(i)+3, y:H-6, fill:muted, 'font-size':10, 'font-family':mono }, new Date(b.d).toLocaleString('en', { month:'short' }).toUpperCase()); } });
+  if (chLayers.plan) {
+    if (m.plan_entry_lo && m.plan_entry_hi) add('rect', { x:PL, y:y(m.plan_entry_hi), width:pw, height:Math.max(1, y(m.plan_entry_lo) - y(m.plan_entry_hi)), fill:chCss('--ch-entryzone') });
+    if (m.plan_stop) {
+      add('rect', { x:PL, y:y(m.plan_stop), width:pw, height:14, fill:chCss('--ch-stopzone') });
+      add('line', { x1:PL, x2:W-PR, y1:y(m.plan_stop), y2:y(m.plan_stop), stroke:chCss('--red'), 'stroke-width':1, 'stroke-dasharray':'5 3' });
+      add('text', { x:PL+4, y:y(m.plan_stop)-3, fill:chCss('--red'), 'font-size':9.5, 'font-family':mono }, 'STOP ' + m.plan_stop.toFixed(2) + ' (−' + (m.plan_stop_pct || 0).toFixed(1) + '%)');
+    }
+  }
+  if (m.earnings_date) { const i = bars.findIndex(b => b.d >= m.earnings_date); const xi = i < 0 ? W - PR : x(i); add('line', { x1:xi, x2:xi, y1:PT, y2:H-PB, stroke:chCss('--amber'), 'stroke-width':1, 'stroke-dasharray':'3 3' }); add('text', { x:xi-4, y:PT+10, fill:chCss('--amber'), 'font-size':9.5, 'font-family':mono, 'text-anchor':'end' }, 'E'); }
+  const up = b => b.c >= b.o, UP = chCss('--green'), DN = chCss('--red');
+  bars.forEach((b, i) => { const hot = b.rv != null && b.rv >= 1.5; add('rect', { x:x(i)-cw/2, y:vy(b.v), width:cw, height:H-PB-vy(b.v), fill:up(b) ? UP : DN, opacity:hot ? 0.9 : 0.3 }); });
+  bars.forEach((b, i) => { const col = up(b) ? UP : DN; add('line', { x1:x(i), x2:x(i), y1:y(b.h), y2:y(b.l), stroke:col, 'stroke-width':1 }); add('rect', { x:x(i)-cw/2, y:y(Math.max(b.o, b.c)), width:cw, height:Math.max(1, Math.abs(y(b.o) - y(b.c))), fill:up(b) ? chCss('--bg2') : col, stroke:col, 'stroke-width':1 }); });
+  const line = (k, col, w, dash) => { if (!chLayers[k]) return; let d = '', pen = false; bars.forEach((b, i) => { if (b[k] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(b[k]).toFixed(1) + ' '; pen = true; }); const a = { d, fill:'none', stroke:col, 'stroke-width':w }; if (dash) a['stroke-dasharray'] = dash; add('path', a); };
+  line('m10w', muted, 1.2, '4 3'); line('e50', chCss('--red'), 1.4); line('e21', chCss('--amber'), 1.2); line('e9', chCss('--blue'), 1.2); line('av', chCss('--ch-purple'), 1.4);
+  const last = bars[n-1];
+  add('rect', { x:W-PR+2, y:y(last.c)-7, width:PR-4, height:14, fill:up(last) ? UP : DN }); add('text', { x:W-PR+6, y:y(last.c)+3.5, fill:'#000', 'font-size':10, 'font-family':mono, 'font-weight':600 }, last.c.toFixed(2));
+  const cross = add('line', { x1:0, x2:0, y1:PT, y2:H-PB, stroke:muted, 'stroke-width':1, 'stroke-dasharray':'2 2', opacity:0 });
+  const tip = box.querySelector('.ch-tip');
+  svg.onmousemove = e => { const r = svg.getBoundingClientRect(); const i = Math.max(0, Math.min(n-1, Math.floor((e.clientX - r.left - PL) / bw))); const b = bars[i];
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
+    tip.style.display = 'block'; tip.style.left = Math.min(e.clientX - r.left + 12, W - 200) + 'px'; tip.style.top = (e.clientY - r.top + 10) + 'px';
+    tip.innerHTML = `<b>${b.d}</b><br><span class="r">O</span> ${b.o} <span class="r">H</span> ${b.h} <span class="r">L</span> ${b.l} <span class="r">C</span> ${b.c}<br><span class="r">VOL</span> ${chFV(b.v)} <span class="r">RVOL</span> ${chF(b.rv)}<br><span class="r">E9</span> ${chF(b.e9)} <span class="r">E21</span> ${chF(b.e21)} <span class="r">E50</span> ${chF(b.e50)}<br><span class="r">AVWAP</span> ${chF(b.av)} <span class="r">10W</span> ${chF(b.m10w)}`; };
+  svg.onmouseleave = () => { tip.style.display = 'none'; cross.setAttribute('opacity', 0); };
+  box.appendChild(svg);
+}
+let chResizeT; window.addEventListener('resize', () => { clearTimeout(chResizeT); chResizeT = setTimeout(chRender, 150); });
 
 // ────────────────────────────────────────────────
 //  INIT
@@ -1579,6 +1766,7 @@ loadCarnivorePortfolios();
 loadSwingData();
 loadScanData();
 loadIbd();
+loadChartData();
 calc();
 
 // Auto-load saved Finnhub key

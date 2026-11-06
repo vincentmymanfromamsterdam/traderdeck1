@@ -54,6 +54,45 @@ PREFILTER_VOL_USD  = 20_000_000     # quick pass; the DNA filter itself is 50M
 KEEP_TOP           = 150
 BATCH              = 150
 
+CHART_PATH  = "data/chart_data.json"
+CHART_MAX   = 40          # max DNA passers with chart data
+CHART_BARS  = 130         # ~6 months of daily bars
+CHART_META  = ("ticker", "name", "industry", "rs_rating", "stage", "adr_pct", "atr_mult_50", "off_52w_high",
+               "setup_score", "rvol", "earnings_date", "earnings_days", "plan_stop", "plan_stop_pct",
+               "plan_stop_basis", "plan_entry_lo", "plan_entry_hi", "dna", "confluence", "pocket_pivot", "tight",
+               "in_universe")
+
+
+def chart_bars(df):
+    """OHLCV + EMA9/21/50, 10-week MA, AVWAP from the 120-day swing low, RVOL — for the chart cards."""
+    x = df.dropna(subset=["Close"])
+    c = x["Close"]
+    e9, e21, e50 = (c.ewm(span=n, adjust=False).mean() for n in (9, 21, 50))
+    ma10w = c.rolling(50).mean()
+    vol20 = x["Volume"].rolling(20).mean()
+    seg = x.loc[x["Low"].tail(120).idxmin():]
+    tp = (seg["High"] + seg["Low"] + seg["Close"]) / 3
+    av = pd.Series(np.nan, index=x.index)
+    av.loc[seg.index] = (tp * seg["Volume"]).cumsum() / seg["Volume"].cumsum()
+    x = x.tail(CHART_BARS)
+
+    def f(s, i):
+        v = s.loc[i]
+        return None if pd.isna(v) else round(float(v), 2)
+
+    bars = []
+    for i, row in x.iterrows():
+        v20 = vol20.loc[i]
+        bars.append({
+            "d": i.strftime("%Y-%m-%d"),
+            "o": round(float(row["Open"]), 2), "h": round(float(row["High"]), 2),
+            "l": round(float(row["Low"]), 2), "c": round(float(row["Close"]), 2),
+            "v": int(row["Volume"]) if not pd.isna(row["Volume"]) else 0,
+            "e9": f(e9, i), "e21": f(e21, i), "e50": f(e50, i), "m10w": f(ma10w, i), "av": f(av, i),
+            "rv": None if pd.isna(v20) or v20 == 0 else round(float(row["Volume"] / v20), 2),
+        })
+    return bars
+
 # ─────────────────────────────────────────────────────────
 #  DOWNLOAD IN BATCHES
 # ─────────────────────────────────────────────────────────
@@ -376,6 +415,18 @@ def main():
     os.makedirs("data", exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(payload, f, separators=(",", ":"))
+
+    # ── 6. Chart data for section 06 (DNA passers, 130 daily bars each) ──
+    try:
+        chart_rows = passed[:CHART_MAX]
+        charts = {r["ticker"]: {"meta": {k: r.get(k) for k in CHART_META},
+                                "bars": chart_bars(full[r["ticker"]])}
+                  for r in chart_rows if r["ticker"] in full}
+        with open(CHART_PATH, "w") as f:
+            json.dump({"updated": payload["updated_at"], "charts": charts}, f, separators=(",", ":"))
+        print(f"  Saved {CHART_PATH} ({len(charts)} tickers)")
+    except Exception as e:
+        print(f"  (chart data skipped: {e})")
 
     print(f"  Analysed {n_analysed} · DNA pass {len(passed)} "
           f"({payload['stats']['new_vs_universe']} not in my universe) · "
