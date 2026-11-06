@@ -54,6 +54,11 @@ PREFILTER_VOL_USD  = 20_000_000     # quick pass; the DNA filter itself is 50M
 KEEP_TOP           = 150
 BATCH              = 150
 
+THEMES_PATH        = "data/themes.json"        # hand-curated theme baskets (edit freely)
+THEME_DATA_PATH    = "data/themes_data.json"
+THEME_HISTORY_PATH = "data/theme_history.json"
+THEME_CHART_TOP    = 5                          # per theme: top-N by RS get chart data
+
 CHART_PATH  = "data/chart_data.json"
 CHART_MAX   = 40          # max DNA passers with chart data
 CHART_BARS  = 130         # ~6 months of daily bars
@@ -149,6 +154,140 @@ def download(tickers, start, label):
 # ─────────────────────────────────────────────────────────
 #  MAIN
 # ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────
+#  THEMATICS
+# ─────────────────────────────────────────────────────────
+def load_themes():
+    if not os.path.exists(THEMES_PATH):
+        return []
+    with open(THEMES_PATH) as f:
+        d = json.load(f)
+    out = []
+    for th in d.get("themes", []):
+        tk = [t.strip().upper() for t in th.get("tickers", []) if t and t.strip()]
+        if th.get("id") and tk:
+            out.append({"id": th["id"], "name": th.get("name") or th["id"], "etf": th.get("etf"),
+                        "src": th.get("src"), "tickers": list(dict.fromkeys(tk))})
+    return out
+
+
+def _ret(c, n):
+    return round(float(c.iloc[-1] / c.iloc[-1 - n] - 1) * 100, 2) if len(c) > n else None
+
+
+def _ytd(c):
+    s = c[c.index.year == c.index[-1].year]
+    return round(float(s.iloc[-1] / s.iloc[0] - 1) * 100, 1) if len(s) > 1 else None
+
+
+def spy_returns(spy):
+    c = spy["Close"].dropna()
+    return {"chg_1d": _ret(c, 1), "chg_1w": _ret(c, 5), "chg_1m": _ret(c, 21), "ytd": _ytd(c)}
+
+
+def theme_label(t):
+    """Same rules as the dashboard legend."""
+    if t["rel_1w"] is None:
+        return None
+    if t["rel_1w"] > 2 and (t.get("ps_chg_5d") or 0) >= 10:
+        return "ON THE MOVE"
+    if t["rel_1w"] > 0 and (t["pct_strong"] or 0) >= 50:
+        return "LEADING"
+    if t["rel_1w"] > 0:
+        return "REL. STRONG"
+    if (t.get("ps_chg_5d") or 0) <= -20:
+        return "FADING"
+    return None
+
+
+def build_themes(themes_def, by_t, full, spy, today_s, dates_hint=None):
+    if not themes_def or spy is None:
+        return [], []
+    spy_c = spy["Close"].dropna()
+    idx = spy_c.tail(130).index
+    spy_n = spy_c.reindex(idx).ffill(); spy_n = spy_n / spy_n.iloc[0]
+
+    # history of % strong per theme → 5-day change (same mechanism as industries)
+    hist = {}
+    if os.path.exists(THEME_HISTORY_PATH):
+        try:
+            with open(THEME_HISTORY_PATH) as f:
+                hist = json.load(f)
+        except Exception:
+            hist = {}
+    prev_labels = {}
+    if os.path.exists(THEME_DATA_PATH):
+        try:
+            with open(THEME_DATA_PATH) as f:
+                prev_labels = {t["id"]: t.get("label") for t in json.load(f).get("themes", [])}
+        except Exception:
+            prev_labels = {}
+    past = sorted(d for d in hist if d < today_s)
+
+    TK = ("ticker", "name", "price", "chg_1d", "rs_rating", "stage", "off_52w_high", "dna", "dna_pass", "dna_score",
+          "setup_score", "confluence_n", "pocket_pivot", "tight", "rvol", "earnings_days", "plan_stop", "plan_stop_pct", "plan_entry_hi",
+          "in_universe", "industry", "etf", "above_ema9", "above_ema21", "ema9_rising", "ema21_rising")
+    out, moves, snap = [], [], {}
+    for th in themes_def:
+        rows = []
+        for t in th["tickers"]:
+            r = by_t.get(t)
+            if not r or t not in full:
+                continue
+            c = full[t]["Close"].dropna()
+            if len(c) < 30:
+                continue
+            row = {k: r.get(k) for k in TK}
+            row.update({"chg_1w": _ret(c, 5), "chg_1m": _ret(c, 21), "ytd": _ytd(c),
+                        "near_high": (r.get("off_52w_high") is not None and r["off_52w_high"] >= -5),
+                        "strong": bool(r["above_ema9"] and r["above_ema21"] and r["ema9_rising"] and r["ema21_rising"])})
+            rows.append(row)
+        if not rows:
+            continue
+        n = len(rows)
+        basket = pd.concat([full[r["ticker"]]["Close"].reindex(idx).ffill() for r in rows], axis=1)
+        basket = (basket / basket.iloc[0]).mean(axis=1)
+        rel = (basket / spy_n).dropna()
+        mean = lambda k: round(float(np.mean([r[k] for r in rows if r[k] is not None])), 2) if any(r[k] is not None for r in rows) else None
+        rows.sort(key=lambda r: ((r["rs_rating"] or 0), r["setup_score"] or 0), reverse=True)
+        pct_strong = round(sum(r["strong"] for r in rows) / n * 100)
+        rs_vals = [r["rs_rating"] for r in rows if r["rs_rating"] is not None]
+        t = {"id": th["id"], "name": th["name"], "etf": th["etf"], "src": th.get("src"), "n": n,
+             "missing": [x for x in th["tickers"] if x not in {r["ticker"] for r in rows}],
+             "chg_1d": mean("chg_1d"), "chg_1w": mean("chg_1w"), "chg_1m": mean("chg_1m"), "ytd": mean("ytd"),
+             "rel_1w": round(float(rel.iloc[-1] / rel.iloc[-6] - 1) * 100, 2) if len(rel) > 6 else None,
+             "rel_1m": round(float(rel.iloc[-1] / rel.iloc[-22] - 1) * 100, 2) if len(rel) > 22 else None,
+             "pct_strong": pct_strong,
+             "pct_stage2": round(sum(r["stage"] == 2 for r in rows) / n * 100),
+             "near_high": sum(r["near_high"] for r in rows),
+             "dna_pass": sum(bool(r["dna_pass"]) for r in rows),
+             "avg_rs": round(sum(rs_vals) / len(rs_vals)) if rs_vals else None,
+             "leaders": [r["ticker"] for r in rows[:3]],
+             "chart_tickers": [r["ticker"] for r in rows[:THEME_CHART_TOP]],
+             "spark": [round(float(v), 4) for v in rel.iloc[::5]],
+             "tickers": rows}
+        snap[th["id"]] = {"ps": pct_strong, "rs": t["avg_rs"]}
+        # 5-day / 1-day change in % strong
+        ref = hist[past[-5]] if len(past) >= 5 else (hist[past[0]] if past else {})
+        prev = hist[past[-1]] if past else {}
+        r5, r1 = ref.get(th["id"]) or {}, prev.get(th["id"]) or {}
+        t["ps_chg_5d"] = round(pct_strong - r5["ps"]) if r5.get("ps") is not None else None
+        t["ps_chg_1d"] = round(pct_strong - r1["ps"]) if r1.get("ps") is not None else None
+        t["label"] = theme_label(t)
+        t["label_prev"] = prev_labels.get(th["id"])
+        if th["id"] in prev_labels and prev_labels[th["id"]] != t["label"]:
+            moves.append({"id": th["id"], "name": th["name"], "prev": prev_labels[th["id"]], "now": t["label"],
+                          "rel_1w": t["rel_1w"], "pct_strong": pct_strong, "ps_chg_5d": t["ps_chg_5d"]})
+        out.append(t)
+
+    hist[today_s] = snap
+    hist = {d: hist[d] for d in sorted(hist)[-30:]}
+    with open(THEME_HISTORY_PATH, "w") as f:
+        json.dump(hist, f, separators=(",", ":"))
+    out.sort(key=lambda t: -(t["rel_1w"] if t["rel_1w"] is not None else -999))
+    return out, moves
+
+
 def main():
     t0 = time.time()
     print("TRADERDECK — Full Market Scan")
@@ -186,7 +325,9 @@ def main():
 
     # ── 4. Full analysis ─────────────────────────────────
     start400 = (dt.date.today() - dt.timedelta(days=400)).strftime("%Y-%m-%d")
-    need = sorted(set(liquid) | set(sp500) | {"SPY"})
+    themes_def = load_themes()
+    theme_tickers = sorted({t for th in themes_def for t in th["tickers"]})
+    need = sorted(set(liquid) | set(sp500) | set(theme_tickers) | {"SPY"})
     print(f"  Full history for {len(need)} names...")
     full = download(need, start400, "full")
 
@@ -214,18 +355,16 @@ def main():
     except Exception as e:
         print(f"  (earnings calendar unavailable: {e})"); earnings = {}
 
-    rows, n_analysed = [], 0
-    for t in liquid:
+    def enrich(t):
         df = full.get(t)
         if df is None:
-            continue
+            return None
         try:
             m = analyse(t, df, spy_chg)
         except Exception:
-            continue
+            return None
         if not m:
-            continue
-        n_analysed += 1
+            return None
         m["rs_rating"] = percentile(m.pop("rs_raw"))
         sm = smap.get(t) or {}
         m["name"] = (sm.get("name") or "")[:40]
@@ -257,7 +396,21 @@ def main():
             + (1 if m["tight"] else 0) + (1 if m["pocket_pivot"] else 0)
             + min(m["wis_count_20d"], 3)
         )
-        rows.append(m)
+        return m
+
+    rows = []
+    for t in liquid:
+        m = enrich(t)
+        if m:
+            rows.append(m)
+    n_analysed = len(rows)
+    # theme tickers that did not pass the liquidity pre-filter: analysed too, but kept out of market breadth / sectors
+    extra = {}
+    for t in theme_tickers:
+        if t in full and t not in {r["ticker"] for r in rows}:
+            m = enrich(t)
+            if m:
+                extra[t] = m
 
     rows.sort(key=lambda x: (x["dna_pass"], x["setup_score"], x["rs_rating"] or 0), reverse=True)
     passed = [r for r in rows if r["dna_pass"]]
@@ -393,6 +546,11 @@ def main():
                                 key=lambda x: x["earnings_days"]),
     }
 
+    # ── Thematics: equal-weight baskets, relative to SPY ──
+    by_t = {r["ticker"]: r for r in rows} | extra
+    themes_out, theme_moves = build_themes(themes_def, by_t, full, spy, today_s, dates_hint=None)
+    changes["theme_moves"] = theme_moves
+
     payload = {
         "updated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "updated_date": dt.date.today().isoformat(),
@@ -418,8 +576,13 @@ def main():
 
     # ── 6. Chart data for section 06 (DNA passers, 130 daily bars each) ──
     try:
-        chart_rows = passed[:CHART_MAX]
-        charts = {r["ticker"]: {"meta": {k: r.get(k) for k in CHART_META},
+        chart_rows = list(passed[:CHART_MAX])
+        seen = {r["ticker"] for r in chart_rows}
+        for th in themes_out:
+            for tk in th["chart_tickers"]:
+                if tk not in seen and tk in by_t:
+                    chart_rows.append(by_t[tk]); seen.add(tk)
+        charts = {r["ticker"]: {"meta": {k: r.get(k) for k in CHART_META} | {"themes": [th["id"] for th in themes_out if r["ticker"] in th["chart_tickers"]]},
                                 "bars": chart_bars(full[r["ticker"]])}
                   for r in chart_rows if r["ticker"] in full}
         with open(CHART_PATH, "w") as f:
@@ -427,6 +590,11 @@ def main():
         print(f"  Saved {CHART_PATH} ({len(charts)} tickers)")
     except Exception as e:
         print(f"  (chart data skipped: {e})")
+
+    with open(THEME_DATA_PATH, "w") as f:
+        json.dump({"updated_at": payload["updated_at"], "updated_date": today_s,
+                   "spy": spy_returns(spy), "themes": themes_out}, f, separators=(",", ":"))
+    print(f"  Saved {THEME_DATA_PATH} ({len(themes_out)} themes, {len(theme_moves)} label changes)")
 
     print(f"  Analysed {n_analysed} · DNA pass {len(passed)} "
           f"({payload['stats']['new_vs_universe']} not in my universe) · "

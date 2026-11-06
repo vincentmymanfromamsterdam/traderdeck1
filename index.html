@@ -250,6 +250,36 @@
   .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
   .ch-ic:hover { color:var(--text); }
   @media (max-width:600px) { .ch-grid { grid-template-columns:1fr; } .ch-plan { grid-template-columns:repeat(2,1fr); } }
+
+  /* ── 03b Thematics ── */
+  .mut { color:var(--muted); } .amb { color:var(--amber); }
+  .th-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:0 0 14px; }
+  .th-kpi { border:1px solid var(--border); background:var(--bg2); padding:10px 12px; font-family:var(--mono); }
+  .th-kpi small { display:block; color:var(--muted); font-size:9px; letter-spacing:0.15em; margin-bottom:4px; text-transform:uppercase; }
+  .th-kpi b { font-size:14px; font-weight:500; } .th-kpi .ls { color:var(--muted); font-size:10px; margin-left:8px; }
+  .th-toolbar { display:flex; gap:6px; align-items:center; margin:0 0 10px; flex-wrap:wrap; }
+  .th-toolbar .dir-btn { flex:0 0 auto; padding:6px 10px; font-size:10px; }
+  .th-toolbar .th-lbl { font-size:9px; letter-spacing:0.15em; color:var(--muted); margin:0 4px 0 10px; }
+  tr.th-row { cursor:pointer; } tr.th-row:hover td, tr.th-row.open td { background:var(--bg3); }
+  .th-caret { display:inline-block; width:12px; color:var(--muted); transition:transform .15s; } tr.open .th-caret { transform:rotate(90deg); }
+  tr.th-row td:nth-child(2), .th-subtbl td:first-child, .th-subtbl th:first-child, #tb-themes + * th:nth-child(2) { text-align:left; }
+  .th-name { font-weight:600; } .th-etf { color:var(--muted); margin-left:6px; font-size:10px; }
+  .th-tag { display:inline-block; padding:2px 6px; font-size:9px; letter-spacing:0.1em; margin-left:6px; vertical-align:middle; font-family:var(--mono); }
+  .th-tag.move { color:var(--green); background:rgba(0,230,118,0.12); border:1px solid var(--green); }
+  .th-tag.lead { color:var(--blue); background:rgba(64,196,255,0.12); }
+  .th-tag.fade { color:var(--red); background:rgba(255,23,68,0.12); }
+  .th-tag.new  { color:var(--amber); background:rgba(255,179,0,0.12); }
+  .th-bar { display:inline-block; height:6px; background:var(--border2); width:56px; vertical-align:middle; margin-left:6px; position:relative; }
+  .th-bar i { position:absolute; top:0; bottom:0; background:var(--green); } .th-bar.neg i { background:var(--red); }
+  tr.th-sub { display:none; } tr.th-sub.open { display:table-row; }
+  tr.th-sub > td { padding:0 0 0 20px !important; background:var(--bg); }
+  .th-subtbl { width:100%; border-left:2px solid var(--border2); }
+  .th-subtbl th { font-size:8.5px; padding:6px 10px; background:var(--bg2); }
+  .th-subtbl td { padding:6px 10px; font-size:10.5px; }
+  .th-actions { display:flex; gap:8px; align-items:center; padding:8px 10px; background:var(--bg2); border-top:1px solid var(--border); font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .th-actions .dir-btn { flex:0 0 auto; padding:5px 9px; font-size:9.5px; }
+  svg.th-sp { vertical-align:middle; }
+  @media (max-width:800px) { .th-kpis { grid-template-columns:1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -491,6 +521,31 @@
     <div class="table-label">S&P 500 GICS Sectors</div>
     <div class="table-wrap"><table><thead><tr><th>#</th><th>Sector / ETF</th><th>1D %</th><th>1W %</th><th>YTD %</th><th title="% of liquid stocks in this sector above rising EMA9 + EMA21">% Strong</th><th title="stocks passing all 6 DNA filters">DNA ✓</th><th>Leaders (RS)</th><th>5D</th></tr></thead><tbody id="tb-sectors"><tr><td colspan="9" class="loading-msg">Loading...</td></tr></tbody></table></div>
 
+
+    <div class="table-label" id="themes" style="margin-top:22px;display:flex;justify-content:space-between"><span>Thematics — theme rotation <span style="color:var(--muted);font-weight:400;letter-spacing:0">· equal-weight baskets vs SPY · click a theme for its tickers</span></span><span id="themes-updated" style="color:var(--muted);font-weight:400"></span></div>
+    <div class="th-kpis" id="th-kpis"></div>
+    <div class="th-toolbar">
+      <span class="th-lbl" style="margin-left:0">SORT</span>
+      <button class="dir-btn active-long" data-ths="rel_1w" onclick="thSort(this)">REL. 1W</button>
+      <button class="dir-btn" data-ths="chg_1w" onclick="thSort(this)">1W</button>
+      <button class="dir-btn" data-ths="ps_chg_5d" onclick="thSort(this)">Δ % STRONG</button>
+      <button class="dir-btn" data-ths="avg_rs" onclick="thSort(this)">AVG RS</button>
+      <button class="dir-btn" data-ths="ytd" onclick="thSort(this)">YTD</button>
+      <span class="th-lbl">SHOW</span>
+      <button class="dir-btn active-long" data-thf="all" onclick="thFilter(this)">ALL</button>
+      <button class="dir-btn" data-thf="move" onclick="thFilter(this)">ON THE MOVE</button>
+      <button class="dir-btn" data-thf="lead" onclick="thFilter(this)">LEADING</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>#</th><th style="text-align:left">Theme</th><th>N</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th>
+        <th title="basket ÷ SPY, 1 week">Rel 1W</th><th title="basket ÷ SPY, 1 month">Rel 1M</th>
+        <th title="% of tickers above rising EMA9 + EMA21">% Strong</th><th title="change in % strong vs 5 days ago">Δ5D</th>
+        <th>Stage 2</th><th title="tickers within 5% of 52-week high">@High</th><th title="tickers passing all 6 DNA filters">DNA ✓</th><th>Avg RS</th><th>Leaders (RS)</th><th title="basket ÷ SPY, 6 months">Rel 6M</th>
+      </tr></thead>
+      <tbody id="tb-themes"><tr><td colspan="17" class="loading-msg">Loading...</td></tr></tbody>
+    </table></div>
+
     <div class="collapsible-head" onclick="toggle(this)">
       <span class="caret">▸</span><span class="collapsible-title">Major ETFs</span>
     </div>
@@ -650,6 +705,7 @@
       <button class="dir-btn active-long" data-chf="all" onclick="chShow(this)">ALL</button>
       <button class="dir-btn" data-chf="new" onclick="chShow(this)">NEW ONLY</button>
       <button class="dir-btn" data-chf="uni" onclick="chShow(this)">MY UNIVERSE</button>
+      <button class="dir-btn" id="chf-theme" style="display:none" onclick="chShow(this)" data-chf="theme">THEME</button>
     </div>
     <div class="ch-grid" id="ch-grid"><div class="loading-msg">Loading charts...</div></div>
   </div>
@@ -1649,7 +1705,7 @@ function chSetActive(btns, b) { btns.forEach(x => x.classList.toggle('active-lon
 function chLayer(b) { chLayers[b.dataset.chl] = !chLayers[b.dataset.chl]; b.classList.toggle('active-long'); chRender(); }
 function chRange(b) { chN = +b.dataset.chn; chSetActive(document.querySelectorAll('[data-chn]'), b); chRender(); }
 function chSort(b)  { chSortKey = b.dataset.chs; chSetActive(document.querySelectorAll('[data-chs]'), b); chRender(); }
-function chShow(b)  { chFilter = b.dataset.chf; chSetActive(document.querySelectorAll('[data-chf]'), b); chRender(); }
+function chShow(b)  { if (b.dataset.chf === 'theme') return; chFilter = b.dataset.chf; chSetActive(document.querySelectorAll('[data-chf]'), b); chRender(); }
 
 async function loadChartData() {
   try {
@@ -1668,6 +1724,8 @@ function chRender() {
   let items = Object.values(chData.charts);
   if (chFilter === 'new') items = items.filter(i => !i.meta.in_universe);
   if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
+  if (chFilter.startsWith('theme:')) { const id = chFilter.slice(6); items = items.filter(i => (i.meta.themes || []).includes(id)); }
+  else { const b = $('chf-theme'); if (b) b.style.display = 'none'; }
   items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
   if (!items.length) { g.innerHTML = '<div class="loading-msg">No tickers match.</div>'; return; }
   items.forEach(it => g.appendChild(chCard(it)));
@@ -1760,6 +1818,90 @@ function chDraw(box, bars, m) {
 }
 let chResizeT; window.addEventListener('resize', () => { clearTimeout(chResizeT); chResizeT = setTimeout(chRender, 150); });
 
+
+// ────────────────────────────────────────────────
+//  03b THEMATICS
+// ────────────────────────────────────────────────
+let thData = null, thSortKey = 'rel_1w', thMode = 'all', thOpen = new Set();
+const thF = (x, d=2, sign=true) => x == null ? '—' : ((sign && x > 0 ? '+' : '') + Number(x).toFixed(d));
+const thC = x => x > 0 ? 'pos' : x < 0 ? 'neg' : 'mut';
+const thTagCls = { 'ON THE MOVE':'move', 'LEADING':'lead', 'REL. STRONG':'lead', 'FADING':'fade' };
+function thSort(b)   { thSortKey = b.dataset.ths; document.querySelectorAll('[data-ths]').forEach(x => x.classList.toggle('active-long', x === b)); renderThemes(); }
+function thFilter(b) { thMode = b.dataset.thf; document.querySelectorAll('[data-thf]').forEach(x => x.classList.toggle('active-long', x === b)); renderThemes(); }
+function thTog(id)   { thOpen.has(id) ? thOpen.delete(id) : thOpen.add(id); renderThemes(); }
+function thSpark(vals) {
+  if (!vals || vals.length < 2) return '';
+  const w = 84, h = 20, mn = Math.min(...vals), mx = Math.max(...vals), sp = mx - mn || 1;
+  const yy = v => (h - 2 - (v - mn) / sp * (h - 4)).toFixed(1);
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${yy(v)}`).join(' ');
+  const col = vals[vals.length - 1] >= vals[0] ? 'var(--green)' : 'var(--red)';
+  return `<svg class="th-sp" width="${w}" height="${h}"><line x1="0" x2="${w}" y1="${yy(1)}" y2="${yy(1)}" stroke="var(--border2)" stroke-dasharray="2 2"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3"/></svg>`;
+}
+function thBar(v, max) { if (v == null) return ''; const neg = v < 0; return `<span class="th-bar ${neg ? 'neg' : ''}"><i style="${neg ? 'right' : 'left'}:50%;width:${Math.min(50, Math.abs(v) / (max || 1) * 50)}%"></i></span>`; }
+function thShowCharts(id) {
+  chFilter = 'theme:' + id; document.querySelectorAll('[data-chf]').forEach(x => x.classList.remove('active-long'));
+  const b = $('chf-theme'); if (b) { b.style.display = ''; b.classList.add('active-long'); b.textContent = 'THEME: ' + ((thData.themes.find(t => t.id === id) || {}).name || id).toUpperCase(); }
+  chRender(); document.getElementById('charts').scrollIntoView({ behavior: 'smooth' });
+}
+function renderThemes() {
+  const tb = $('tb-themes'); if (!tb || !thData) return;
+  let T = [...thData.themes].sort((a, b) => ((b[thSortKey] ?? -999) - (a[thSortKey] ?? -999)));
+  if (thMode === 'move') T = T.filter(t => t.label === 'ON THE MOVE');
+  if (thMode === 'lead') T = T.filter(t => t.label === 'LEADING' || t.label === 'REL. STRONG');
+  const mx = Math.max(...thData.themes.map(t => Math.abs(t.rel_1w || 0)));
+  const dots = r => `<span class="dna-dots">${['adr','vol','rs','stage','high','ext'].map(k => `<span class="dna-dot ${r.dna && r.dna[k] ? 'ok' : ''}"></span>`).join('')}</span>`;
+  tb.innerHTML = T.length ? T.map((t, i) => {
+    const tag = t.label ? `<span class="th-tag ${thTagCls[t.label]}">${t.label}</span>` : '';
+    const open = thOpen.has(t.id);
+    return `<tr class="th-row ${open ? 'open' : ''}" onclick="thTog('${t.id}')">
+      <td class="mut">${String(i + 1).padStart(2, '0')}</td>
+      <td><span class="th-caret">▸</span><span class="th-name">${t.name}</span><span class="th-etf">${t.etf || ''}</span>${tag}${t.src ? `<span class="th-tag new" title="source: ${t.src}">NEW</span>` : ''}</td>
+      <td class="mut">${t.n}</td>
+      <td class="${thC(t.chg_1d)}">${thF(t.chg_1d)}%</td><td class="${thC(t.chg_1w)}">${thF(t.chg_1w)}%</td><td class="${thC(t.chg_1m)}">${thF(t.chg_1m)}%</td><td class="${thC(t.ytd)}">${thF(t.ytd, 1)}%</td>
+      <td class="${thC(t.rel_1w)}">${thF(t.rel_1w)}%${thBar(t.rel_1w, mx)}</td><td class="${thC(t.rel_1m)}">${thF(t.rel_1m)}%</td>
+      <td class="${t.pct_strong >= 60 ? 'pos' : t.pct_strong >= 40 ? 'amb' : 'neg'}">${t.pct_strong}%</td>
+      <td class="${thC(t.ps_chg_5d)}">${t.ps_chg_5d == null ? '—' : thF(t.ps_chg_5d, 0)}</td>
+      <td>${t.pct_stage2}%</td><td class="${t.near_high ? 'pos' : 'mut'}">${t.near_high}/${t.n}</td>
+      <td class="${t.dna_pass ? 'pos' : 'mut'}">${t.dna_pass}</td>
+      <td class="${t.avg_rs >= 70 ? 'pos' : t.avg_rs >= 50 ? '' : 'neg'}">${t.avg_rs ?? '—'}</td>
+      <td style="color:var(--accent)">${(t.leaders || []).join(' ')}</td><td>${thSpark(t.spark)}</td>
+    </tr>
+    <tr class="th-sub ${open ? 'open' : ''}"><td colspan="17"><table class="th-subtbl">
+      <thead><tr><th>Ticker</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>DNA</th><th>RS</th><th>Stage</th><th>Off 52W</th><th>Strong</th><th>Confl.</th><th>Score</th><th title="click to load in calculator">Stop · %</th><th>ER</th></tr></thead>
+      <tbody>${t.tickers.map(r => `<tr>
+        <td style="font-weight:600;color:var(--text)">${r.ticker}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
+        <td class="${thC(r.chg_1d)}">${thF(r.chg_1d)}%</td><td class="${thC(r.chg_1w)}">${thF(r.chg_1w)}%</td><td class="${thC(r.chg_1m)}">${thF(r.chg_1m)}%</td><td class="${thC(r.ytd)}">${thF(r.ytd, 1)}%</td>
+        <td>${dots(r)}</td><td class="${r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 70 ? 'amb' : ''}">${r.rs_rating ?? '—'}</td>
+        <td>${r.stage ?? '—'}</td><td class="${r.off_52w_high > -10 ? 'pos' : r.off_52w_high < -25 ? 'neg' : ''}">${thF(r.off_52w_high, 1, false)}%</td>
+        <td class="${r.strong ? 'pos' : 'mut'}">${r.strong ? '●' : '○'}</td><td>${r.confluence_n ?? '—'}</td><td>${r.setup_score ?? '—'}</td>
+        <td>${r.plan_stop != null ? `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.plan_entry_hi ?? r.price}, ${r.plan_stop})">$${Number(r.plan_stop).toFixed(2)} <span class="${r.plan_stop_pct <= 3 ? 'pos' : r.plan_stop_pct <= 5 ? 'amb' : 'neg'}">${Number(r.plan_stop_pct).toFixed(1)}%</span></span>` : '—'}</td>
+        <td class="${r.earnings_days != null && r.earnings_days <= 7 ? 'neg' : 'mut'}">${r.earnings_days == null ? '—' : r.earnings_days === 0 ? 'today' : r.earnings_days + 'd'}</td>
+      </tr>`).join('')}</tbody></table>
+      <div class="th-actions"><button class="dir-btn active-long" onclick="event.stopPropagation(); thShowCharts('${t.id}')">→ CHARTS (TOP ${t.chart_tickers.length} BY RS)</button><span>basket: ${t.tickers.map(r => r.ticker).join(', ')}${t.missing && t.missing.length ? ` · no data: ${t.missing.join(', ')}` : ''}</span></div>
+    </td></tr>`;
+  }).join('') : '<tr><td colspan="17" class="loading-msg">No themes match</td></tr>';
+}
+async function loadThemes() {
+  try {
+    const res = await fetch(`data/themes_data.json?t=${Date.now()}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    thData = await res.json();
+    const T = thData.themes, s = thData.spy || {};
+    if ($('themes-updated')) $('themes-updated').textContent = `SPY 1W ${thF(s.chg_1w)}% · 1M ${thF(s.chg_1m)}% · YTD ${thF(s.ytd, 1)}% · ${thData.updated_at || ''}`;
+    const mv = T.filter(t => t.label === 'ON THE MOVE'), ld = T.filter(t => (t.rel_1w || 0) > 0);
+    const best = [...T].sort((a, b) => (b.rel_1w ?? -999) - (a.rel_1w ?? -999))[0];
+    const up = [...T].filter(t => t.ps_chg_5d != null).sort((a, b) => b.ps_chg_5d - a.ps_chg_5d)[0];
+    $('th-kpis').innerHTML = `
+      <div class="th-kpi"><small>Themes beating SPY (1W)</small><b class="${ld.length >= T.length / 2 ? 'pos' : 'neg'}">${ld.length} / ${T.length}</b><span class="ls">${ld.map(t => t.name.split(' ')[0]).join(' · ') || '—'}</span></div>
+      <div class="th-kpi"><small>On the move</small><b class="pos">${mv.length}</b><span class="ls">${mv.map(t => t.name).join(' · ') || '—'}</span></div>
+      <div class="th-kpi"><small>Strongest rel. 1W</small><b class="pos">${best ? best.name : '—'}</b><span class="ls">${best ? thF(best.rel_1w) + '% vs SPY' : ''}</span></div>
+      <div class="th-kpi"><small>Biggest breadth jump (Δ5D)</small><b class="${up && up.ps_chg_5d > 0 ? 'pos' : 'mut'}">${up ? up.name : '—'}</b><span class="ls">${up ? thF(up.ps_chg_5d, 0) + ' pt → ' + up.pct_strong + '% strong' : 'needs 2+ days of history'}</span></div>`;
+    renderThemes();
+  } catch (err) {
+    const tb = $('tb-themes'); if (tb) tb.innerHTML = `<tr><td colspan="17" class="loading-msg">No theme data yet — appears after the next nightly run (${err.message}).</td></tr>`;
+  }
+}
+
 // ────────────────────────────────────────────────
 //  INIT
 // ────────────────────────────────────────────────
@@ -1769,6 +1911,7 @@ loadSwingData();
 loadScanData();
 loadIbd();
 loadChartData();
+loadThemes();
 calc();
 
 // Auto-load saved Finnhub key
@@ -2034,6 +2177,9 @@ function renderChanges() {
   cols.push(`<div><div class="gauge-label">DNA pass with earnings ≤7d <span class="neg">(${er.length})</span></div>${wrap(er.slice(0,16).map(x => `<span class="chg-chip"><span style="color:var(--accent);font-weight:600">${x.ticker}</span> <span style="color:var(--red);font-size:9px">${x.earnings_days === 0 ? 'today' : x.earnings_days + 'd'}</span></span>`).join('') || '<span class="neu">none</span>')}</div>`);
   const im = (c.industry_moves || []);
   cols.push(`<div><div class="gauge-label">Industry moves (5d, ≥15 pts)</div>${im.slice(0,8).map(x => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${x.industry} <span style="color:var(--muted);font-size:9px">${x.etf}</span></span><span class="${x.chg_5d > 0 ? 'pos' : 'neg'}">${x.chg_5d > 0 ? '▲' : '▼'} ${Math.abs(x.chg_5d).toFixed(0)} → ${x.pct_strong.toFixed(0)}%</span></div>`).join('') || '<span class="neu">no big rotations yet — needs 2+ days of history</span>'}</div>`);
+  const tm = (c.theme_moves || []);
+  const tmTag = l => l ? `<span class="th-tag ${ {'ON THE MOVE':'move','LEADING':'lead','REL. STRONG':'lead','FADING':'fade'}[l] || '' }" style="margin:0">${l}</span>` : '<span class="neu">—</span>';
+  cols.push(`<div><div class="gauge-label">Theme label changes</div>${tm.slice(0,8).map(x => `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><a href="#themes" style="color:var(--text);text-decoration:none">${x.name}</a></span><span>${tmTag(x.prev)} → ${tmTag(x.now)}</span></div>`).join('') || '<span class="neu">no theme rotations since last run</span>'}</div>`);
   $('sw-changes-body').innerHTML = cols.join('');
   $('sw-changes-since').textContent = c.since ? `vs ${c.since}` : 'first run';
   box.style.display = 'block';
