@@ -1,0 +1,269 @@
+{
+ "_comment": "Thema-mandjes voor sectie 03b Thematics. Vrij te bewerken: thema toevoegen = {id, name, etf, src, tickers}. id = korte slug zonder spaties. Tickers die Yahoo niet kent vallen stil weg (zie 'missing' in themes_data.json).",
+ "themes": [
+  {
+   "id": "water",
+   "name": "Water",
+   "etf": "PHO",
+   "src": "Divergence nov-26",
+   "tickers": [
+    "XYL",
+    "BMI",
+    "PNR",
+    "MWA",
+    "ECL",
+    "ZWS",
+    "VLTO",
+    "AWK",
+    "WTRG",
+    "CWT",
+    "AOS",
+    "WMS",
+    "TTEK",
+    "ERII"
+   ]
+  },
+  {
+   "id": "ai-infra",
+   "name": "AI build-out / datacenter",
+   "etf": "SMH",
+   "tickers": [
+    "NVDA",
+    "AVGO",
+    "VRT",
+    "ETN",
+    "PWR",
+    "ANET",
+    "CRWV",
+    "NBIS",
+    "DELL",
+    "SMCI",
+    "MU",
+    "CIEN",
+    "COHR",
+    "ALAB"
+   ]
+  },
+  {
+   "id": "power",
+   "name": "Power / grid / nuclear",
+   "etf": "GRID",
+   "tickers": [
+    "CEG",
+    "VST",
+    "TLN",
+    "OKLO",
+    "SMR",
+    "NNE",
+    "LEU",
+    "GEV",
+    "BWXT",
+    "NRG",
+    "CCJ",
+    "FLNC"
+   ]
+  },
+  {
+   "id": "drones",
+   "name": "Drones / defense tech",
+   "etf": "ITA",
+   "tickers": [
+    "KTOS",
+    "AVAV",
+    "RCAT",
+    "ONDS",
+    "AXON",
+    "LHX",
+    "PLTR",
+    "KRMN",
+    "AIRO",
+    "UMAC"
+   ]
+  },
+  {
+   "id": "space",
+   "name": "Space",
+   "etf": "UFO",
+   "tickers": [
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "RDW",
+    "PL",
+    "BKSY",
+    "SPIR",
+    "SATS",
+    "VSAT",
+    "IRDM",
+    "FLY"
+   ]
+  },
+  {
+   "id": "robotics",
+   "name": "Robotics / physical AI",
+   "etf": "BOTZ",
+   "tickers": [
+    "TSLA",
+    "ISRG",
+    "SYM",
+    "TER",
+    "ROK",
+    "SERV",
+    "ZBRA",
+    "PRCT",
+    "CGNX",
+    "NVTS"
+   ]
+  },
+  {
+   "id": "cyber",
+   "name": "Cybersecurity",
+   "etf": "CIBR",
+   "tickers": [
+    "CRWD",
+    "PANW",
+    "ZS",
+    "S",
+    "FTNT",
+    "CYBR",
+    "OKTA",
+    "NET",
+    "RBRK",
+    "NTSK"
+   ]
+  },
+  {
+   "id": "quantum",
+   "name": "Quantum",
+   "etf": "QTUM",
+   "tickers": [
+    "IONQ",
+    "RGTI",
+    "QBTS",
+    "QUBT",
+    "ARQQ"
+   ]
+  },
+  {
+   "id": "crypto",
+   "name": "Crypto / digital assets",
+   "etf": "BITQ",
+   "tickers": [
+    "COIN",
+    "MSTR",
+    "HOOD",
+    "CRCL",
+    "MARA",
+    "RIOT",
+    "CLSK",
+    "GLXY",
+    "BMNR",
+    "CIFR"
+   ]
+  },
+  {
+   "id": "gold",
+   "name": "Gold & silver miners",
+   "etf": "GDX",
+   "tickers": [
+    "NEM",
+    "AEM",
+    "GOLD",
+    "KGC",
+    "AU",
+    "WPM",
+    "FNV",
+    "HL",
+    "CDE",
+    "PAAS",
+    "AG"
+   ]
+  },
+  {
+   "id": "uranium",
+   "name": "Uranium",
+   "etf": "URA",
+   "tickers": [
+    "CCJ",
+    "UEC",
+    "URG",
+    "DNN",
+    "NXE",
+    "UUUU",
+    "LEU"
+   ]
+  },
+  {
+   "id": "rare",
+   "name": "Rare earths / critical minerals",
+   "etf": "REMX",
+   "tickers": [
+    "MP",
+    "USAR",
+    "LAC",
+    "ALB",
+    "SGML",
+    "TMC",
+    "CRML"
+   ]
+  },
+  {
+   "id": "semicap",
+   "name": "Semi equipment",
+   "etf": "SMH",
+   "tickers": [
+    "AMAT",
+    "LRCX",
+    "KLAC",
+    "ASML",
+    "ENTG",
+    "ONTO",
+    "CAMT",
+    "ACLS"
+   ]
+  },
+  {
+   "id": "tankers",
+   "name": "Tankers / shipping",
+   "etf": "BDRY",
+   "tickers": [
+    "FRO",
+    "STNG",
+    "DHT",
+    "INSW",
+    "TNK",
+    "ECO",
+    "NAT",
+    "ZIM",
+    "TRMD"
+   ]
+  },
+  {
+   "id": "glp1",
+   "name": "GLP-1 / obesity",
+   "etf": "XBI",
+   "tickers": [
+    "LLY",
+    "NVO",
+    "VKTX",
+    "AMGN",
+    "HIMS"
+   ]
+  },
+  {
+   "id": "fintech",
+   "name": "Fintech / payments",
+   "etf": "FINX",
+   "tickers": [
+    "SOFI",
+    "AFRM",
+    "TOST",
+    "NU",
+    "PYPL",
+    "UPST",
+    "PAY",
+    "FOUR"
+   ]
+  }
+ ]
+}
