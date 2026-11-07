@@ -285,6 +285,47 @@ def analyse(ticker, df, spy_chg):
     accum_ratio = up_vol / dn_vol if dn_vol > 0 else None
     higher_low = bool(len(l) >= 20 and float(l.iloc[-10:].min()) > float(l.iloc[-20:-10].min()))
 
+    # -- Undercut & Reclaim (section 07, third route) ---------------------------
+    # Iain Murphy's setup #2: a support level that has held for a while is
+    # undercut intraday and reclaimed on the close, on heavy volume. The shakeout
+    # flushes weak holders and the reclaim says the sellers are done; the stop
+    # sits just under the undercut low, which is what earns this setup its own
+    # gate -- a tight stop with a fast answer.
+    # Measured on 394 liquid names over 120 sessions: a bare undercut+reclaim has
+    # no edge (+0.3% median over 10 days vs +0.2% for the universe). Requiring the
+    # support to have HELD for >= 5 bars and volume >= 2x lifts that to +2.9%
+    # median / 62% win, and halves the stop-out rate when price is above the 200.
+    # TYL printed one on 29 Oct 2026 (support 355.55 from 19 Oct, low 348.52,
+    # close 373.93 on 2.53x volume) and ran +12.5% in the ten days after.
+    UR_LOOKBACK, UR_MIN_HELD, UR_MAX_UNDER = 30, 5, 0.07
+    UR_VOL, UR_LOD, UR_MAX_AGE = 2.0, 0.6, 5
+    ur = None
+    if len(df) >= 40:
+        lo_v, hi_v, cl_v, vo_v, e50_v = l.values, h.values, c.values, v.values, e50.values
+        v20_v = pd.Series(vo_v).rolling(20).mean().values
+        for i in range(max(len(df) - UR_MAX_AGE, UR_LOOKBACK + 1), len(df)):
+            day_lo, day_hi, day_cl = float(lo_v[i]), float(hi_v[i]), float(cl_v[i])
+            rng = day_hi - day_lo
+            if rng <= 0 or np.isnan(v20_v[i]) or v20_v[i] <= 0:
+                continue
+            if (day_cl - day_lo) / rng < UR_LOD:      # close must be in the upper part
+                continue
+            vol_x = float(vo_v[i]) / float(v20_v[i])
+            if vol_x < UR_VOL:
+                continue
+            # Walk back for the most recent low that then held as support for at
+            # least UR_MIN_HELD bars, was undercut today and sits below the close.
+            for j in range(i - 1 - UR_MIN_HELD, max(i - UR_LOOKBACK, 0) - 1, -1):
+                ref = float(lo_v[j])
+                if ref >= float(np.min(lo_v[j + 1:i])):
+                    continue                          # never acted as support
+                if day_lo < ref < day_cl and (ref - day_lo) / ref <= UR_MAX_UNDER:
+                    ur = {"date": str(df.index[i].date()), "ref": r2(ref), "low": r2(day_lo),
+                          "under_pct": r2((ref - day_lo) / ref * 100, 2), "vol_x": r2(vol_x),
+                          "held": int(i - 1 - j), "age": int(len(df) - 1 - i),
+                          "at_ema50": bool(day_lo < float(e50_v[i]) <= day_cl)}
+                    break
+
     hi20_pos = int(np.argmax(h.iloc[-20:].values))
     days_since_20d_high = 19 - hi20_pos
 
@@ -321,9 +362,11 @@ def analyse(ticker, df, spy_chg):
         # behaviour
         "vol_ratio_5_20": r2(vol_ratio), "rvol": r2(rvol), "pocket_pivot": pocket_pivot, "tight": tight,
         "accum_ratio": r2(accum_ratio),
+        "ur": ur,
         "early": {"reclaim50": reclaim50, "ma200_turn": ma200_turn, "pocket_pivot": pocket_pivot,
                   "accum": bool(accum_ratio is not None and accum_ratio >= 1.3),
-                  "higher_low": higher_low, "rs_turn": False},
+                  "higher_low": higher_low, "rs_turn": False,
+                  "ur": bool(ur)},
         # trade plan
         "plan_stop": r2(plan_stop), "plan_stop_pct": r2(plan_stop_pct), "plan_stop_basis": stop_basis,
         "plan_entry_lo": r2(plan_entry_lo), "plan_entry_hi": r2(plan_entry_hi),

@@ -271,6 +271,7 @@
   .ch-why.th.weak { color:var(--muted); border-color:var(--border2); }
   .ch-why.lbl  { font-size:8.5px; padding:2px 5px; border:0; color:var(--green); background:rgba(0,230,118,0.10); }
   .ch-why.nt   { color:var(--amber); border-color:var(--amber); }
+  .ch-why.ur   { color:var(--blue); border-color:var(--blue); }
   .ch-card.flash { outline:2px solid var(--amber); outline-offset:-2px; }
   /* ── 07 Notable ── */
   .nt-row { cursor:pointer; }
@@ -279,6 +280,12 @@
              border:1px solid var(--border); color:var(--dim); white-space:nowrap; }
   .sig-tag.on { color:var(--amber); border-color:var(--amber); background:rgba(255,179,0,0.10); font-weight:600; }
   html[data-theme="light"] .sig-tag.on { background:rgba(183,121,31,0.12); }
+  .sig-tag.ur-on { color:var(--blue); border-color:var(--blue); background:rgba(64,196,255,0.12); font-weight:600; }
+  /* positie t.o.v. de MA's in het U&R-tabblad */
+  .ma { font-family:var(--mono); font-size:8.5px; letter-spacing:0.03em; padding:1px 3px;
+        border:1px solid var(--border); color:var(--dim); white-space:nowrap; margin-left:2px; }
+  .ma.on   { color:var(--green); border-color:rgba(0,230,118,0.45); }
+  .ma.at50 { color:var(--blue); border-color:var(--blue); background:rgba(64,196,255,0.12); font-weight:600; }
   .ch-tip { position:absolute; pointer-events:none; background:var(--bg3); border:1px solid var(--border2); padding:6px 8px; font-family:var(--mono); font-size:10.5px; color:var(--text); display:none; z-index:3; white-space:nowrap; }
   .ch-tip .r { color:var(--muted); }
   .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
@@ -755,16 +762,11 @@
     <div class="ch-toolbar" style="margin-bottom:10px">
       <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1 met een vlakke of stijgende 200 &mdash; de klassieke Weinstein-base. Rustig; wachten op de 1&rightarrow;2-transitie en dan de eerste pullback.">BASE &middot; VLAKKE 200 <span id="ntc-base" style="color:var(--muted)"></span></button>
       <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Draaiend na een echte correctie: Stage 1 met een nog d&aacute;lende 200 (verse reclaim) of Stage 3 die gecorrigeerd is. Minimaal 2 signalen waarvan &eacute;&eacute;n omslagsignaal (R50 / 200&uarr; / RS&uarr;).">RECOVERY &middot; DRAAIEND <span id="ntc-recovery" style="color:var(--muted)"></span></button>
+      <button class="dir-btn" id="ntb-ur" onclick="ntShow('ur')" title="Undercut &amp; reclaim: een steun die minstens 5 dagen hield wordt intraday ondergeschoten en op de slotkoers heroverd, op &ge;2&times; volume, met de prijs boven de 200 SMA. Geen stage- en geen RS-filter. Stop net onder de undercut-low; de setup is vijf sessies vers.">U&amp;R &middot; UNDERCUT <span id="ntc-ur" style="color:var(--muted)"></span></button>
     </div>
     <div class="table-wrap"><table>
-      <thead><tr>
-        <th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th>
-        <th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
-        <th title="reclaim 50 EMA &middot; 200 draait &middot; pocket pivot &middot; accumulatie &middot; hogere bodems &middot; RS draait">Signals</th>
-        <th>Score</th><th>Off 52W</th><th>$ Vol</th><th title="confluence-lagen binnen 1 ATR">Confl.</th>
-        <th title="voorgestelde stop onder structuur &middot; klik om in de calculator te laden">Stop &middot; %</th><th></th>
-      </tr></thead>
-      <tbody id="nt-tbody"><tr><td colspan="12" class="loading-msg">Loading...</td></tr></tbody>
+      <thead id="nt-thead"></thead>
+      <tbody id="nt-tbody"><tr><td colspan="13" class="loading-msg">Loading...</td></tr></tbody>
     </table></div>
   </div>
 
@@ -1793,22 +1795,49 @@ const NT_SIG = [['reclaim50',   'R50',  '50 EMA heroverd (kruising in de laatste
                 ['pocket_pivot','PP',   'pocket pivot (hoogste volume vs elke down-day in 10 dagen)'],
                 ['accum',       'ACC',  'accumulatie (up-volume / down-volume >= 1,3 over 15 dagen)'],
                 ['higher_low',  'HL',   'hogere bodems (laatste 10 dagen boven de 10 ervoor)'],
-                ['rs_turn',     'RS\u2191',  'RS draait (+15 punten in een maand, RS nog onder 85)']];
+                ['rs_turn',     'RS\u2191',  'RS draait (+15 punten in een maand, RS nog onder 85)'],
+                ['ur',          'U&R',  'undercut & reclaim: steun ondergeschoten en dezelfde dag heroverd op >=2x volume']];
 // Welke signalen vuurden, als leesbare labels. compact=true toont alleen de actieve.
 function sigTags(early, compact) {
   const e = early || {};
   const list = compact ? NT_SIG.filter(([k]) => e[k]) : NT_SIG;
   if (!list.length) return '';
   return list.map(([k, lbl, tip]) =>
-    `<span class="sig-tag${e[k] ? ' on' : ''}" title="${esc(tip)}">${lbl}</span>`).join('');
+    `<span class="sig-tag${e[k] ? (k === 'ur' ? ' ur-on' : ' on') : ''}" title="${esc(tip)}">${lbl}</span>`).join('');
 }
 
 let ntMode = 'base';
+const NT_MODES = ['base', 'recovery', 'ur'];
 function ntShow(mode) {
   ntMode = mode;
-  ['base', 'recovery'].forEach(m => { const b = $('ntb-' + m); if (b) b.classList.toggle('active-long', m === mode); });
+  NT_MODES.forEach(m => { const b = $('ntb-' + m); if (b) b.classList.toggle('active-long', m === mode); });
   renderNotable();
 }
+
+// Twee kolomsets: structurele routes (base/recovery) tonen de signaalmix,
+// de U&R-route toont de gegevens van de undercut zelf.
+const NT_HEAD = {
+  base: `<tr>
+    <th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th>
+    <th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
+    <th title="reclaim 50 EMA &middot; 200 draait &middot; pocket pivot &middot; accumulatie &middot; hogere bodems &middot; RS draait &middot; undercut &amp; reclaim">Signals</th>
+    <th>Score</th><th>Off 52W</th><th>$ Vol</th><th title="confluence-lagen binnen 1 ATR">Confl.</th>
+    <th title="voorgestelde stop onder structuur &middot; klik om in de calculator te laden">Stop &middot; %</th><th></th>
+  </tr>`,
+  ur: `<tr>
+    <th>Ticker</th><th>Price</th><th>1D %</th>
+    <th title="datum van de undercut &amp; reclaim, met leeftijd in handelsdagen">U&amp;R</th>
+    <th title="het steunniveau dat werd ondergeschoten, en hoeveel dagen het hield">Steun</th>
+    <th title="hoeveel procent de dag-low onder de steun dook">Under</th>
+    <th title="volume op de U&amp;R-dag t.o.v. het 20-daags gemiddelde">Vol &times;</th>
+    <th title="positie t.o.v. 50 EMA en 200 SMA &middot; @50 = de U&amp;R-low raakte de 50 EMA">50 / 200</th>
+    <th>RS</th>
+    <th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
+    <th>$ Vol</th>
+    <th title="stop net onder de undercut-low &middot; klik om in de calculator te laden">Stop &middot; %</th><th></th>
+  </tr>`
+};
+NT_HEAD.recovery = NT_HEAD.base;
 
 async function loadNotable() {
   const tb = $('nt-tbody'); if (!tb) return;
@@ -1819,24 +1848,70 @@ async function loadNotable() {
     const all = ntData.rows || [];
     // oude runs zonder route-veld: alles is base
     all.forEach(x => { if (!x.route) x.route = 'base'; });
-    ['base', 'recovery'].forEach(m => { const c = $('ntc-' + m); if (c) c.textContent = '(' + all.filter(x => x.route === m).length + ')'; });
+    NT_MODES.forEach(m => { const c = $('ntc-' + m); if (c) c.textContent = '(' + all.filter(x => x.route === m).length + ')'; });
     const u = $('nt-updated');
     if (u) u.textContent = '\u00b7 ' + (ntData.updated_at || '');
     renderNotable();
   } catch (err) {
-    tb.innerHTML = `<tr><td colspan="12" class="loading-msg">Nog geen notable-data \u2014 verschijnt na de volgende nachtelijke run.</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="13" class="loading-msg">Nog geen notable-data \u2014 verschijnt na de volgende nachtelijke run.</td></tr>`;
   }
 }
 
 const NT_EMPTY = {
   base: 'Geen bases met een vlakke of stijgende 200 en een vroeg signaal in deze run.',
-  recovery: 'Geen gecorrigeerde namen die omdraaien in deze run.'
+  recovery: 'Geen gecorrigeerde namen die omdraaien in deze run.',
+  ur: 'Geen verse undercut &amp; reclaim in deze run \u2014 deze poort vult zich vooral op omslagdagen.'
 };
+// Positie t.o.v. de MA's, met @50 als de undercut de 50 EMA raakte.
+function maPills(r) {
+  const u = r.ur || {};
+  let out = `<span class="ma${r.above_ema50 ? ' on' : ''}" title="slot ${r.above_ema50 ? 'boven' : 'onder'} de 50 EMA">&gt;50</span>`
+          + `<span class="ma${r.above_s200 ? ' on' : ''}" title="slot ${r.above_s200 ? 'boven' : 'onder'} de 200 SMA">&gt;200</span>`;
+  if (u.at_ema50) out += `<span class="ma at50" title="de undercut-low dook onder de 50 EMA en sloot erboven">@50</span>`;
+  return out;
+}
+// Stop = net onder de undercut-low; dat is de hele reden dat deze setup een
+// eigen poort heeft. Afstand vanaf de huidige koers erbij, want hij loopt op.
+function urStopCell(r) {
+  const u = r.ur || {}; if (u.low == null || !r.price) return '\u2014';
+  const pct = (r.price - u.low) / r.price * 100;
+  const c = pct <= 5 ? 'var(--green)' : pct <= 10 ? 'var(--amber)' : 'var(--red)';
+  return `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" title="stop onder de undercut-low van ${u.date} \u00b7 klik om in de calculator te laden" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.price}, ${u.low})">$${fmtPrice(u.low)} <span style="color:${c}">${pct.toFixed(1)}%</span></span>`;
+}
+const NT_MON = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+function urDate(d) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); if (!m) return d || '\u2014';
+  return (+m[3]) + ' ' + NT_MON[+m[2] - 1];
+}
+
 function renderNotable() {
   const tb = $('nt-tbody'); if (!tb || !ntData) return;
+  const th = $('nt-thead'); if (th) th.innerHTML = NT_HEAD[ntMode] || NT_HEAD.base;
   const rows = (ntData.rows || []).filter(x => x.route === ntMode);
   if (!rows.length) {
-    tb.innerHTML = `<tr><td colspan="12" class="loading-msg">${NT_EMPTY[ntMode]}</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="13" class="loading-msg">${NT_EMPTY[ntMode]}</td></tr>`;
+    return;
+  }
+  if (ntMode === 'ur') {
+    tb.innerHTML = rows.map(r => {
+      const u = r.ur || {};
+      return `<tr class="nt-row" onclick="chShowTicker('${r.ticker}')" title="klik voor de chart">
+        <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+            <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
+        <td>$${fmtPrice(r.price)}</td>
+        <td>${pct(r.chg_1d)}</td>
+        <td>${urDate(u.date)} <span style="color:var(--muted)">\u00b7 ${u.age == null ? '?' : u.age}d</span></td>
+        <td>$${fmtPrice(u.ref)} <span style="color:var(--muted)">\u00b7 ${u.held == null ? '?' : u.held}d</span></td>
+        <td>${u.under_pct == null ? '\u2014' : u.under_pct.toFixed(1) + '%'}</td>
+        <td style="color:var(--blue);font-weight:600">${u.vol_x == null ? '\u2014' : u.vol_x.toFixed(2) + '\u00d7'}</td>
+        <td>${maPills(r)}</td>
+        <td>${r.rs_rating ?? '\u2014'}</td>
+        <td>${rsDelta(r.rs_chg_1m)}</td>
+        <td>${fmtDollarVol(r.avg_dollar_vol)}</td>
+        <td>${urStopCell(r)}</td>
+        <td style="color:var(--accent)">&rarr;</td>
+      </tr>`;
+    }).join('');
     return;
   }
   tb.innerHTML = rows.map(r => {
@@ -1945,7 +2020,11 @@ function chRender() {
 // Why is this ticker in section 06? DNA rank, theme rank, or the Notable scan.
 function whyPills(m) {
   let out = '';
-  if (m.why === 'notable') {
+  if (m.ur) {
+    const u = m.ur;
+    out += `<span class="ch-why ur" title="undercut &amp; reclaim op ${u.date} — steun $${u.ref} hield ${u.held} dagen, low $${u.low} (${u.under_pct}% eronder), slot erboven op ${u.vol_x}× volume — stop net onder $${u.low}">U&R ${urDate(u.date)}</span>`;
+  }
+  if (m.why === 'notable' && m.route !== 'ur') {
     const rec = m.route === 'recovery';
     out += `<span class="ch-why nt" title="${rec ? 'draait na een echte correctie (200 daalt nog, of Stage 3)' : 'Weinstein-base: Stage 1 met vlakke of stijgende 200'} — ${m.early_score || 0} signalen — watchlist, geen koopsignaal">${rec ? 'RECOVERY' : 'BASE'}</span>`;
   }
