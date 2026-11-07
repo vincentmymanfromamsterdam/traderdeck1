@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07 19:26 UTC",
+  "updated_at": "2026-11-07 21:37 UTC",
   "updated_date": "2026-11-07",
   "thresholds": {
     "adr_pct_min": 3.0,
@@ -16,7 +16,7 @@
     "label": "red",
     "pct_strong": 8.3,
     "pct_above_ema21": 20.8,
-    "pct_stage2": 31.2,
+    "pct_stage2": 29.2,
     "universe_n": 48,
     "sp500_pct_strong": 43.3,
     "sp500_n": 499,
@@ -163,13 +163,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.16,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 1296.61,
       "plan_stop_pct": 4.24,
@@ -246,13 +248,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 3.26,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 128.33,
       "plan_stop_pct": 7.53,
@@ -329,13 +333,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.06,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 289.26,
       "plan_stop_pct": 4.77,
@@ -412,13 +418,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 2.05,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 93.92,
       "plan_stop_pct": 11.19,
@@ -494,13 +502,15 @@
       "pocket_pivot": false,
       "tight": true,
       "accum_ratio": 0.69,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 40.54,
       "plan_stop_pct": 4.86,
@@ -576,13 +586,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.49,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 442.88,
       "plan_stop_pct": 3.81,
@@ -659,13 +671,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.4,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 678.29,
       "plan_stop_pct": 2.37,
@@ -742,13 +756,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.88,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 356.63,
       "plan_stop_pct": 2.3,
@@ -777,89 +793,6 @@
       "in_sr": true,
       "in_lt": false,
       "in_watchlist": false,
-      "setup_score": 10
-    },
-    {
-      "ticker": "ISRG",
-      "price": 452.8,
-      "chg_1d": -3.36,
-      "adr_pct": 3.21,
-      "atr": 15.94,
-      "atr_pct": 3.52,
-      "atr_mult_50": 1.99,
-      "pct_from_50": 7.6,
-      "off_52w_high": -25.0,
-      "avg_dollar_vol": 1235781587.0,
-      "lod_dist": 18.0,
-      "stage": 2,
-      "above_s200": true,
-      "s200_slope_20": -0.0275,
-      "s200_slope_60": -0.0974,
-      "rs_rating": 41,
-      "ema9": 452.34,
-      "ema21": 440.2,
-      "ema50": 421.0,
-      "ma10w": 409.93,
-      "avwap": 396.82,
-      "avwap_days": 75,
-      "ema9_rising": true,
-      "ema21_rising": true,
-      "ema50_rising": true,
-      "above_ema9": true,
-      "above_ema21": true,
-      "above_ema50": true,
-      "dist_atr": {
-        "ema9": 0.03,
-        "ema21": 0.79,
-        "ema50": 1.99,
-        "ma10w": 2.69,
-        "avwap": 3.51
-      },
-      "confluence": [
-        "ema9",
-        "ema21"
-      ],
-      "confluence_n": 2,
-      "vol_ratio_5_20": 1.24,
-      "rvol": 0.77,
-      "pocket_pivot": false,
-      "tight": false,
-      "accum_ratio": 1.11,
-      "early": {
-        "reclaim50": false,
-        "ma200_turn": false,
-        "pocket_pivot": false,
-        "accum": false,
-        "higher_low": true,
-        "rs_turn": false
-      },
-      "plan_stop": 435.42,
-      "plan_stop_pct": 3.84,
-      "plan_stop_basis": "ema21",
-      "plan_entry_lo": 440.2,
-      "plan_entry_hi": 452.8,
-      "days_since_20d_high": 2,
-      "wis_count_20d": 2,
-      "wis_today": false,
-      "rs_rating_1m": 21,
-      "rs_chg_1m": 20,
-      "earnings_date": null,
-      "earnings_days": null,
-      "dna": {
-        "adr": true,
-        "vol": true,
-        "rs": false,
-        "stage": true,
-        "ema50": true,
-        "high": true,
-        "ext": true
-      },
-      "dna_pass": false,
-      "dna_score": 6,
-      "extension": "ok",
-      "in_sr": false,
-      "in_lt": false,
-      "in_watchlist": true,
       "setup_score": 10
     },
     {
@@ -909,13 +842,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.92,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 30.05,
       "plan_stop_pct": 13.63,
@@ -944,6 +879,91 @@
       "in_sr": false,
       "in_lt": true,
       "in_watchlist": false,
+      "setup_score": 9
+    },
+    {
+      "ticker": "ISRG",
+      "price": 452.8,
+      "chg_1d": -3.36,
+      "adr_pct": 3.21,
+      "atr": 15.94,
+      "atr_pct": 3.52,
+      "atr_mult_50": 1.99,
+      "pct_from_50": 7.6,
+      "off_52w_high": -25.0,
+      "avg_dollar_vol": 1235781587.0,
+      "lod_dist": 18.0,
+      "stage": 1,
+      "above_s200": true,
+      "s200_slope_20": -0.0275,
+      "s200_slope_60": -0.0974,
+      "rs_rating": 41,
+      "ema9": 452.34,
+      "ema21": 440.2,
+      "ema50": 421.0,
+      "ma10w": 409.93,
+      "avwap": 396.82,
+      "avwap_days": 75,
+      "ema9_rising": true,
+      "ema21_rising": true,
+      "ema50_rising": true,
+      "above_ema9": true,
+      "above_ema21": true,
+      "above_ema50": true,
+      "dist_atr": {
+        "ema9": 0.03,
+        "ema21": 0.79,
+        "ema50": 1.99,
+        "ma10w": 2.69,
+        "avwap": 3.51
+      },
+      "confluence": [
+        "ema9",
+        "ema21"
+      ],
+      "confluence_n": 2,
+      "vol_ratio_5_20": 1.24,
+      "rvol": 0.77,
+      "pocket_pivot": false,
+      "tight": false,
+      "accum_ratio": 1.11,
+      "ur": null,
+      "early": {
+        "reclaim50": false,
+        "ma200_turn": false,
+        "pocket_pivot": false,
+        "accum": false,
+        "higher_low": true,
+        "rs_turn": false,
+        "ur": false
+      },
+      "plan_stop": 435.42,
+      "plan_stop_pct": 3.84,
+      "plan_stop_basis": "ema21",
+      "plan_entry_lo": 440.2,
+      "plan_entry_hi": 452.8,
+      "days_since_20d_high": 2,
+      "wis_count_20d": 2,
+      "wis_today": false,
+      "rs_rating_1m": 21,
+      "rs_chg_1m": 20,
+      "earnings_date": null,
+      "earnings_days": null,
+      "dna": {
+        "adr": true,
+        "vol": true,
+        "rs": false,
+        "stage": false,
+        "ema50": true,
+        "high": true,
+        "ext": true
+      },
+      "dna_pass": false,
+      "dna_score": 5,
+      "extension": "ok",
+      "in_sr": false,
+      "in_lt": false,
+      "in_watchlist": true,
       "setup_score": 9
     },
     {
@@ -991,13 +1011,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.56,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 203.47,
       "plan_stop_pct": 6.19,
@@ -1074,13 +1096,15 @@
       "pocket_pivot": true,
       "tight": false,
       "accum_ratio": 0.72,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": true,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 236.71,
       "plan_stop_pct": 11.92,
@@ -1156,13 +1180,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.81,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 155.2,
       "plan_stop_pct": 8.0,
@@ -1238,13 +1264,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.19,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 394.13,
       "plan_stop_pct": 12.23,
@@ -1318,13 +1346,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.55,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 283.48,
       "plan_stop_pct": 9.67,
@@ -1398,13 +1428,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.39,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 39.57,
       "plan_stop_pct": 6.25,
@@ -1483,13 +1515,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.85,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 7.71,
       "plan_stop_pct": 11.54,
@@ -1565,13 +1599,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.85,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 601.88,
       "plan_stop_pct": 12.77,
@@ -1647,13 +1683,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.34,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 157.45,
       "plan_stop_pct": 1.83,
@@ -1730,13 +1768,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.93,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 120.85,
       "plan_stop_pct": 6.27,
@@ -1814,13 +1854,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.87,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 333.16,
       "plan_stop_pct": 7.0,
@@ -1897,13 +1939,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.76,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 73.62,
       "plan_stop_pct": 9.24,
@@ -1979,13 +2023,15 @@
       "pocket_pivot": true,
       "tight": false,
       "accum_ratio": 1.35,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": true,
         "accum": true,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 58.46,
       "plan_stop_pct": 19.34,
@@ -2062,13 +2108,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.65,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 174.33,
       "plan_stop_pct": 9.58,
@@ -2145,13 +2193,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.18,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 46.97,
       "plan_stop_pct": 11.49,
@@ -2228,13 +2278,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.96,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 9.06,
       "plan_stop_pct": 13.45,
@@ -2311,13 +2363,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.81,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 29.77,
       "plan_stop_pct": 7.93,
@@ -2393,13 +2447,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.62,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 672.37,
       "plan_stop_pct": 19.48,
@@ -2475,13 +2531,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.44,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 573.93,
       "plan_stop_pct": 5.94,
@@ -2557,13 +2615,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.77,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 121.81,
       "plan_stop_pct": 9.28,
@@ -2640,13 +2700,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.77,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 120.19,
       "plan_stop_pct": 7.19,
@@ -2720,13 +2782,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 1.8,
+      "ur": null,
       "early": {
         "reclaim50": true,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": true,
         "higher_low": true,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 94.76,
       "plan_stop_pct": 9.67,
@@ -2802,13 +2866,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.57,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 165.45,
       "plan_stop_pct": 5.25,
@@ -2885,13 +2951,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.43,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 230.55,
       "plan_stop_pct": 7.76,
@@ -2968,13 +3036,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.97,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 10.87,
       "plan_stop_pct": 7.42,
@@ -3051,13 +3121,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.83,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 7.8,
       "plan_stop_pct": 12.29,
@@ -3134,13 +3206,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.53,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 33.65,
       "plan_stop_pct": 4.97,
@@ -3217,13 +3291,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.5,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 5.61,
       "plan_stop_pct": 14.33,
@@ -3300,13 +3376,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.62,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 42.87,
       "plan_stop_pct": 7.6,
@@ -3383,13 +3461,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.8,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 19.09,
       "plan_stop_pct": 11.77,
@@ -3465,13 +3545,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.63,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 166.36,
       "plan_stop_pct": 3.97,
@@ -3547,13 +3629,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.67,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 690.0,
       "plan_stop_pct": 10.87,
@@ -3629,13 +3713,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.53,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 174.99,
       "plan_stop_pct": 6.24,
@@ -3711,13 +3797,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.67,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 72.63,
       "plan_stop_pct": 10.24,
@@ -3793,13 +3881,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.71,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 46.57,
       "plan_stop_pct": 7.1,
@@ -3875,13 +3965,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.71,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 271.57,
       "plan_stop_pct": 7.53,
@@ -3957,13 +4049,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.88,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 176.98,
       "plan_stop_pct": 3.21,
@@ -4039,13 +4133,15 @@
       "pocket_pivot": false,
       "tight": false,
       "accum_ratio": 0.52,
+      "ur": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
         "pocket_pivot": false,
         "accum": false,
         "higher_low": false,
-        "rs_turn": false
+        "rs_turn": false,
+        "ur": false
       },
       "plan_stop": 118.53,
       "plan_stop_pct": 12.04,
