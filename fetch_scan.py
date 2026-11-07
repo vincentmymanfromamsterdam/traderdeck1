@@ -67,6 +67,13 @@ CHART_META  = ("ticker", "name", "industry", "rs_rating", "stage", "adr_pct", "a
                "plan_stop_basis", "plan_entry_lo", "plan_entry_hi", "dna", "confluence", "pocket_pivot", "tight",
                "in_universe")
 
+SA_NEWS_PATH    = "data/sa_news.json"
+SA_FEED         = "https://seekingalpha.com/api/sa/combined/{}.xml"   # public per-symbol RSS, no login
+SA_NEWS_PER_TK  = 8        # headlines kept per ticker
+SA_NEWS_WORKERS = 6        # parallel feed requests
+SA_NEWS_MAX_TK  = 80       # safety cap on tickers per run
+SA_NEWS_TIMEOUT = 15
+
 
 def chart_bars(df):
     """OHLCV + EMA9/21/50, 10-week MA, AVWAP from the 120-day swing low, RVOL — for the chart cards."""
@@ -286,6 +293,90 @@ def build_themes(themes_def, by_t, full, spy, today_s, dates_hint=None):
         json.dump(hist, f, separators=(",", ":"))
     out.sort(key=lambda t: -(t["rel_1w"] if t["rel_1w"] is not None else -999))
     return out, moves
+
+
+def _sa_item_url(guid, link, title):
+    """Seeking Alpha RSS: articles carry a real slug URL, news items only link to the
+    symbol's news page — rebuild the direct /news/<id> link from the guid."""
+    gid = guid or ""
+    if "Article:" in gid:
+        kind = "transcript" if "transcript" in ((link or "") + " " + (title or "")).lower() else "article"
+        return kind, link
+    if "MarketCurrent:" in gid:
+        nid = gid.rsplit(":", 1)[-1]
+        if nid.isdigit():
+            return "news", f"https://seekingalpha.com/news/{nid}"
+    return "news", link
+
+
+def fetch_sa_news(tickers, per_ticker=SA_NEWS_PER_TK, workers=SA_NEWS_WORKERS):
+    """Headlines per ticker from Seeking Alpha's public per-symbol RSS feed.
+    Returns {ticker: [{t,u,d,a,k}, ...]} — never raises, a dead feed just yields nothing."""
+    import xml.etree.ElementTree as ET
+    from concurrent.futures import ThreadPoolExecutor
+    from email.utils import parsedate_to_datetime
+    import requests
+
+    NS = {"sa": "https://seekingalpha.com/api/1.0"}
+    sess = requests.Session()
+    sess.headers.update({
+        "User-Agent": "Mozilla/5.0 (compatible; traderdeck/1.0; personal dashboard)",
+        "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+    })
+
+    def candidates(tk):
+        # SA uses dots for class shares (BRK.B); yfinance/Nasdaq use hyphens or slashes.
+        out = [tk, tk.replace("-", ".").replace("/", "."), tk.replace(".", "-")]
+        seen, uniq = set(), []
+        for c in out:
+            if c and c not in seen:
+                seen.add(c); uniq.append(c)
+        return uniq
+
+    def one(tk):
+        for sym in candidates(tk):
+            try:
+                r = sess.get(SA_FEED.format(sym), timeout=SA_NEWS_TIMEOUT)
+            except Exception:
+                continue
+            if r.status_code != 200 or not r.content.lstrip()[:1] == b"<":
+                continue
+            try:
+                root = ET.fromstring(r.content)
+            except Exception:
+                continue
+            items = []
+            for it in root.iterfind("./channel/item"):
+                title = (it.findtext("title") or "").strip()
+                if not title:
+                    continue
+                kind, url = _sa_item_url((it.findtext("guid") or "").strip(),
+                                         (it.findtext("link") or "").strip(), title)
+                if not url:
+                    continue
+                try:
+                    d = parsedate_to_datetime(it.findtext("pubDate") or "")
+                    d = d.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+                except Exception:
+                    d = None
+                author = (it.findtext("sa:author_name", namespaces=NS) or "").strip()
+                items.append({"t": title, "u": url, "d": d, "a": author or None, "k": kind})
+            if items:
+                items.sort(key=lambda x: x["d"] or "", reverse=True)
+                keep = items[:per_ticker]
+                # always carry the newest earnings-call transcript, even if it fell off the list
+                tr = next((i for i in items if i["k"] == "transcript"), None)
+                if tr is not None and tr not in keep:
+                    keep.append(tr)
+                return tk, keep
+        return tk, []
+
+    res = {}
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        for tk, items in ex.map(one, list(tickers)[:SA_NEWS_MAX_TK]):
+            if items:
+                res[tk] = items
+    return res
 
 
 def main():
@@ -575,6 +666,7 @@ def main():
         json.dump(payload, f, separators=(",", ":"))
 
     # ── 6. Chart data for section 06 (DNA passers, 130 daily bars each) ──
+    charts = {}
     try:
         chart_rows = list(passed[:CHART_MAX])
         seen = {r["ticker"] for r in chart_rows}
@@ -595,6 +687,25 @@ def main():
         json.dump({"updated_at": payload["updated_at"], "updated_date": today_s,
                    "spy": spy_returns(spy), "themes": themes_out}, f, separators=(",", ":"))
     print(f"  Saved {THEME_DATA_PATH} ({len(themes_out)} themes, {len(theme_moves)} label changes)")
+
+    # ── 7. Seeking Alpha headlines for the charted tickers (section 06) ──
+    try:
+        sa_tickers = sorted(charts.keys())
+        if not sa_tickers:
+            raise RuntimeError("no chart tickers")
+        sa_t0 = time.time()
+        sa_news = fetch_sa_news(sa_tickers)
+        n_items = sum(len(v) for v in sa_news.values())
+        n_tr = sum(1 for v in sa_news.values() for i in v if i["k"] == "transcript")
+        with open(SA_NEWS_PATH, "w") as f:
+            json.dump({"updated_at": payload["updated_at"],
+                       "fetched_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+                       "source": "Seeking Alpha per-symbol RSS",
+                       "news": sa_news}, f, separators=(",", ":"), ensure_ascii=False)
+        print(f"  Saved {SA_NEWS_PATH} ({len(sa_news)}/{len(sa_tickers)} tickers, "
+              f"{n_items} headlines, {n_tr} transcripts, {int(time.time() - sa_t0)}s)")
+    except Exception as e:
+        print(f"  (Seeking Alpha news skipped: {e})")
 
     print(f"  Analysed {n_analysed} · DNA pass {len(passed)} "
           f"({payload['stats']['new_vs_universe']} not in my universe) · "

@@ -245,6 +245,24 @@
   .ch-plan small { display:block; color:var(--muted); font-size:9.5px; letter-spacing:0.1em; margin-bottom:3px; }
   .ch-plan .v { font-size:13px; color:var(--text); } .ch-plan .stop .v { color:var(--red); } .ch-plan .entry .v { color:var(--green); }
   .ch-plan .calc { cursor:pointer; } .ch-plan .calc:hover { background:var(--bg3); }
+  /* ── Seeking Alpha: deep links + headline feed ── */
+  .sa-ln { display:inline-block; font-family:var(--mono); font-size:9.5px; line-height:1.3; padding:0 3px; margin-left:4px;
+           border:1px solid var(--border); border-radius:2px; color:var(--muted); text-decoration:none; vertical-align:middle; }
+  .sa-ln:hover { color:var(--accent); border-color:var(--accent); background:var(--bg3); }
+  .sa-chip { text-decoration:none; border-bottom:1px dotted var(--border); }
+  .sa-chip:hover { border-bottom-style:solid; }
+  .ch-news { border-top:1px solid var(--border); padding:7px 12px 9px; }
+  .ch-news .hd { display:flex; justify-content:space-between; align-items:center; font-family:var(--mono);
+                 font-size:9px; letter-spacing:0.1em; color:var(--muted); margin-bottom:5px; }
+  .ch-news .nh { display:flex; gap:8px; align-items:baseline; padding:2px 0; font-size:10.5px; line-height:1.35; }
+  .ch-news .nh a { color:var(--text); text-decoration:none; }
+  .ch-news .nh a:hover { color:var(--accent); text-decoration:underline; }
+  .ch-news .nd { font-family:var(--mono); font-size:9px; color:var(--muted); white-space:nowrap; min-width:28px; text-align:right; }
+  .ch-news .nk { font-family:var(--mono); font-size:8px; letter-spacing:0.06em; padding:0 3px; border:1px solid var(--border);
+                 color:var(--muted); white-space:nowrap; min-width:60px; text-align:center; }
+  .ch-news .nk.art { color:var(--blue); border-color:var(--blue); }
+  .ch-news .nk.tr  { color:var(--ch-purple); border-color:var(--ch-purple); }
+  .ch-news .fresh a { font-weight:600; } .ch-news .fresh .nd { color:var(--amber); }
   .ch-tip { position:absolute; pointer-events:none; background:var(--bg3); border:1px solid var(--border2); padding:6px 8px; font-family:var(--mono); font-size:10.5px; color:var(--text); display:none; z-index:3; white-space:nowrap; }
   .ch-tip .r { color:var(--muted); }
   .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
@@ -792,6 +810,25 @@
 // ────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
+// ────────────────────────────────────────────────
+//  SEEKING ALPHA — deep links + headline feed
+// ────────────────────────────────────────────────
+const SA_TAB = { main:'', quant:'/ratings/quant-ratings', earnings:'/earnings', peers:'/peers',
+                 news:'/news', analysis:'/analysis', financials:'/financials' };
+// SA writes class shares with a dot (BRK.B) where yfinance/Nasdaq use a hyphen.
+const saSym = tk => String(tk || '').replace(/^([A-Z]+)-([A-Z])$/, '$1.$2');
+const saUrl = (tk, tab) => 'https://seekingalpha.com/symbol/' + encodeURIComponent(saSym(tk)) + (SA_TAB[tab] || '');
+function saLink(tk, tab, label) {
+  if (!tk || tk === '—') return '';
+  return `<a class="sa-ln" href="${saUrl(tk, tab)}" target="_blank" rel="noopener noreferrer"`
+       + ` title="Seeking Alpha — ${label || 'symbol page'}: ${tk}" onclick="event.stopPropagation()">α</a>`;
+}
+// Ticker of a table cell — prefers data-tk so the added links can't break live-quote matching.
+const cellTicker = c => c ? (c.dataset.tk || c.textContent.replace('⚠️', '').trim()) : null;
+const esc = t => String(t == null ? '' : t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+
 function pct(v, decimals=2) {
   if (v == null || isNaN(v)) return '<span class="neu">—</span>';
   const c = v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu';
@@ -1197,7 +1234,7 @@ function renderPortfolioTable(tbodyId, positions) {
 
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" style="font-weight:700">${p.ticker || '—'}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker, 'main', 'symbol page')}</td>
       <td style="color:var(--muted)">${p.name && p.name !== p.ticker ? p.name : '—'}</td>
       <td>${p.shares != null ? Number(p.shares).toLocaleString() : '—'}</td>
       <td>${p.avg_cost != null ? '$' + fmtPrice(p.avg_cost) : '—'}</td>
@@ -1231,7 +1268,7 @@ function renderLongTermTable(tbodyId, positions) {
 
     return `<tr style="${rowStyle}">
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" style="font-weight:700">${warnIcon}${p.ticker || '—'}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker, 'main', 'symbol page')}</td>
       <td style="color:var(--muted);font-size:10px">${p.name || '—'}</td>
       <td style="color:var(--muted);font-size:10px">${p.entry_date || '—'}</td>
       <td>$${p.avg_cost != null ? p.avg_cost.toFixed(2) : '—'}</td>
@@ -1403,7 +1440,7 @@ function updatePriceInTable(tableId, ticker, q) {
     const cells = row.querySelectorAll('td');
     if (!cells.length) return;
     // Check if any cell contains this ticker
-    const tickerCell = Array.from(cells).find(c => c.textContent.trim() === ticker);
+    const tickerCell = Array.from(cells).find(c => cellTicker(c) === ticker);
     if (!tickerCell) return;
     // Find price cell (typically index 1 or 2) and pct cell
     cells.forEach(cell => {
@@ -1494,7 +1531,7 @@ function applyLiveQuotes() {
       if (cells.length < 9) return;
       const tickerCell = cells[1];
       if (!tickerCell) return;
-      const ticker = tickerCell.textContent.replace('⚠️','').trim();
+      const ticker = cellTicker(tickerCell);
       const q = liveQuotes[ticker];
       if (!q) return;
 
@@ -1528,7 +1565,7 @@ function applyLiveQuotes() {
       if (cells.length < 9) return;
       const tickerCell = cells[1];
       if (!tickerCell) return;
-      const ticker = tickerCell.textContent.replace('⚠️','').trim();
+      const ticker = cellTicker(tickerCell);
       const q = liveQuotes[ticker];
       if (!q) return;
 
@@ -1698,6 +1735,43 @@ applyThemeBtn();
 //  06 CHARTS — DNA pass
 // ────────────────────────────────────────────────
 let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'setup_score', chFilter = 'all';
+
+// ── Seeking Alpha headlines (data/sa_news.json, written by fetch_scan.py) ──
+let saNews = null;
+const SA_KIND = { article: ['ANALYSIS', 'art'], transcript: ['TRANSCRIPT', 'tr'], news: ['NEWS', ''] };
+const SA_FRESH_MS = 48 * 3600 * 1000;
+async function loadSaNews() {
+  try {
+    const r = await fetch('data/sa_news.json?t=' + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    saNews = await r.json();
+  } catch (err) { saNews = null; }
+}
+const saFeed = tk => (saNews && saNews.news && saNews.news[tk]) || [];
+const saTranscript = tk => saFeed(tk).find(i => i.k === 'transcript') || null;
+function saAge(iso) {
+  const ms = Date.now() - Date.parse(iso || '');
+  if (!isFinite(ms)) return '';
+  if (ms < 3600e3)  return Math.max(1, Math.round(ms / 60000)) + 'm';
+  if (ms < 86400e3) return Math.round(ms / 3600e3) + 'h';
+  return Math.round(ms / 86400e3) + 'd';
+}
+function chNews(tk) {
+  const feed = saFeed(tk);
+  if (!feed.length) return '';
+  const fresh = feed.filter(i => Date.now() - Date.parse(i.d || '') < SA_FRESH_MS).length;
+  const rows = feed.slice(0, 5).map(i => {
+    const isFresh = Date.now() - Date.parse(i.d || '') < SA_FRESH_MS;
+    const k = SA_KIND[i.k] || SA_KIND.news;
+    return `<div class="nh${isFresh ? ' fresh' : ''}"><span class="nd">${saAge(i.d)}</span>`
+         + `<span class="nk ${k[1]}">${k[0]}</span>`
+         + `<a href="${esc(i.u)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"`
+         + ` title="${esc(i.t)}${i.a ? ' · ' + esc(i.a) : ''}${i.d ? ' · ' + esc(i.d) : ''}">${esc(i.t)}</a></div>`;
+  }).join('');
+  return `<div class="ch-news"><div class="hd"><span>SEEKING ALPHA${fresh ? ' · ' + fresh + ' NEW &lt;48H' : ''}</span>`
+       + `<a class="sa-ln" href="${saUrl(tk, 'news')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="all news on Seeking Alpha: ${tk}">ALL α</a>`
+       + `</div>${rows}</div>`;
+}
 const chF  = (x, d=2) => x == null ? '—' : Number(x).toFixed(d);
 const chFV = v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v;
 const chCss = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -1739,7 +1813,7 @@ function chCard(it) {
   const r3 = m.plan_stop && m.plan_entry_hi ? m.plan_entry_hi + 3 * (m.plan_entry_hi - m.plan_stop) : null;
   el.innerHTML = `
     <div class="ch-hd">
-      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>
+      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>${saLink(m.ticker, 'earnings', 'earnings & transcripts')}
       <span class="ch-nm" title="${m.name || ''}">${m.name || ''}</span>
       <span class="ch-dna">${keys.map(k => `<span class="dna-dot ${m.dna && m.dna[k] ? 'ok' : ''}" title="${titles[k]}" style="margin:0"></span>`).join('')}<span>SETUP ${m.setup_score}</span></span>
       ${m.in_universe ? '' : '<span class="ch-chg" style="color:var(--blue);background:rgba(64,196,255,0.10)">NEW</span>'}
@@ -1754,6 +1828,7 @@ function chCard(it) {
       <span>CONFL <b>${(m.confluence || []).join('/') || '—'}</b></span>
       ${m.pocket_pivot ? '<span class="good">● POCKET PIVOT</span>' : ''}${m.tight ? '<span>● TIGHT</span>' : ''}
       ${m.earnings_days != null && m.earnings_days <= 10 ? `<span class="warn">⚠ EARNINGS ${m.earnings_date} (${m.earnings_days}d)</span>` : ''}
+      ${(() => { const t = saTranscript(m.ticker); return t ? `<span><a href="${esc(t.u)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:var(--ch-purple);text-decoration:none" title="${esc(t.t)}">● TRANSCRIPT ${(t.d || '').slice(0, 10)}</a></span>` : ''; })()}
     </div>
     <div class="ch-chart"><div class="ch-tip"></div></div>
     <div class="ch-legend">
@@ -1767,7 +1842,8 @@ function chCard(it) {
       <div class="stop"><small>PLAN STOP (${m.plan_stop_basis || '—'})</small><span class="v">${chF(m.plan_stop)} · −${chF(m.plan_stop_pct, 1)}%</span></div>
       <div><small>+3R TARGET</small><span class="v">${r3 ? chF(r3) : '—'}</span></div>
       <div class="calc" title="load entry & stop in the calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})"><small>POSITION</small><span class="v" style="color:var(--accent)">→ CALCULATOR</span></div>
-    </div>`;
+    </div>
+    ${chNews(m.ticker)}`;
   const box = el.querySelector('.ch-chart');
   el.querySelector('.ch-ic').onclick = () => { el.classList.toggle('expanded'); chDraw(box, bars, m); };
   requestAnimationFrame(() => chDraw(box, bars, m));
@@ -1869,7 +1945,7 @@ function renderThemes() {
     <tr class="th-sub ${open ? 'open' : ''}"><td colspan="17"><table class="th-subtbl">
       <thead><tr><th>Ticker</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>DNA</th><th>RS</th><th>Stage</th><th>Off 52W</th><th>Strong</th><th>Confl.</th><th>Score</th><th title="click to load in calculator">Stop · %</th><th>ER</th></tr></thead>
       <tbody>${t.tickers.map(r => `<tr>
-        <td style="font-weight:600;color:var(--text)">${r.ticker}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
+        <td data-tk="${r.ticker}" style="font-weight:600;color:var(--text)">${r.ticker}${saLink(r.ticker, 'peers', 'peers & valuation')}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
         <td class="${thC(r.chg_1d)}">${thF(r.chg_1d)}%</td><td class="${thC(r.chg_1w)}">${thF(r.chg_1w)}%</td><td class="${thC(r.chg_1m)}">${thF(r.chg_1m)}%</td><td class="${thC(r.ytd)}">${thF(r.ytd, 1)}%</td>
         <td>${dots(r)}</td><td class="${r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 70 ? 'amb' : ''}">${r.rs_rating ?? '—'}</td>
         <td>${r.stage ?? '—'}</td><td class="${r.off_52w_high > -10 ? 'pos' : r.off_52w_high < -25 ? 'neg' : ''}">${thF(r.off_52w_high, 1, false)}%</td>
@@ -1910,7 +1986,7 @@ loadCarnivorePortfolios();
 loadSwingData();
 loadScanData();
 loadIbd();
-loadChartData();
+loadSaNews().then(loadChartData);
 loadThemes();
 calc();
 
@@ -2001,7 +2077,7 @@ function swRow(r) {
     const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : '', (r.in_universe === false) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
-      <td title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span> <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker, 'quant', 'Quant Ratings')} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
       <td><span class="dna-dots">${dots}</span></td>
@@ -2043,7 +2119,8 @@ function tickerChips(list, scan) {
     const r = scan && scan[t];
     const rs = r ? r.rs_rating : null;
     const c = rs == null ? 'var(--muted)' : rs >= 85 ? 'var(--green)' : rs >= 60 ? 'var(--amber)' : 'var(--text)';
-    return `<span style="color:${c};margin-right:6px" title="${r ? (r.name || '') + ' · RS ' + rs + ' · score ' + r.setup_score : ''}">${t}</span>`;
+    const tip = (r ? (r.name || '') + ' · RS ' + rs + ' · score ' + r.setup_score + ' · ' : '') + 'open on Seeking Alpha';
+    return `<a class="sa-chip" href="${saUrl(t, 'main')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:${c};margin-right:6px" title="${tip}">${t}</a>`;
   }).join('');
 }
 
