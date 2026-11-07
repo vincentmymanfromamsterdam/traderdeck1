@@ -753,8 +753,8 @@
       <div class="section-subtitle">WATCHLIST, GEEN KOOPSIGNAAL <span id="nt-updated" style="color:var(--muted)"></span></div>
     </div>
     <div class="ch-toolbar" style="margin-bottom:10px">
-      <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1-base met vroege tekenen van Stage 2 — wachten op de 1&rightarrow;2-transitie en de eerste pullback">BASE &middot; STAGE 1&rightarrow;2 <span id="ntc-base" style="color:var(--muted)"></span></button>
-      <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Echt gecorrigeerde naam (Stage 1 of 3, onder de 200 of &ge;15% onder de high) die omdraait: &ge;2 signalen waarvan minstens &eacute;&eacute;n omslagsignaal">RECOVERY <span id="ntc-recovery" style="color:var(--muted)"></span></button>
+      <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1 met een vlakke of stijgende 200 &mdash; de klassieke Weinstein-base. Rustig; wachten op de 1&rightarrow;2-transitie en dan de eerste pullback.">BASE &middot; VLAKKE 200 <span id="ntc-base" style="color:var(--muted)"></span></button>
+      <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Draaiend na een echte correctie: Stage 1 met een nog d&aacute;lende 200 (verse reclaim) of Stage 3 die gecorrigeerd is. Minimaal 2 signalen waarvan &eacute;&eacute;n omslagsignaal (R50 / 200&uarr; / RS&uarr;).">RECOVERY &middot; DRAAIEND <span id="ntc-recovery" style="color:var(--muted)"></span></button>
     </div>
     <div class="table-wrap"><table>
       <thead><tr>
@@ -1829,8 +1829,8 @@ async function loadNotable() {
 }
 
 const NT_EMPTY = {
-  base: 'Geen Stage 1-namen met vroege signalen in deze run.',
-  recovery: 'Geen gecorrigeerde namen met een omslagsignaal in deze run.'
+  base: 'Geen bases met een vlakke of stijgende 200 en een vroeg signaal in deze run.',
+  recovery: 'Geen gecorrigeerde namen die omdraaien in deze run.'
 };
 function renderNotable() {
   const tb = $('nt-tbody'); if (!tb || !ntData) return;
@@ -1947,7 +1947,7 @@ function whyPills(m) {
   let out = '';
   if (m.why === 'notable') {
     const rec = m.route === 'recovery';
-    out += `<span class="ch-why nt" title="${rec ? 'gecorrigeerde naam die omdraait' : 'Stage 1-base met vroege Stage 2-signalen'} — ${m.early_score || 0} signalen — watchlist, geen koopsignaal">${rec ? 'RECOVERY' : 'BASE'}</span>`;
+    out += `<span class="ch-why nt" title="${rec ? 'draait na een echte correctie (200 daalt nog, of Stage 3)' : 'Weinstein-base: Stage 1 met vlakke of stijgende 200'} — ${m.early_score || 0} signalen — watchlist, geen koopsignaal">${rec ? 'RECOVERY' : 'BASE'}</span>`;
   }
   if (m.dna_rank)
     out += `<span class="ch-why dna" title="DNA-passer #${m.dna_rank} op setup score">DNA #${m.dna_rank}</span>`;

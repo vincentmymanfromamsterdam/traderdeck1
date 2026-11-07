@@ -67,6 +67,7 @@ NOTABLE_MIN_SIGNALS = 1   # of 6 — one real signal makes a name notable; the s
 NOTABLE_MAX_BASE     = 15  # Stage 1 bases with early Stage 2 signs
 NOTABLE_MAX_RECOVERY = 10  # corrected names (Stage 1/3) turning back up: >=2 signals incl. a turn signal
 NOTABLE_RECOVERY_OFF_HIGH = -15   # "really corrected": below the 200 SMA or at least this far off the high
+NOTABLE_FALLING_200 = -0.01       # 200 SMA slope over 20 bars below this = still falling -> recovery, not base
 NOTABLE_MIN_DOLLAR_VOL = 50_000_000
 NOTABLE_MIN_ABOVE_LOW  = 1.05    # dead-cat guard only. 25% cut the wrong names:
                                  # a quiet consolidation sits close to BOTH its 52w low
@@ -749,10 +750,17 @@ def main():
             turn = any(e.get(k) for k in TURN_SIGNALS)
             corrected = (r.get("above_s200") is False
                          or (r.get("off_52w_high") or 0) <= NOTABLE_RECOVERY_OFF_HIGH)
+            falling200 = (r.get("s200_slope_20") or 0) < NOTABLE_FALLING_200
+            # Since v6.4 Stage 1 holds two different animals, split by the 200's slope:
+            #   flat/rising 200  -> a quiet Weinstein base, the classic 1->2 candidate
+            #   still falling    -> a fresh reclaim of a falling 200 (RKT, 4 Nov 2026)
+            # Without the split the reclaims crowd the bases out of the cap.
             route = None
-            if r.get("stage") == 1 and sc >= NOTABLE_MIN_SIGNALS:
+            if r.get("stage") == 1 and not falling200 and sc >= NOTABLE_MIN_SIGNALS:
                 route = "base"
-            elif r.get("stage") in (1, 3) and corrected and sc >= 2 and turn:
+            elif sc >= 2 and turn and (
+                    (r.get("stage") == 1 and falling200)
+                    or (r.get("stage") == 3 and corrected)):
                 route = "recovery"
             if route is None:
                 continue
@@ -760,7 +768,8 @@ def main():
                 "ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating",
                 "rs_chg_1m", "avg_dollar_vol", "off_52w_high", "early", "early_score",
                 "setup_score", "plan_stop", "plan_stop_pct", "plan_stop_basis",
-                "plan_entry_lo", "plan_entry_hi", "confluence_n", "rvol")} | {"route": route})
+                "plan_entry_lo", "plan_entry_hi", "confluence_n", "rvol",
+                "s200_slope_20", "above_s200")} | {"route": route})
         # Rank: score, then the number of actual TURN signals over merely constructive
         # ones (accumulation, higher lows, a pocket pivot), then dRS.
         notable.sort(key=lambda r: ((r["early_score"] or 0),
@@ -776,6 +785,8 @@ def main():
                        "rows": notable}, f, separators=(",", ":"))
         nb = sum(1 for r in notable if r["route"] == "base")
         print(f"  Saved {NOTABLE_PATH} ({nb} base + {len(notable) - nb} recovery)")
+        if notable:
+            print("    " + ", ".join(f"{r['ticker']}:{r['route'][:3]}{r['early_score']}" for r in notable[:12]))
     except Exception as e:
         notable = []
         print(f"  (notable scan skipped: {e})")

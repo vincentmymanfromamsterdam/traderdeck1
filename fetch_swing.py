@@ -196,10 +196,15 @@ def analyse(ticker, df, spy_chg):
             return s200_now / prev - 1
 
         s200_slope_20, s200_slope_60 = _slope(20), _slope(60)
-        if close > s200_now and (above50 or (s200_slope_20 or 0) >= FLAT_200):
-            # Advance. A multi-week pullback below the 50 EMA while the 200 is
-            # still clearly rising is a Stage 2 correction, not a top — that is
-            # exactly the pullback-to-confluence setup we trade.
+        if close > s200_now and ((s200_slope_20 or 0) >= FLAT_200
+                                 or (above50 and (s200_slope_20 or 0) > -FLAT_200)):
+            # Advance, Weinstein-strict (v6.4): price above the 200 AND the 200 is
+            # either clearly rising, or flat with price above the 50 EMA. A name
+            # above a still-FALLING 200 is no longer Stage 2 — it is a reclaim, i.e.
+            # Stage 1 (or 3 if it is rolling over from an advance). That is what made
+            # RKT invisible on its 4 Nov 2026 turn: five signals, but labelled Stage 2.
+            # A multi-week pullback below the 50 above a rising 200 stays Stage 2 —
+            # that is the pullback-to-confluence setup we trade.
             stage = 2
         elif s200_slope_20 is None:
             stage = 1
