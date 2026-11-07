@@ -118,6 +118,9 @@ def ret(close, n):
     a, b = float(close.iloc[-1]), float(close.iloc[-1 - n])
     return (a / b - 1) * 100 if b else None
 
+RS_LOOKBACK_1M = 21      # trading days back for the "RS a month ago" percentile
+
+
 def rs_raw(close):
     """IBD-style weighted 12-month performance: 40% Q1, 20% Q2, 20% Q3, 20% Q4."""
     parts = [(63, 0.4), (126, 0.2), (189, 0.2), (252, 0.2)]
@@ -334,7 +337,9 @@ def main():
     tickers = sorted(set(bench_pool) | {"SPY"})
     print(f"  Universe: {len(universe)} tickers · RS benchmark pool: {len(bench_pool)}")
 
-    start = (dt.date.today() - dt.timedelta(days=400)).strftime("%Y-%m-%d")
+    # 480 days: same window as fetch_scan.py — a 252-bar RS window plus the
+    # 21-bar offset for rs_rating_1m needs ~274 trading days.
+    start = (dt.date.today() - dt.timedelta(days=480)).strftime("%Y-%m-%d")
     print(f"  Downloading {len(tickers)} tickers from {start}...", end=" ", flush=True)
     data = yf.download(tickers, start=start, interval="1d", group_by="ticker",
                        auto_adjust=True, progress=False, threads=True)
@@ -352,21 +357,37 @@ def main():
     spy_chg = spy["Close"].pct_change() * 100 if spy is not None else None
     record_results(tickers, [t for t in tickers if frame(t) is not None and len(frame(t)) >= 5])
 
-    # RS raw for the whole benchmark pool (cheap: close series only)
-    rs_pool = {}
+    # RS raw for the whole benchmark pool (cheap: close series only), plus the
+    # same thing on the series as it stood RS_LOOKBACK_1M trading days ago.
+    rs_pool, rs_pool_1m = {}, {}
     for t in bench_pool:
         df = frame(t)
         if df is None or len(df) < 70:
             continue
-        r = rs_raw(df["Close"].dropna())
+        cl = df["Close"].dropna()
+        r = rs_raw(cl)
         if r is not None:
             rs_pool[t] = r
+        if len(cl) > RS_LOOKBACK_1M + 70:
+            r1 = rs_raw(cl.iloc[:-RS_LOOKBACK_1M])
+            if r1 is not None:
+                rs_pool_1m[t] = r1
     pool_vals = np.array(sorted(rs_pool.values()))
+    pool_vals_1m = np.array(sorted(rs_pool_1m.values()))
+
+    def _pct(x, pool):
+        if x is None or len(pool) == 0:
+            return None
+        return int(max(1, min(99, round(np.searchsorted(pool, x, side="right") / len(pool) * 99))))
 
     def percentile(x):
-        if x is None or len(pool_vals) == 0:
+        return _pct(x, pool_vals)
+
+    def rs_1m_of(df):
+        cl = df["Close"].dropna()
+        if len(cl) <= RS_LOOKBACK_1M + 70:
             return None
-        return int(max(1, min(99, round(np.searchsorted(pool_vals, x, side="right") / len(pool_vals) * 99))))
+        return _pct(rs_raw(cl.iloc[:-RS_LOOKBACK_1M]), pool_vals_1m)
 
     try:
         from sector_map import load_earnings
@@ -388,6 +409,9 @@ def main():
         if not m:
             continue
         m["rs_rating"] = percentile(m.pop("rs_raw"))
+        m["rs_rating_1m"] = rs_1m_of(df)
+        m["rs_chg_1m"] = (m["rs_rating"] - m["rs_rating_1m"]) \
+            if (m["rs_rating"] is not None and m["rs_rating_1m"] is not None) else None
         er = earnings.get(t)
         m["earnings_date"] = er
         m["earnings_days"] = (dt.date.fromisoformat(er) - dt.date.today()).days if er else None
