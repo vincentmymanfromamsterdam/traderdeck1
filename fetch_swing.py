@@ -297,11 +297,23 @@ def analyse(ticker, df, spy_chg):
     # median / 62% win, and halves the stop-out rate when price is above the 200.
     # TYL printed one on 29 Oct 2026 (support 355.55 from 19 Oct, low 348.52,
     # close 373.93 on 2.53x volume) and ran +12.5% in the ten days after.
+    # What matters is not how deep the dip went but WHERE THE REVERSAL ENDED: the
+    # close of the U&R day must sit near the previous close. Above it is always
+    # fine (a gap-down that fully reverses, XMTR +16.5% on 3 Nov 2026, is exactly
+    # the kind of day worth watching), but a close far below means the reversal
+    # left most of the gap open -- the level was jumped through, not tested, and
+    # the chart is broken for weeks (WK -14.9%, IT -13.2%, RYTM -7.5%).
+    # Note this is a tradability rule, not a performance one: on the sample the
+    # names it drops showed a HIGHER raw forward return. They are excluded to keep
+    # one recognisable pattern per list -- on the first live run 9 of 14 rows were
+    # earnings repricings -- and because their swing entry comes on a later retest,
+    # well outside this gate's five-session window.
     UR_LOOKBACK, UR_MIN_HELD, UR_MAX_UNDER = 30, 5, 0.07
-    UR_VOL, UR_LOD, UR_MAX_AGE = 2.0, 0.6, 5
+    UR_VOL, UR_LOD, UR_MAX_AGE, UR_MAX_CLOSE_BELOW_PC = 2.0, 0.6, 5, -3.0
     ur = None
     if len(df) >= 40:
         lo_v, hi_v, cl_v, vo_v, e50_v = l.values, h.values, c.values, v.values, e50.values
+        op_v = df["Open"].values
         v20_v = pd.Series(vo_v).rolling(20).mean().values
         for i in range(max(len(df) - UR_MAX_AGE, UR_LOOKBACK + 1), len(df)):
             day_lo, day_hi, day_cl = float(lo_v[i]), float(hi_v[i]), float(cl_v[i])
@@ -313,6 +325,12 @@ def analyse(ticker, df, spy_chg):
             vol_x = float(vo_v[i]) / float(v20_v[i])
             if vol_x < UR_VOL:
                 continue
+            prev_cl = float(cl_v[i - 1])
+            close_vs_pc = (day_cl / prev_cl - 1) * 100
+            if close_vs_pc <= UR_MAX_CLOSE_BELOW_PC:
+                continue                          # gap left open, not reclaimed
+            low_vs_pc = (day_lo / prev_cl - 1) * 100
+            gap_pct = (float(op_v[i]) / prev_cl - 1) * 100
             # Walk back for the most recent low that then held as support for at
             # least UR_MIN_HELD bars, was undercut today and sits below the close.
             for j in range(i - 1 - UR_MIN_HELD, max(i - UR_LOOKBACK, 0) - 1, -1):
@@ -323,6 +341,9 @@ def analyse(ticker, df, spy_chg):
                     ur = {"date": str(df.index[i].date()), "ref": r2(ref), "low": r2(day_lo),
                           "under_pct": r2((ref - day_lo) / ref * 100, 2), "vol_x": r2(vol_x),
                           "held": int(i - 1 - j), "age": int(len(df) - 1 - i),
+                          "close_vs_pc": r2(close_vs_pc, 1), "low_vs_pc": r2(low_vs_pc, 1),
+                          "gap_pct": r2(gap_pct, 1),
+                          "stop_dist_pct": r2((day_cl - day_lo) / day_cl * 100, 1),
                           "at_ema50": bool(day_lo < float(e50_v[i]) <= day_cl)}
                     break
 
