@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-07 16:14 UTC",
+  "updated_at": "2026-11-07 16:27 UTC",
   "updated_date": "2026-11-07",
   "thresholds": {
     "adr_pct_min": 3.0,
@@ -178,6 +178,8 @@
       "days_since_20d_high": 1,
       "wis_count_20d": 4,
       "wis_today": false,
+      "rs_rating_1m": 69,
+      "rs_chg_1m": 21,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -258,6 +260,8 @@
       "days_since_20d_high": 6,
       "wis_count_20d": 2,
       "wis_today": false,
+      "rs_rating_1m": 90,
+      "rs_chg_1m": 9,
       "earnings_date": "2026-11-10",
       "earnings_days": 3,
       "dna": {
@@ -338,6 +342,8 @@
       "days_since_20d_high": 11,
       "wis_count_20d": 3,
       "wis_today": false,
+      "rs_rating_1m": 89,
+      "rs_chg_1m": 7,
       "earnings_date": "2026-11-19",
       "earnings_days": 12,
       "dna": {
@@ -418,6 +424,8 @@
       "days_since_20d_high": 7,
       "wis_count_20d": 2,
       "wis_today": false,
+      "rs_rating_1m": 94,
+      "rs_chg_1m": 3,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -497,6 +505,8 @@
       "days_since_20d_high": 3,
       "wis_count_20d": 2,
       "wis_today": false,
+      "rs_rating_1m": 88,
+      "rs_chg_1m": 3,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -576,6 +586,8 @@
       "days_since_20d_high": 1,
       "wis_count_20d": 3,
       "wis_today": false,
+      "rs_rating_1m": 78,
+      "rs_chg_1m": 11,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -656,6 +668,8 @@
       "days_since_20d_high": 2,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 78,
+      "rs_chg_1m": 11,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -736,6 +750,8 @@
       "days_since_20d_high": 1,
       "wis_count_20d": 4,
       "wis_today": false,
+      "rs_rating_1m": 59,
+      "rs_chg_1m": 12,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -816,6 +832,8 @@
       "days_since_20d_high": 2,
       "wis_count_20d": 2,
       "wis_today": false,
+      "rs_rating_1m": 21,
+      "rs_chg_1m": 20,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -897,6 +915,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 86,
+      "rs_chg_1m": 0,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -976,6 +996,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 97,
+      "rs_chg_1m": 0,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1056,6 +1078,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 92,
+      "rs_chg_1m": -15,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1135,6 +1159,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 98,
+      "rs_chg_1m": 0,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1214,6 +1240,8 @@
       "days_since_20d_high": 18,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 97,
+      "rs_chg_1m": -3,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1291,6 +1319,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 2,
       "wis_today": false,
+      "rs_rating_1m": 94,
+      "rs_chg_1m": -2,
       "earnings_date": "2026-11-18",
       "earnings_days": 11,
       "dna": {
@@ -1368,6 +1398,8 @@
       "days_since_20d_high": 5,
       "wis_count_20d": 3,
       "wis_today": false,
+      "rs_rating_1m": 83,
+      "rs_chg_1m": -39,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1450,6 +1482,8 @@
       "days_since_20d_high": 6,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 6,
+      "rs_chg_1m": -4,
       "earnings_date": "2026-11-10",
       "earnings_days": 3,
       "dna": {
@@ -1529,6 +1563,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 98,
+      "rs_chg_1m": -2,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1608,6 +1644,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 88,
+      "rs_chg_1m": -49,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1688,6 +1726,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 72,
+      "rs_chg_1m": -44,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1725,7 +1765,7 @@
       "rs_rating": 22,
       "ema9": 378.34,
       "ema21": 379.61,
-      "ema50": 373.95,
+      "ema50": 373.94,
       "ma10w": 372.14,
       "avwap": 361.15,
       "avwap_days": 71,
@@ -1769,6 +1809,8 @@
       "days_since_20d_high": 4,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 24,
+      "rs_chg_1m": -2,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1849,6 +1891,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 95,
+      "rs_chg_1m": -80,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -1929,6 +1973,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 91,
+      "rs_chg_1m": -83,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2009,6 +2055,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 23,
+      "rs_chg_1m": -20,
       "earnings_date": "2026-11-09",
       "earnings_days": 2,
       "dna": {
@@ -2089,6 +2137,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 11,
+      "rs_chg_1m": -9,
       "earnings_date": "2026-11-12",
       "earnings_days": 5,
       "dna": {
@@ -2169,6 +2219,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 2,
+      "rs_chg_1m": -1,
       "earnings_date": "2026-11-09",
       "earnings_days": 2,
       "dna": {
@@ -2248,6 +2300,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 99,
+      "rs_chg_1m": -3,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2327,6 +2381,8 @@
       "days_since_20d_high": 18,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 62,
+      "rs_chg_1m": -27,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2406,6 +2462,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 65,
+      "rs_chg_1m": -36,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2486,6 +2544,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 92,
+      "rs_chg_1m": -67,
       "earnings_date": "2026-11-12",
       "earnings_days": 5,
       "dna": {
@@ -2563,6 +2623,8 @@
       "days_since_20d_high": 2,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 14,
+      "rs_chg_1m": 9,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2642,6 +2704,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 92,
+      "rs_chg_1m": -71,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2722,6 +2786,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 38,
+      "rs_chg_1m": -24,
       "earnings_date": "2026-11-09",
       "earnings_days": 2,
       "dna": {
@@ -2801,6 +2867,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 95,
+      "rs_chg_1m": -83,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2881,6 +2949,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 1,
       "wis_today": false,
+      "rs_rating_1m": 83,
+      "rs_chg_1m": -74,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -2961,6 +3031,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 35,
+      "rs_chg_1m": -30,
       "earnings_date": "2026-11-16",
       "earnings_days": 9,
       "dna": {
@@ -3041,6 +3113,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 6,
+      "rs_chg_1m": -4,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3121,6 +3195,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 3,
+      "rs_chg_1m": -2,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3201,6 +3277,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 15,
+      "rs_chg_1m": -14,
       "earnings_date": "2026-11-10",
       "earnings_days": 3,
       "dna": {
@@ -3281,6 +3359,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 7,
+      "rs_chg_1m": -6,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3360,6 +3440,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 96,
+      "rs_chg_1m": -71,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3439,6 +3521,8 @@
       "days_since_20d_high": 18,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 77,
+      "rs_chg_1m": -53,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3518,6 +3602,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 74,
+      "rs_chg_1m": -54,
       "earnings_date": "2026-11-17",
       "earnings_days": 10,
       "dna": {
@@ -3597,6 +3683,8 @@
       "days_since_20d_high": 18,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 47,
+      "rs_chg_1m": -34,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3676,6 +3764,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 94,
+      "rs_chg_1m": -88,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3755,6 +3845,8 @@
       "days_since_20d_high": 19,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 39,
+      "rs_chg_1m": -34,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3834,6 +3926,8 @@
       "days_since_20d_high": 6,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 57,
+      "rs_chg_1m": -52,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
@@ -3913,6 +4007,8 @@
       "days_since_20d_high": 16,
       "wis_count_20d": 0,
       "wis_today": false,
+      "rs_rating_1m": 14,
+      "rs_chg_1m": -10,
       "earnings_date": null,
       "earnings_days": null,
       "dna": {
