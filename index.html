@@ -274,7 +274,11 @@
   .ch-card.flash { outline:2px solid var(--amber); outline-offset:-2px; }
   /* ── 07 Notable ── */
   .nt-row { cursor:pointer; }
-  .nt-sig { display:inline-flex; gap:4px; align-items:center; vertical-align:middle; }
+  .nt-sig { display:inline-flex; gap:3px; align-items:center; vertical-align:middle; }
+  .sig-tag { font-family:var(--mono); font-size:8.5px; letter-spacing:0.03em; padding:1px 3px;
+             border:1px solid var(--border); color:var(--dim); white-space:nowrap; }
+  .sig-tag.on { color:var(--amber); border-color:var(--amber); background:rgba(255,179,0,0.10); font-weight:600; }
+  html[data-theme="light"] .sig-tag.on { background:rgba(183,121,31,0.12); }
   .ch-tip { position:absolute; pointer-events:none; background:var(--bg3); border:1px solid var(--border2); padding:6px 8px; font-family:var(--mono); font-size:10.5px; color:var(--text); display:none; z-index:3; white-space:nowrap; }
   .ch-tip .r { color:var(--muted); }
   .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
@@ -1780,12 +1784,20 @@ const SA_KIND = { article: ['ANALYSIS', 'art'], transcript: ['TRANSCRIPT', 'tr']
 const SA_FRESH_MS = 48 * 3600 * 1000;
 // ── 07 Notable ──────────────────────────────────────────────
 let ntData = null;
-const NT_SIG = [['reclaim50', '50 EMA heroverd (kruising in de laatste 5 dagen, 50 vlak of op)'],
-                ['ma200_turn', 'de 200 SMA draait op (20 dagen op, 60 dagen nog neer)'],
-                ['pocket_pivot', 'pocket pivot (hoogste volume vs elke down-day in 10 dagen)'],
-                ['accum', 'accumulatie (up-volume / down-volume >= 1,3 over 15 dagen)'],
-                ['higher_low', 'hogere bodems (laatste 10 dagen boven de 10 ervoor)'],
-                ['rs_turn', 'RS draait (+15 punten in een maand, RS tussen 50 en 85)']];
+const NT_SIG = [['reclaim50',   'R50',  '50 EMA heroverd (kruising in de laatste 5 dagen, 50 vlak of op)'],
+                ['ma200_turn',  '200\u2191', 'de 200 SMA draait op (20 dagen op, 60 dagen nog neer)'],
+                ['pocket_pivot','PP',   'pocket pivot (hoogste volume vs elke down-day in 10 dagen)'],
+                ['accum',       'ACC',  'accumulatie (up-volume / down-volume >= 1,3 over 15 dagen)'],
+                ['higher_low',  'HL',   'hogere bodems (laatste 10 dagen boven de 10 ervoor)'],
+                ['rs_turn',     'RS\u2191',  'RS draait (+15 punten in een maand, RS tussen 50 en 85)']];
+// Welke signalen vuurden, als leesbare labels. compact=true toont alleen de actieve.
+function sigTags(early, compact) {
+  const e = early || {};
+  const list = compact ? NT_SIG.filter(([k]) => e[k]) : NT_SIG;
+  if (!list.length) return '';
+  return list.map(([k, lbl, tip]) =>
+    `<span class="sig-tag${e[k] ? ' on' : ''}" title="${esc(tip)}">${lbl}</span>`).join('');
+}
 
 async function loadNotable() {
   const tb = $('nt-tbody'); if (!tb) return;
@@ -1811,7 +1823,7 @@ function renderNotable() {
   }
   tb.innerHTML = rows.map(r => {
     const e = r.early || {};
-    const dots = NT_SIG.map(([k, t]) => `<span class="dna-dot${e[k] ? ' ok' : ''}" title="${t}"></span>`).join('');
+    const dots = sigTags(e, false);
     return `<tr class="nt-row" onclick="chShowTicker('${r.ticker}')" title="klik voor de chart">
       <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
           <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
@@ -1954,6 +1966,7 @@ function chCard(it) {
       <span>CONFL <b>${(m.confluence || []).join('/') || '—'}</b></span>
       ${m.pocket_pivot ? '<span class="good">● POCKET PIVOT</span>' : ''}${m.tight ? '<span>● TIGHT</span>' : ''}
       ${m.earnings_days != null && m.earnings_days <= 10 ? `<span class="warn">⚠ EARNINGS ${m.earnings_date} (${m.earnings_days}d)</span>` : ''}
+      ${m.why === 'notable' && m.early ? `<span style="color:var(--amber);display:inline-flex;gap:4px;align-items:center;white-space:nowrap">● EARLY ${sigTags(m.early, true)}</span>` : ''}
       ${(() => { const t = saTranscript(m.ticker); return t ? `<span><a href="${esc(t.u)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:var(--ch-purple);text-decoration:none" title="${esc(t.t)}">● TRANSCRIPT ${(t.d || '').slice(0, 10)}</a></span>` : ''; })()}
     </div>
     <div class="ch-chart"><div class="ch-tip"></div></div>
