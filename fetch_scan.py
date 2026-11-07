@@ -59,10 +59,21 @@ THEME_DATA_PATH    = "data/themes_data.json"
 THEME_HISTORY_PATH = "data/theme_history.json"
 THEME_CHART_TOP    = 5                          # per theme: top-N by RS get chart data
 
+HISTORY_DAYS   = 480      # calendar days of daily history to download
+RS_LOOKBACK_1M = 21       # trading days back for the "RS a month ago" percentile
+RS_TURN_MIN    = 15       # rs_chg_1m needed for the rs_turn signal
+NOTABLE_PATH   = "data/notable.json"
+NOTABLE_MIN_SIGNALS = 1   # of 6 — one real signal makes a name notable; the score ranks them
+NOTABLE_MAX     = 20
+NOTABLE_MIN_DOLLAR_VOL = 50_000_000
+NOTABLE_MIN_ABOVE_LOW  = 1.05    # dead-cat guard only. 25% cut the wrong names:
+                                 # a quiet consolidation sits close to BOTH its 52w low
+                                 # and high, so distance-from-low says nothing about quality.
+
 CHART_PATH  = "data/chart_data.json"
 CHART_MAX   = 40          # max DNA passers with chart data
 CHART_BARS  = 130         # ~6 months of daily bars
-CHART_META  = ("ticker", "name", "industry", "rs_rating", "stage", "adr_pct", "atr_mult_50", "off_52w_high",
+CHART_META  = ("ticker", "name", "industry", "rs_rating", "rs_chg_1m", "stage", "adr_pct", "atr_mult_50", "off_52w_high",
                "setup_score", "rvol", "earnings_date", "earnings_days", "plan_stop", "plan_stop_pct",
                "plan_stop_basis", "plan_entry_lo", "plan_entry_hi", "dna", "confluence", "pocket_pivot", "tight",
                "in_universe")
@@ -70,8 +81,8 @@ CHART_META  = ("ticker", "name", "industry", "rs_rating", "stage", "adr_pct", "a
 SA_NEWS_PATH    = "data/sa_news.json"
 SA_FEED         = "https://seekingalpha.com/api/sa/combined/{}.xml"   # public per-symbol RSS, no login
 SA_NEWS_PER_TK  = 8        # headlines kept per ticker
-SA_NEWS_WORKERS = 6        # parallel feed requests
-SA_NEWS_MAX_TK  = 80       # safety cap on tickers per run
+SA_NEWS_WORKERS = 8        # parallel feed requests
+SA_NEWS_MAX_TK  = 250      # safety cap only — must stay above CHART_MAX + themes * THEME_CHART_TOP
 SA_NEWS_TIMEOUT = 15
 
 
@@ -231,7 +242,7 @@ def build_themes(themes_def, by_t, full, spy, today_s, dates_hint=None):
             prev_labels = {}
     past = sorted(d for d in hist if d < today_s)
 
-    TK = ("ticker", "name", "price", "chg_1d", "rs_rating", "stage", "off_52w_high", "dna", "dna_pass", "dna_score",
+    TK = ("ticker", "name", "price", "chg_1d", "rs_rating", "rs_chg_1m", "stage", "off_52w_high", "dna", "dna_pass", "dna_score",
           "setup_score", "confluence_n", "pocket_pivot", "tight", "rvol", "earnings_days", "plan_stop", "plan_stop_pct", "plan_entry_hi",
           "in_universe", "industry", "etf", "above_ema9", "above_ema21", "ema9_rising", "ema21_rising")
     out, moves, snap = [], [], {}
@@ -371,9 +382,14 @@ def fetch_sa_news(tickers, per_ticker=SA_NEWS_PER_TK, workers=SA_NEWS_WORKERS):
                 return tk, keep
         return tk, []
 
+    todo = list(tickers)
+    if len(todo) > SA_NEWS_MAX_TK:
+        print(f"  ! SA news capped at {SA_NEWS_MAX_TK} of {len(todo)} tickers "
+              f"— raise SA_NEWS_MAX_TK, the rest gets no headlines")
+        todo = todo[:SA_NEWS_MAX_TK]
     res = {}
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        for tk, items in ex.map(one, list(tickers)[:SA_NEWS_MAX_TK]):
+        for tk, items in ex.map(one, todo):
             if items:
                 res[tk] = items
     return res
@@ -415,7 +431,9 @@ def main():
             smap[t].update(v)
 
     # ── 4. Full analysis ─────────────────────────────────
-    start400 = (dt.date.today() - dt.timedelta(days=400)).strftime("%Y-%m-%d")
+    # 480 days ~= 334 trading days: enough for a 252-bar RS window PLUS the
+    # 21-bar offset used for rs_rating_1m, with ~60 bars to spare.
+    start400 = (dt.date.today() - dt.timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
     themes_def = load_themes()
     theme_tickers = sorted({t for th in themes_def for t in th["tickers"]})
     need = sorted(set(liquid) | set(sp500) | set(theme_tickers) | {"SPY"})
@@ -426,20 +444,41 @@ def main():
     spy_chg = spy["Close"].pct_change() * 100 if spy is not None else None
 
     # RS pool = S&P 500 + all liquid names (one consistent percentile for both scripts' output)
-    rs_pool = {}
+    rs_pool, rs_pool_1m = {}, {}
     for t in set(sp500) | set(liquid):
         df = full.get(t)
         if df is None or len(df) < 70:
             continue
-        r = rs_raw(df["Close"].dropna())
+        cl = df["Close"].dropna()
+        r = rs_raw(cl)
         if r is not None:
             rs_pool[t] = r
+        # Same formula on the series as it stood 21 trading days ago. RS is a pure
+        # function of price, so the whole history is recomputable — no stored
+        # rs_history and no external source needed.
+        if len(cl) > RS_LOOKBACK_1M + 70:
+            r1 = rs_raw(cl.iloc[:-RS_LOOKBACK_1M])
+            if r1 is not None:
+                rs_pool_1m[t] = r1
     pool_vals = np.array(sorted(rs_pool.values()))
+    pool_vals_1m = np.array(sorted(rs_pool_1m.values()))
+
+    def _pct(x, pool):
+        if x is None or len(pool) == 0:
+            return None
+        return int(max(1, min(99, round(np.searchsorted(pool, x, side="right") / len(pool) * 99))))
 
     def percentile(x):
-        if x is None or len(pool_vals) == 0:
+        return _pct(x, pool_vals)
+
+    def percentile_1m(x):
+        return _pct(x, pool_vals_1m)
+
+    def rs_1m_of(df):
+        cl = df["Close"].dropna()
+        if len(cl) <= RS_LOOKBACK_1M + 70:
             return None
-        return int(max(1, min(99, round(np.searchsorted(pool_vals, x, side="right") / len(pool_vals) * 99))))
+        return percentile_1m(rs_raw(cl.iloc[:-RS_LOOKBACK_1M]))
 
     try:
         earnings = load_earnings()
@@ -457,6 +496,14 @@ def main():
         if not m:
             return None
         m["rs_rating"] = percentile(m.pop("rs_raw"))
+        m["rs_rating_1m"] = rs_1m_of(df)
+        m["rs_chg_1m"] = (m["rs_rating"] - m["rs_rating_1m"]) \
+            if (m["rs_rating"] is not None and m["rs_rating_1m"] is not None) else None
+        early = m.get("early") or {}
+        early["rs_turn"] = bool(m["rs_chg_1m"] is not None and m["rs_chg_1m"] >= RS_TURN_MIN
+                                and m["rs_rating"] is not None and 50 <= m["rs_rating"] < 85)
+        m["early"] = early
+        m["early_score"] = sum(1 for v in early.values() if v)
         sm = smap.get(t) or {}
         m["name"] = (sm.get("name") or "")[:40]
         m["sector"] = sm.get("sector")
@@ -471,6 +518,7 @@ def main():
             "vol":   (m["avg_dollar_vol"] or 0) >= DNA["avg_dollar_vol_min"],
             "rs":    (m["rs_rating"] or 0) >= DNA["rs_rating_min"],
             "stage": m["stage"] == 2,
+            "ema50": bool(m["above_ema50"]),
             "high":  abs(m["off_52w_high"] or 100) <= DNA["off_52w_high_max"],
             "ext":   (m["atr_mult_50"] if m["atr_mult_50"] is not None else 99) <= DNA["atr_mult_max"],
         }
@@ -517,10 +565,11 @@ def main():
     stage2 = sum(1 for r in rows if r["stage"] == 2)
 
     COMPACT = ("ticker", "name", "sector", "industry", "etf", "market_cap", "price", "chg_1d", "rs_rating", "stage",
+               "rs_rating_1m", "rs_chg_1m",
                "adr_pct", "atr_mult_50", "off_52w_high", "avg_dollar_vol", "lod_dist", "confluence",
                "confluence_n", "dist_atr", "pocket_pivot", "tight", "vol_ratio_5_20", "wis_count_20d",
                "wis_today", "dna", "dna_pass", "dna_score", "extension", "setup_score", "in_universe",
-               "above_ema9", "above_ema21", "ema9_rising", "ema21_rising",
+               "above_ema9", "above_ema21", "above_ema50", "ema9_rising", "ema21_rising",
                "rvol", "earnings_date", "earnings_days",
                "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi")
     all_rows = [{k: r.get(k) for k in COMPACT} for r in rows]
@@ -665,21 +714,97 @@ def main():
     with open(OUTPUT_PATH, "w") as f:
         json.dump(payload, f, separators=(",", ":"))
 
-    # ── 6. Chart data for section 06 (DNA passers, 130 daily bars each) ──
+    # ── 6a. Notable: Stage 1 names showing early signs of a Stage 2 turn ──
+    # Watchlist seeding for the first pullback after the transition, NOT a buy list.
+    notable = []
+    try:
+        for r in rows:
+            if r.get("stage") != 1 or (r.get("early_score") or 0) < NOTABLE_MIN_SIGNALS:
+                continue
+            if (r.get("avg_dollar_vol") or 0) < NOTABLE_MIN_DOLLAR_VOL:
+                continue
+            if (r.get("rs_rating") or 0) >= DNA["rs_rating_min"]:
+                continue            # already strong enough for the screener
+            cap = r.get("market_cap")
+            if cap is not None and cap < 2_000_000_000:
+                continue
+            df = full.get(r["ticker"])
+            if df is None or len(df) < 60:
+                continue
+            lo252 = float(df["Low"].iloc[-252:].min())
+            if not lo252 or (r.get("price") or 0) < NOTABLE_MIN_ABOVE_LOW * lo252:
+                continue            # still making lows
+            notable.append({k: r.get(k) for k in (
+                "ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating",
+                "rs_chg_1m", "avg_dollar_vol", "off_52w_high", "early", "early_score",
+                "setup_score", "plan_stop", "plan_stop_pct", "plan_stop_basis",
+                "plan_entry_lo", "plan_entry_hi", "confluence_n", "rvol")})
+        # Scores cluster at 1, so the cap would otherwise truncate arbitrarily.
+        # Rank by: score, then how many of the signals are actual TURN signals
+        # (the 200 turning, a 50 reclaim, RS turning) rather than merely
+        # constructive ones (accumulation, higher lows, a pocket pivot), then dRS.
+        TURN_SIGNALS = ("ma200_turn", "reclaim50", "rs_turn")
+        notable.sort(key=lambda r: ((r["early_score"] or 0),
+                                    sum(1 for k in TURN_SIGNALS if (r.get("early") or {}).get(k)),
+                                    (r["rs_chg_1m"] if r["rs_chg_1m"] is not None else -999)), reverse=True)
+        notable = notable[:NOTABLE_MAX]
+        with open(NOTABLE_PATH, "w") as f:
+            json.dump({"updated_at": payload["updated_at"],
+                       "thresholds": {"min_signals": NOTABLE_MIN_SIGNALS, "min_dollar_vol": NOTABLE_MIN_DOLLAR_VOL,
+                                      "min_above_low": NOTABLE_MIN_ABOVE_LOW, "rs_max": DNA["rs_rating_min"]},
+                       "rows": notable}, f, separators=(",", ":"))
+        print(f"  Saved {NOTABLE_PATH} ({len(notable)} Stage 1 names with >= {NOTABLE_MIN_SIGNALS} early signals)")
+    except Exception as e:
+        notable = []
+        print(f"  (notable scan skipped: {e})")
+
+    # ── 6b. Chart data for section 06 ──
+    #   DNA passers (top CHART_MAX by setup score)
+    # + theme leaders, but only where the theme beats SPY AND the name is Stage 2
+    # + every Notable row, so section 07 can click through to a chart
     charts = {}
     try:
         chart_rows = list(passed[:CHART_MAX])
-        seen = {r["ticker"] for r in chart_rows}
+        dna_rank = {r["ticker"]: i + 1 for i, r in enumerate(chart_rows)}
+        seen = set(dna_rank)
+        why = {t: "dna" for t in seen}
+
         for th in themes_out:
+            if (th.get("rel_1w") or -99) <= 0:
+                continue                                   # theme is not beating SPY
             for tk in th["chart_tickers"]:
-                if tk not in seen and tk in by_t:
-                    chart_rows.append(by_t[tk]); seen.add(tk)
-        charts = {r["ticker"]: {"meta": {k: r.get(k) for k in CHART_META} | {"themes": [th["id"] for th in themes_out if r["ticker"] in th["chart_tickers"]]},
-                                "bars": chart_bars(full[r["ticker"]])}
-                  for r in chart_rows if r["ticker"] in full}
+                r = by_t.get(tk)
+                if tk in seen or r is None or r.get("stage") != 2:
+                    continue
+                chart_rows.append(r); seen.add(tk); why[tk] = "theme"
+
+        for r in notable:
+            tk = r["ticker"]
+            if tk not in seen and tk in by_t:
+                chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "notable"
+
+        def picks_for(tk):
+            return [{"id": th["id"], "name": th["name"], "rank": th["chart_tickers"].index(tk) + 1,
+                     "label": th.get("label"), "rel_1w": th.get("rel_1w")}
+                    for th in themes_out if tk in th["chart_tickers"]]
+
+        charts = {}
+        for r in chart_rows:
+            tk = r["ticker"]
+            if tk not in full:
+                continue
+            charts[tk] = {"meta": {k: r.get(k) for k in CHART_META} | {
+                              "themes": [th["id"] for th in themes_out if tk in th["chart_tickers"]],
+                              "theme_picks": picks_for(tk),
+                              "dna_rank": dna_rank.get(tk),
+                              "early": r.get("early"), "early_score": r.get("early_score"),
+                              "why": why.get(tk, "dna")},
+                          "bars": chart_bars(full[tk])}
         with open(CHART_PATH, "w") as f:
             json.dump({"updated": payload["updated_at"], "charts": charts}, f, separators=(",", ":"))
-        print(f"  Saved {CHART_PATH} ({len(charts)} tickers)")
+        n_by = {w: sum(1 for t in charts if charts[t]["meta"]["why"] == w) for w in ("dna", "theme", "notable")}
+        print(f"  Saved {CHART_PATH} ({len(charts)} tickers: {n_by['dna']} DNA, "
+              f"{n_by['theme']} theme, {n_by['notable']} notable)")
     except Exception as e:
         print(f"  (chart data skipped: {e})")
 
@@ -702,8 +827,11 @@ def main():
                        "fetched_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
                        "source": "Seeking Alpha per-symbol RSS",
                        "news": sa_news}, f, separators=(",", ":"), ensure_ascii=False)
+        missing = [t for t in sa_tickers if t not in sa_news]
         print(f"  Saved {SA_NEWS_PATH} ({len(sa_news)}/{len(sa_tickers)} tickers, "
               f"{n_items} headlines, {n_tr} transcripts, {int(time.time() - sa_t0)}s)")
+        if missing:
+            print(f"    no feed for: {', '.join(missing[:20])}{' ...' if len(missing) > 20 else ''}")
     except Exception as e:
         print(f"  (Seeking Alpha news skipped: {e})")
 

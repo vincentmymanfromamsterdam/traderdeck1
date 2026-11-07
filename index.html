@@ -225,9 +225,9 @@
   .ch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(540px,1fr)); gap:14px; }
   .ch-card { background:var(--bg2); border:1px solid var(--border); overflow:hidden; }
   .ch-card.expanded { grid-column:1/-1; }
-  .ch-hd { display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .ch-hd { display:flex; align-items:center; gap:7px; padding:10px 12px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .ch-tk { font-family:var(--mono); font-size:16px; font-weight:600; cursor:pointer; }
-  .ch-nm { color:var(--muted); font-size:11px; max-width:220px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .ch-nm { color:var(--muted); font-size:11px; flex:1 1 40px; min-width:0; max-width:220px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .ch-px { font-family:var(--mono); font-size:13px; margin-left:auto; }
   .ch-chg { font-family:var(--mono); font-size:11px; padding:2px 6px; }
   .ch-chg.up { color:var(--green); background:rgba(0,230,118,0.10); } .ch-chg.dn { color:var(--red); background:rgba(255,23,68,0.10); }
@@ -263,6 +263,18 @@
   .ch-news .nk.art { color:var(--blue); border-color:var(--blue); }
   .ch-news .nk.tr  { color:var(--ch-purple); border-color:var(--ch-purple); }
   .ch-news .fresh a { font-weight:600; } .ch-news .fresh .nd { color:var(--amber); }
+  /* ── why is this ticker here (chart header) ── */
+  .ch-why { font-family:var(--mono); font-size:9px; letter-spacing:0.08em; padding:2px 6px;
+            border:1px solid var(--border2); color:var(--muted); white-space:nowrap; }
+  .ch-why.dna  { color:var(--accent); border-color:rgba(0,230,118,0.45); }
+  .ch-why.th   { color:var(--ch-purple); border-color:var(--ch-purple); }
+  .ch-why.th.weak { color:var(--muted); border-color:var(--border2); }
+  .ch-why.lbl  { font-size:8.5px; padding:2px 5px; border:0; color:var(--green); background:rgba(0,230,118,0.10); }
+  .ch-why.nt   { color:var(--amber); border-color:var(--amber); }
+  .ch-card.flash { outline:2px solid var(--amber); outline-offset:-2px; }
+  /* ── 07 Notable ── */
+  .nt-row { cursor:pointer; }
+  .nt-sig { display:inline-flex; gap:4px; align-items:center; vertical-align:middle; }
   .ch-tip { position:absolute; pointer-events:none; background:var(--bg3); border:1px solid var(--border2); padding:6px 8px; font-family:var(--mono); font-size:10.5px; color:var(--text); display:none; z-index:3; white-space:nowrap; }
   .ch-tip .r { color:var(--muted); }
   .ch-ic { width:24px; height:24px; border:1px solid var(--border2); background:var(--bg3); color:var(--muted); cursor:pointer; font-size:12px; line-height:22px; text-align:center; }
@@ -310,6 +322,7 @@
     <a href="#equities">EQUITIES</a>
     <a href="#swing">SWING</a>
     <a href="#charts">CHARTS</a>
+    <a href="#notable">NOTABLE</a>
     <a href="#calc">CALC</a>
   </nav>
   <div class="clock-wrap" style="display:flex;align-items:center">
@@ -656,11 +669,11 @@
 
     <div class="table-wrap"><table>
       <thead><tr>
-        <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
+        <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th>Stage</th>
         <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
         <th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
       </tr></thead>
-      <tbody id="sw-tbody"><tr><td colspan="17" class="loading-msg">Loading...</td></tr></tbody>
+      <tbody id="sw-tbody"><tr><td colspan="18" class="loading-msg">Loading...</td></tr></tbody>
     </table></div>
 
     <div class="collapsible-head" onclick="toggle(this)" style="margin-top:18px">
@@ -681,11 +694,11 @@
       </div>
       <div class="table-wrap"><table>
         <thead><tr>
-          <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th>
+          <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th>Stage</th>
           <th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th>
           <th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
         </tr></thead>
-        <tbody id="sc-tbody"><tr><td colspan="17" class="loading-msg">Loading...</td></tr></tbody>
+        <tbody id="sc-tbody"><tr><td colspan="18" class="loading-msg">Loading...</td></tr></tbody>
       </table></div>
     </div>
 
@@ -723,9 +736,28 @@
       <button class="dir-btn active-long" data-chf="all" onclick="chShow(this)">ALL</button>
       <button class="dir-btn" data-chf="new" onclick="chShow(this)">NEW ONLY</button>
       <button class="dir-btn" data-chf="uni" onclick="chShow(this)">MY UNIVERSE</button>
+      <button class="dir-btn" data-chf="notable" onclick="chShow(this)">NOTABLE</button>
       <button class="dir-btn" id="chf-theme" style="display:none" onclick="chShow(this)" data-chf="theme">THEME</button>
     </div>
     <div class="ch-grid" id="ch-grid"><div class="loading-msg">Loading charts...</div></div>
+  </div>
+
+  <div class="section" id="notable">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title">Notable — Stage 1 met vroege tekenen van Stage 2</div>
+      <div class="section-subtitle">WATCHLIST VOOR DE EERSTE PULLBACK NA DE TRANSITIE &middot; GEEN KOOPSIGNAAL <span id="nt-updated" style="color:var(--muted)"></span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th>
+        <th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
+        <th title="reclaim 50 EMA &middot; 200 vlak &middot; pocket pivot &middot; accumulatie &middot; hogere bodems &middot; RS draait">Signals</th>
+        <th>Score</th><th>Off 52W</th><th>$ Vol</th><th title="confluence-lagen binnen 1 ATR">Confl.</th>
+        <th title="voorgestelde stop onder structuur &middot; klik om in de calculator te laden">Stop &middot; %</th><th></th>
+      </tr></thead>
+      <tbody id="nt-tbody"><tr><td colspan="12" class="loading-msg">Loading...</td></tr></tbody>
+    </table></div>
   </div>
 
   <div class="section" id="calc">
@@ -813,18 +845,24 @@ const $ = id => document.getElementById(id);
 // ────────────────────────────────────────────────
 //  SEEKING ALPHA — deep links + headline feed
 // ────────────────────────────────────────────────
-const SA_TAB = { main:'', quant:'/ratings/quant-ratings', earnings:'/earnings', peers:'/peers',
-                 news:'/news', analysis:'/analysis', financials:'/financials' };
+// Every SA link points at the plain symbol page — that lands on the summary.
+// Sub-tabs (/peers, /earnings, /ratings/...) are deliberately not used: some 404.
 // SA writes class shares with a dot (BRK.B) where yfinance/Nasdaq use a hyphen.
 const saSym = tk => String(tk || '').replace(/^([A-Z]+)-([A-Z])$/, '$1.$2');
-const saUrl = (tk, tab) => 'https://seekingalpha.com/symbol/' + encodeURIComponent(saSym(tk)) + (SA_TAB[tab] || '');
-function saLink(tk, tab, label) {
+const saUrl = tk => 'https://seekingalpha.com/symbol/' + encodeURIComponent(saSym(tk));
+function saLink(tk) {
   if (!tk || tk === '—') return '';
-  return `<a class="sa-ln" href="${saUrl(tk, tab)}" target="_blank" rel="noopener noreferrer"`
-       + ` title="Seeking Alpha — ${label || 'symbol page'}: ${tk}" onclick="event.stopPropagation()">α</a>`;
+  return `<a class="sa-ln" href="${saUrl(tk)}" target="_blank" rel="noopener noreferrer"`
+       + ` title="Seeking Alpha: ${tk}" onclick="event.stopPropagation()">α</a>`;
 }
 // Ticker of a table cell — prefers data-tk so the added links can't break live-quote matching.
 const cellTicker = c => c ? (c.dataset.tk || c.textContent.replace('⚠️', '').trim()) : null;
+// Change in RS rating vs 21 trading days ago — recomputed each run, not stored.
+function rsDelta(d) {
+  if (d == null) return '<span style="color:var(--dim)">—</span>';
+  const c = d >= 10 ? 'var(--green)' : d <= -10 ? 'var(--red)' : 'var(--muted)';
+  return `<span style="color:${c}" title="RS ${d >= 0 ? '+' : ''}${d} punten in 21 handelsdagen">${d > 0 ? '+' : ''}${d}</span>`;
+}
 const esc = t => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -1199,7 +1237,7 @@ let lastCarnivore = null;
 function techCells(ticker) {
   const r = swData && (swData.universe || []).find(x => x.ticker === ticker);
   if (!r) return '<td colspan="4" style="color:var(--dim);font-size:9px">—</td>';
-  const dots = ['adr','vol','rs','stage','high','ext'].map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
+  const dots = ['adr','vol','rs','stage','ema50','high','ext'].map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
   const am = r.atr_mult_50; const extCls = 'ext-' + (r.extension || 'ok');
   const sig = [];
   if (r.stage === 4) sig.push('<span class="neg">S4</span>'); else if (r.stage !== 2) sig.push(`<span class="neu">S${r.stage}</span>`);
@@ -1234,7 +1272,7 @@ function renderPortfolioTable(tbodyId, positions) {
 
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker, 'main', 'symbol page')}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker)}</td>
       <td style="color:var(--muted)">${p.name && p.name !== p.ticker ? p.name : '—'}</td>
       <td>${p.shares != null ? Number(p.shares).toLocaleString() : '—'}</td>
       <td>${p.avg_cost != null ? '$' + fmtPrice(p.avg_cost) : '—'}</td>
@@ -1268,7 +1306,7 @@ function renderLongTermTable(tbodyId, positions) {
 
     return `<tr style="${rowStyle}">
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker, 'main', 'symbol page')}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker)}</td>
       <td style="color:var(--muted);font-size:10px">${p.name || '—'}</td>
       <td style="color:var(--muted);font-size:10px">${p.entry_date || '—'}</td>
       <td>$${p.avg_cost != null ? p.avg_cost.toFixed(2) : '—'}</td>
@@ -1740,6 +1778,75 @@ let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN 
 let saNews = null;
 const SA_KIND = { article: ['ANALYSIS', 'art'], transcript: ['TRANSCRIPT', 'tr'], news: ['NEWS', ''] };
 const SA_FRESH_MS = 48 * 3600 * 1000;
+// ── 07 Notable ──────────────────────────────────────────────
+let ntData = null;
+const NT_SIG = [['reclaim50', '50 EMA heroverd (kruising in de laatste 5 dagen, 50 vlak of op)'],
+                ['ma200_turn', 'de 200 SMA draait op (20 dagen op, 60 dagen nog neer)'],
+                ['pocket_pivot', 'pocket pivot (hoogste volume vs elke down-day in 10 dagen)'],
+                ['accum', 'accumulatie (up-volume / down-volume >= 1,3 over 15 dagen)'],
+                ['higher_low', 'hogere bodems (laatste 10 dagen boven de 10 ervoor)'],
+                ['rs_turn', 'RS draait (+15 punten in een maand, RS tussen 50 en 85)']];
+
+async function loadNotable() {
+  const tb = $('nt-tbody'); if (!tb) return;
+  try {
+    const r = await fetch('data/notable.json?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    ntData = await r.json();
+    const u = $('nt-updated');
+    if (u) u.textContent = '\u00b7 ' + (ntData.updated_at || '') + ' \u00b7 ' +
+      (ntData.rows || []).length + ' namen \u00b7 minimaal ' + ((ntData.thresholds || {}).min_signals ?? 2) + ' van 6 signalen';
+    renderNotable();
+  } catch (err) {
+    tb.innerHTML = `<tr><td colspan="12" class="loading-msg">Nog geen notable-data \u2014 verschijnt na de volgende nachtelijke run.</td></tr>`;
+  }
+}
+
+function renderNotable() {
+  const tb = $('nt-tbody'); if (!tb || !ntData) return;
+  const rows = ntData.rows || [];
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="12" class="loading-msg">Geen Stage 1-namen met genoeg vroege signalen in deze run.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(r => {
+    const e = r.early || {};
+    const dots = NT_SIG.map(([k, t]) => `<span class="dna-dot${e[k] ? ' ok' : ''}" title="${t}"></span>`).join('');
+    return `<tr class="nt-row" onclick="chShowTicker('${r.ticker}')" title="klik voor de chart">
+      <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+          <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
+      <td>$${fmtPrice(r.price)}</td>
+      <td>${pct(r.chg_1d)}</td>
+      <td>${r.rs_rating ?? '—'}</td>
+      <td>${rsDelta(r.rs_chg_1m)}</td>
+      <td><span class="nt-sig">${dots}</span></td>
+      <td style="font-weight:600">${r.early_score ?? '—'}</td>
+      <td>${r.off_52w_high == null ? '—' : r.off_52w_high.toFixed(1) + '%'}</td>
+      <td>${fmtDollarVol(r.avg_dollar_vol)}</td>
+      <td>${r.confluence_n ?? '—'}</td>
+      <td>${planCell(r)}</td>
+      <td style="color:var(--accent)">&rarr;</td>
+    </tr>`;
+  }).join('');
+}
+
+// Jump from a Notable row to its chart in section 06.
+function chShowTicker(tk) {
+  chFilter = 'notable';
+  document.querySelectorAll('[data-chf]').forEach(x => x.classList.toggle('active-long', x.dataset.chf === 'notable'));
+  chRender();
+  const sec = document.getElementById('charts');
+  if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => {
+    const card = Array.from(document.querySelectorAll('.ch-card'))
+      .find(c => c.querySelector('.ch-tk') && c.querySelector('.ch-tk').textContent.trim() === tk);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('flash');
+    setTimeout(() => card.classList.remove('flash'), 1500);
+  }, 400);
+}
+
 async function loadSaNews() {
   try {
     const r = await fetch('data/sa_news.json?t=' + Date.now());
@@ -1769,7 +1876,7 @@ function chNews(tk) {
          + ` title="${esc(i.t)}${i.a ? ' · ' + esc(i.a) : ''}${i.d ? ' · ' + esc(i.d) : ''}">${esc(i.t)}</a></div>`;
   }).join('');
   return `<div class="ch-news"><div class="hd"><span>SEEKING ALPHA${fresh ? ' · ' + fresh + ' NEW &lt;48H' : ''}</span>`
-       + `<a class="sa-ln" href="${saUrl(tk, 'news')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="all news on Seeking Alpha: ${tk}">ALL α</a>`
+       + `<a class="sa-ln" href="${saUrl(tk)}/news" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="all news on Seeking Alpha: ${tk}">ALL α</a>`
        + `</div>${rows}</div>`;
 }
 const chF  = (x, d=2) => x == null ? '—' : Number(x).toFixed(d);
@@ -1798,24 +1905,43 @@ function chRender() {
   let items = Object.values(chData.charts);
   if (chFilter === 'new') items = items.filter(i => !i.meta.in_universe);
   if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
+  if (chFilter === 'notable') items = items.filter(i => i.meta.why === 'notable');
   if (chFilter.startsWith('theme:')) { const id = chFilter.slice(6); items = items.filter(i => (i.meta.themes || []).includes(id)); }
   else { const b = $('chf-theme'); if (b) b.style.display = 'none'; }
   items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
   if (!items.length) { g.innerHTML = '<div class="loading-msg">No tickers match.</div>'; return; }
   items.forEach(it => g.appendChild(chCard(it)));
 }
+// Why is this ticker in section 06? DNA rank, theme rank, or the Notable scan.
+function whyPills(m) {
+  let out = '';
+  if (m.why === 'notable')
+    out += `<span class="ch-why nt" title="Stage 1 met ${m.early_score || 0} vroege signalen — watchlist, geen koopsignaal">NOTABLE</span>`;
+  if (m.dna_rank)
+    out += `<span class="ch-why dna" title="DNA-passer #${m.dna_rank} op setup score">DNA #${m.dna_rank}</span>`;
+  (m.theme_picks || []).forEach(t => {
+    const strong = (t.rel_1w || 0) > 0;
+    const short = String(t.name || '').split(/[\s\/]/)[0].toUpperCase().slice(0, 8);
+    const rel = t.rel_1w != null ? ` · ${t.rel_1w > 0 ? '+' : ''}${t.rel_1w}% vs SPY` : '';
+    out += `<span class="ch-why th${strong ? '' : ' weak'}" title="${esc(t.name)} · #${t.rank} op RS binnen het thema · ${esc(t.label || 'geen label')}${rel}">${esc(short)} #${t.rank}</span>`;
+    if (t.label && strong) out += `<span class="ch-why lbl">${esc(t.label)}</span>`;
+  });
+  return out;
+}
+
 function chCard(it) {
   const m = it.meta, bars = it.bars.slice(-chN), last = bars[bars.length - 1], prev = bars[bars.length - 2] || last;
   const chg = (last.c / prev.c - 1) * 100;
   const el = document.createElement('div'); el.className = 'ch-card';
-  const keys = ['adr','vol','rs','stage','high','ext'];
-  const titles = { adr:'ADR ≥3%', vol:'$vol ≥50M', rs:'RS ≥85', stage:'Stage 2', high:'≤25% off high', ext:'ATR-mult ≤10' };
+  const keys = ['adr','vol','rs','stage','ema50','high','ext'];
+  const titles = { adr:'ADR ≥3%', vol:'$vol ≥50M', rs:'RS ≥85', stage:'Stage 2', ema50:'boven de 50 EMA', high:'≤25% off high', ext:'ATR-mult ≤10' };
   const r3 = m.plan_stop && m.plan_entry_hi ? m.plan_entry_hi + 3 * (m.plan_entry_hi - m.plan_stop) : null;
   el.innerHTML = `
     <div class="ch-hd">
-      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>${saLink(m.ticker, 'earnings', 'earnings & transcripts')}
+      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>${saLink(m.ticker)}
       <span class="ch-nm" title="${m.name || ''}">${m.name || ''}</span>
       <span class="ch-dna">${keys.map(k => `<span class="dna-dot ${m.dna && m.dna[k] ? 'ok' : ''}" title="${titles[k]}" style="margin:0"></span>`).join('')}<span>SETUP ${m.setup_score}</span></span>
+      ${whyPills(m)}
       ${m.in_universe ? '' : '<span class="ch-chg" style="color:var(--blue);background:rgba(64,196,255,0.10)">NEW</span>'}
       <span class="ch-px">${chF(last.c)}</span><span class="ch-chg ${chg >= 0 ? 'up' : 'dn'}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
       <span class="ch-ic" title="expand">⤢</span>
@@ -1925,7 +2051,7 @@ function renderThemes() {
   if (thMode === 'move') T = T.filter(t => t.label === 'ON THE MOVE');
   if (thMode === 'lead') T = T.filter(t => t.label === 'LEADING' || t.label === 'REL. STRONG');
   const mx = Math.max(...thData.themes.map(t => Math.abs(t.rel_1w || 0)));
-  const dots = r => `<span class="dna-dots">${['adr','vol','rs','stage','high','ext'].map(k => `<span class="dna-dot ${r.dna && r.dna[k] ? 'ok' : ''}"></span>`).join('')}</span>`;
+  const dots = r => `<span class="dna-dots">${['adr','vol','rs','stage','ema50','high','ext'].map(k => `<span class="dna-dot ${r.dna && r.dna[k] ? 'ok' : ''}"></span>`).join('')}</span>`;
   tb.innerHTML = T.length ? T.map((t, i) => {
     const tag = t.label ? `<span class="th-tag ${thTagCls[t.label]}">${t.label}</span>` : '';
     const open = thOpen.has(t.id);
@@ -1943,12 +2069,12 @@ function renderThemes() {
       <td style="color:var(--accent)">${(t.leaders || []).join(' ')}</td><td>${thSpark(t.spark)}</td>
     </tr>
     <tr class="th-sub ${open ? 'open' : ''}"><td colspan="17"><table class="th-subtbl">
-      <thead><tr><th>Ticker</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>DNA</th><th>RS</th><th>Stage</th><th>Off 52W</th><th>Strong</th><th>Confl.</th><th>Score</th><th title="click to load in calculator">Stop · %</th><th>ER</th></tr></thead>
+      <thead><tr><th>Ticker</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>DNA</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th>Stage</th><th>Off 52W</th><th>Strong</th><th>Confl.</th><th>Score</th><th title="click to load in calculator">Stop · %</th><th>ER</th></tr></thead>
       <tbody>${t.tickers.map(r => `<tr>
-        <td data-tk="${r.ticker}" style="font-weight:600;color:var(--text)">${r.ticker}${saLink(r.ticker, 'peers', 'peers & valuation')}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
+        <td data-tk="${r.ticker}" style="font-weight:600;color:var(--text)">${r.ticker}${saLink(r.ticker)}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
         <td class="${thC(r.chg_1d)}">${thF(r.chg_1d)}%</td><td class="${thC(r.chg_1w)}">${thF(r.chg_1w)}%</td><td class="${thC(r.chg_1m)}">${thF(r.chg_1m)}%</td><td class="${thC(r.ytd)}">${thF(r.ytd, 1)}%</td>
         <td>${dots(r)}</td><td class="${r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 70 ? 'amb' : ''}">${r.rs_rating ?? '—'}</td>
-        <td>${r.stage ?? '—'}</td><td class="${r.off_52w_high > -10 ? 'pos' : r.off_52w_high < -25 ? 'neg' : ''}">${thF(r.off_52w_high, 1, false)}%</td>
+        <td>${rsDelta(r.rs_chg_1m)}</td><td>${r.stage ?? '—'}</td><td class="${r.off_52w_high > -10 ? 'pos' : r.off_52w_high < -25 ? 'neg' : ''}">${thF(r.off_52w_high, 1, false)}%</td>
         <td class="${r.strong ? 'pos' : 'mut'}">${r.strong ? '●' : '○'}</td><td>${r.confluence_n ?? '—'}</td><td>${r.setup_score ?? '—'}</td>
         <td>${r.plan_stop != null ? `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.plan_entry_hi ?? r.price}, ${r.plan_stop})">$${Number(r.plan_stop).toFixed(2)} <span class="${r.plan_stop_pct <= 3 ? 'pos' : r.plan_stop_pct <= 5 ? 'amb' : 'neg'}">${Number(r.plan_stop_pct).toFixed(1)}%</span></span>` : '—'}</td>
         <td class="${r.earnings_days != null && r.earnings_days <= 7 ? 'neg' : 'mut'}">${r.earnings_days == null ? '—' : r.earnings_days === 0 ? 'today' : r.earnings_days + 'd'}</td>
@@ -1987,6 +2113,7 @@ loadSwingData();
 loadScanData();
 loadIbd();
 loadSaNews().then(loadChartData);
+loadNotable();
 loadThemes();
 calc();
 
@@ -2029,7 +2156,7 @@ function renderSwing() {
     const extra = ((scData && scData.leaders) || []).filter(r => r.dna_pass && !mine.has(r.ticker));
     rows = [...rows.filter(r => r.dna_pass), ...extra].sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
   }
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="17" class="loading-msg">No tickers match</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="18" class="loading-msg">No tickers match</td></tr>'; return; }
 
   tb.innerHTML = rows.map(swRow).join('');
 }
@@ -2057,7 +2184,7 @@ function loadPlan(ticker, entry, stop) {
 }
 
 function swRow(r) {
-  const order = ['adr', 'vol', 'rs', 'stage', 'high', 'ext'];
+  const order = ['adr', 'vol', 'rs', 'stage', 'ema50', 'high', 'ext'];
   {
     const dots = order.map(k => `<span class="dna-dot${r.dna[k] ? ' ok' : ''}" title="${k}"></span>`).join('');
     const conf = ['ema9', 'ema21', 'ema50', 'ma10w', 'avwap'].map(k => {
@@ -2077,11 +2204,12 @@ function swRow(r) {
     const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : '', (r.in_universe === false) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
-      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker, 'quant', 'Quant Ratings')} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
       <td><span class="dna-dots">${dots}</span></td>
       <td class="${rsCls}">${r.rs_rating ?? '—'}</td>
+      <td>${rsDelta(r.rs_chg_1m)}</td>
       <td class="${stCls}">${STAGE_LABEL[r.stage] || '—'}</td>
       <td>${r.adr_pct ?? '—'}</td>
       <td class="${extCls}">${r.atr_mult_50 == null ? '—' : (r.atr_mult_50 > 0 ? '+' : '') + r.atr_mult_50.toFixed(1)}</td>
@@ -2120,7 +2248,7 @@ function tickerChips(list, scan) {
     const rs = r ? r.rs_rating : null;
     const c = rs == null ? 'var(--muted)' : rs >= 85 ? 'var(--green)' : rs >= 60 ? 'var(--amber)' : 'var(--text)';
     const tip = (r ? (r.name || '') + ' · RS ' + rs + ' · score ' + r.setup_score + ' · ' : '') + 'open on Seeking Alpha';
-    return `<a class="sa-chip" href="${saUrl(t, 'main')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:${c};margin-right:6px" title="${tip}">${t}</a>`;
+    return `<a class="sa-chip" href="${saUrl(t)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:${c};margin-right:6px" title="${tip}">${t}</a>`;
   }).join('');
 }
 
@@ -2178,7 +2306,7 @@ function renderIndustryNames(etf, industry, byT) {
     .sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
   if (!rows.length) return '';
   return `<table><thead><tr>
-      <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th>Stage</th><th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th><th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
+      <th>Ticker</th><th>Price</th><th>1D %</th><th>DNA</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th>Stage</th><th>ADR %</th><th>ATR× 50</th><th>Off 52W</th><th>$ Vol</th><th>LoD</th><th>Confluence (≤1 ATR)</th><th>Signals</th><th title="today's volume / 20-day average">RVOL</th><th title="days until earnings">ER</th><th title="suggested stop under structure (lowest layer − 0.3 ATR) · click to load in calculator">Stop · %</th><th>Score</th>
     </tr></thead><tbody>${rows.map(swRow).join('')}</tbody></table>`;
 }
 
@@ -2199,7 +2327,7 @@ function renderScan() {
   if (scMode === 'new')   rows = rows.filter(r => r.dna_pass && !r.in_universe);
   if (scMode === 'setup') rows = rows.filter(r => r.stage === 2 && r.confluence_n >= 2);
   rows = rows.slice(0, 150);
-  tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="17" class="loading-msg">No tickers match</td></tr>';
+  tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="18" class="loading-msg">No tickers match</td></tr>';
 }
 async function loadScanData() {
   try {
@@ -2237,7 +2365,7 @@ async function loadScanData() {
     if (typeof lastCarnivore !== 'undefined' && lastCarnivore) { renderPortfolioTable('tb-carnivore-sr', lastCarnivore.sr); renderLongTermTable('tb-carnivore-lt', lastCarnivore.lt); }
   } catch (err) {
     const tb = $('sc-tbody');
-    if (tb) tb.innerHTML = `<tr><td colspan="17" class="loading-msg">Market scan not available yet (${err.message}).</td></tr>`;
+    if (tb) tb.innerHTML = `<tr><td colspan="18" class="loading-msg">Market scan not available yet (${err.message}).</td></tr>`;
   }
 }
 
@@ -2280,7 +2408,7 @@ async function loadSwingData() {
     if (typeof lastCarnivore !== 'undefined' && lastCarnivore) { renderPortfolioTable('tb-carnivore-sr', lastCarnivore.sr); renderLongTermTable('tb-carnivore-lt', lastCarnivore.lt); }
   } catch (err) {
     const tb = $('sw-tbody');
-    if (tb) tb.innerHTML = `<tr><td colspan="17" class="loading-msg">Swing data not available yet (${err.message}). Run fetch_swing.py or wait for the nightly Action.</td></tr>`;
+    if (tb) tb.innerHTML = `<tr><td colspan="18" class="loading-msg">Swing data not available yet (${err.message}). Run fetch_swing.py or wait for the nightly Action.</td></tr>`;
   }
 }
 

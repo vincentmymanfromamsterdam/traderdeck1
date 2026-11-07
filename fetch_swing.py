@@ -172,20 +172,40 @@ def analyse(ticker, df, spy_chg):
     day_range = float(h.iloc[-1] - l.iloc[-1])
     lod_dist = (close - float(l.iloc[-1])) / day_range * 100 if day_range > 0 else None
 
-    # ── Stage (Weinstein, simplified) ─────────────────────
+    # ── Stage (Weinstein) ─────────────────────────────────
+    # Stage 1 = base: the 200 has gone flat after a decline, or price has
+    # reclaimed a still-falling 200. Stage 3 = top/distribution. The old
+    # version called everything under a non-rising 200 "Stage 4", which put
+    # most real Stage 1 bases in the Stage 4 bucket.
+    FLAT_200 = 0.01                       # +/-1% over 20 bars counts as flat
     above50 = close > float(e50.iloc[-1])
     e50_up = rising(e50, 10)
+    s200_slope_20 = s200_slope_60 = None
     if s200 is not None and not np.isnan(float(s200.iloc[-1])):
         s200_now = float(s200.iloc[-1])
-        s200_up = rising(s200, 20)
-        if above50 and e50_up and close > s200_now:
+
+        def _slope(lag):
+            if len(s200) <= lag:
+                return None
+            prev = float(s200.iloc[-1 - lag])
+            if np.isnan(prev) or prev == 0:
+                return None
+            return s200_now / prev - 1
+
+        s200_slope_20, s200_slope_60 = _slope(20), _slope(60)
+        if close > s200_now and (above50 or (s200_slope_20 or 0) >= FLAT_200):
+            # Advance. A multi-week pullback below the 50 EMA while the 200 is
+            # still clearly rising is a Stage 2 correction, not a top — that is
+            # exactly the pullback-to-confluence setup we trade.
             stage = 2
-        elif close < s200_now and not s200_up:
-            stage = 4
-        elif close > s200_now:
-            stage = 3 if not above50 else 2
-        else:
+        elif s200_slope_20 is None:
             stage = 1
+        elif close < s200_now and s200_slope_20 <= -FLAT_200:
+            stage = 4                                        # decline
+        else:
+            # Base or top: above a flat 200 having lost the 50, or below a
+            # rising 200 (the first crack). The 60-bar slope says which.
+            stage = 3 if (s200_slope_60 is not None and s200_slope_60 > 0) else 1
     else:
         stage = 2 if (above50 and e50_up) else 1
 
@@ -230,10 +250,30 @@ def analyse(ticker, df, spy_chg):
     last10 = df.iloc[-11:-1]
     down_vols = last10.loc[last10["Close"] < last10["Close"].shift(1).fillna(last10["Close"]), "Volume"]
     up_today = close > float(c.iloc[-2])
-    pocket_pivot = bool(up_today and len(down_vols) > 0 and float(v.iloc[-1]) > float(down_vols.max()))
+    # Only meaningful inside a base or an uptrend — in a Stage 4 decline the
+    # same volume signature is almost always a short-covering bounce.
+    pocket_pivot = bool(stage in (1, 2) and up_today and len(down_vols) > 0
+                        and float(v.iloc[-1]) > float(down_vols.max()))
 
     rng3 = float(h.iloc[-3:].max() - l.iloc[-3:].min())
     tight = bool(rng3 / atr_now <= 1.5)
+
+    # ── Early signs of a Stage 1 -> 2 transition (section 07 Notable) ──
+    # rs_turn is added later in fetch_scan.py, once RS percentiles exist.
+    e50_now = float(e50.iloc[-1])
+    reclaim50 = bool(close > e50_now
+                     and bool((c.iloc[-6:-1] < e50.iloc[-6:-1]).any())
+                     and len(e50) > 10 and e50_now >= float(e50.iloc[-11]))
+    # Weinstein's actual transition signal: the 200 has turned up over 20 bars
+    # while it is still down over 60. A flat 200 on its own says nothing — it is
+    # close to the definition of Stage 1, so it fired on almost every candidate.
+    ma200_turn = bool(s200_slope_20 is not None and s200_slope_60 is not None
+                      and s200_slope_20 > 0 and s200_slope_60 < 0)
+    seg15 = df.iloc[-16:]
+    d15, v15 = seg15["Close"].diff().iloc[1:], seg15["Volume"].iloc[1:]
+    up_vol, dn_vol = float(v15[d15 > 0].sum()), float(v15[d15 < 0].sum())
+    accum_ratio = up_vol / dn_vol if dn_vol > 0 else None
+    higher_low = bool(len(l) >= 20 and float(l.iloc[-10:].min()) > float(l.iloc[-20:-10].min()))
 
     hi20_pos = int(np.argmax(h.iloc[-20:].values))
     days_since_20d_high = 19 - hi20_pos
@@ -257,16 +297,22 @@ def analyse(ticker, df, spy_chg):
         "atr_mult_50": r2(atr_mult_50), "pct_from_50": r2(pct_from_50, 1),
         "off_52w_high": r2(off_52w_high, 1), "avg_dollar_vol": r2(avg_dollar_vol, 0),
         "lod_dist": r2(lod_dist, 0), "stage": stage,
+        "s200_slope_20": r2(s200_slope_20, 4), "s200_slope_60": r2(s200_slope_60, 4),
         "rs_raw": rs_raw(c), "rs_rating": None,
         # structure
         "ema9": r2(levels["ema9"]), "ema21": r2(levels["ema21"]), "ema50": r2(levels["ema50"]),
         "ma10w": r2(levels["ma10w"]), "avwap": r2(avwap), "avwap_days": days_since_anchor,
         "ema9_rising": rising(e9, 3), "ema21_rising": rising(e21, 5), "ema50_rising": e50_up,
         "above_ema9": bool(close > levels["ema9"]), "above_ema21": bool(close > levels["ema21"]),
+        "above_ema50": bool(above50),
         "dist_atr": {k: r2(d) for k, d in dist_atr.items()},
         "confluence": confluence, "confluence_n": len(confluence),
         # behaviour
         "vol_ratio_5_20": r2(vol_ratio), "rvol": r2(rvol), "pocket_pivot": pocket_pivot, "tight": tight,
+        "accum_ratio": r2(accum_ratio),
+        "early": {"reclaim50": reclaim50, "ma200_turn": ma200_turn, "pocket_pivot": pocket_pivot,
+                  "accum": bool(accum_ratio is not None and accum_ratio >= 1.3),
+                  "higher_low": higher_low, "rs_turn": False},
         # trade plan
         "plan_stop": r2(plan_stop), "plan_stop_pct": r2(plan_stop_pct), "plan_stop_basis": stop_basis,
         "plan_entry_lo": r2(plan_entry_lo), "plan_entry_hi": r2(plan_entry_hi),
@@ -352,6 +398,7 @@ def main():
             "vol":   (m["avg_dollar_vol"] or 0) >= DNA["avg_dollar_vol_min"],
             "rs":    (m["rs_rating"] or 0) >= DNA["rs_rating_min"],
             "stage": m["stage"] == 2,
+            "ema50": bool(m["above_ema50"]),
             "high":  abs(m["off_52w_high"] or 100) <= DNA["off_52w_high_max"],
             "ext":   (m["atr_mult_50"] if m["atr_mult_50"] is not None else 99) <= DNA["atr_mult_max"],
         }
