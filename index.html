@@ -749,14 +749,18 @@
   <div class="section" id="notable">
     <div class="section-header">
       <div class="section-num">07</div>
-      <div class="section-title">Notable — Stage 1 met vroege tekenen van Stage 2</div>
-      <div class="section-subtitle">WATCHLIST VOOR DE EERSTE PULLBACK NA DE TRANSITIE &middot; GEEN KOOPSIGNAAL <span id="nt-updated" style="color:var(--muted)"></span></div>
+      <div class="section-title">Notable</div>
+      <div class="section-subtitle">WATCHLIST, GEEN KOOPSIGNAAL <span id="nt-updated" style="color:var(--muted)"></span></div>
+    </div>
+    <div class="ch-toolbar" style="margin-bottom:10px">
+      <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1-base met vroege tekenen van Stage 2 — wachten op de 1&rightarrow;2-transitie en de eerste pullback">BASE &middot; STAGE 1&rightarrow;2 <span id="ntc-base" style="color:var(--muted)"></span></button>
+      <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Echt gecorrigeerde naam (Stage 1 of 3, onder de 200 of &ge;15% onder de high) die omdraait: &ge;2 signalen waarvan minstens &eacute;&eacute;n omslagsignaal">RECOVERY <span id="ntc-recovery" style="color:var(--muted)"></span></button>
     </div>
     <div class="table-wrap"><table>
       <thead><tr>
         <th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th>
         <th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
-        <th title="reclaim 50 EMA &middot; 200 vlak &middot; pocket pivot &middot; accumulatie &middot; hogere bodems &middot; RS draait">Signals</th>
+        <th title="reclaim 50 EMA &middot; 200 draait &middot; pocket pivot &middot; accumulatie &middot; hogere bodems &middot; RS draait">Signals</th>
         <th>Score</th><th>Off 52W</th><th>$ Vol</th><th title="confluence-lagen binnen 1 ATR">Confl.</th>
         <th title="voorgestelde stop onder structuur &middot; klik om in de calculator te laden">Stop &middot; %</th><th></th>
       </tr></thead>
@@ -1789,7 +1793,7 @@ const NT_SIG = [['reclaim50',   'R50',  '50 EMA heroverd (kruising in de laatste
                 ['pocket_pivot','PP',   'pocket pivot (hoogste volume vs elke down-day in 10 dagen)'],
                 ['accum',       'ACC',  'accumulatie (up-volume / down-volume >= 1,3 over 15 dagen)'],
                 ['higher_low',  'HL',   'hogere bodems (laatste 10 dagen boven de 10 ervoor)'],
-                ['rs_turn',     'RS\u2191',  'RS draait (+15 punten in een maand, RS tussen 50 en 85)']];
+                ['rs_turn',     'RS\u2191',  'RS draait (+15 punten in een maand, RS nog onder 85)']];
 // Welke signalen vuurden, als leesbare labels. compact=true toont alleen de actieve.
 function sigTags(early, compact) {
   const e = early || {};
@@ -1799,26 +1803,40 @@ function sigTags(early, compact) {
     `<span class="sig-tag${e[k] ? ' on' : ''}" title="${esc(tip)}">${lbl}</span>`).join('');
 }
 
+let ntMode = 'base';
+function ntShow(mode) {
+  ntMode = mode;
+  ['base', 'recovery'].forEach(m => { const b = $('ntb-' + m); if (b) b.classList.toggle('active-long', m === mode); });
+  renderNotable();
+}
+
 async function loadNotable() {
   const tb = $('nt-tbody'); if (!tb) return;
   try {
     const r = await fetch('data/notable.json?t=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     ntData = await r.json();
+    const all = ntData.rows || [];
+    // oude runs zonder route-veld: alles is base
+    all.forEach(x => { if (!x.route) x.route = 'base'; });
+    ['base', 'recovery'].forEach(m => { const c = $('ntc-' + m); if (c) c.textContent = '(' + all.filter(x => x.route === m).length + ')'; });
     const u = $('nt-updated');
-    if (u) u.textContent = '\u00b7 ' + (ntData.updated_at || '') + ' \u00b7 ' +
-      (ntData.rows || []).length + ' namen \u00b7 minimaal ' + ((ntData.thresholds || {}).min_signals ?? 2) + ' van 6 signalen';
+    if (u) u.textContent = '\u00b7 ' + (ntData.updated_at || '');
     renderNotable();
   } catch (err) {
     tb.innerHTML = `<tr><td colspan="12" class="loading-msg">Nog geen notable-data \u2014 verschijnt na de volgende nachtelijke run.</td></tr>`;
   }
 }
 
+const NT_EMPTY = {
+  base: 'Geen Stage 1-namen met vroege signalen in deze run.',
+  recovery: 'Geen gecorrigeerde namen met een omslagsignaal in deze run.'
+};
 function renderNotable() {
   const tb = $('nt-tbody'); if (!tb || !ntData) return;
-  const rows = ntData.rows || [];
+  const rows = (ntData.rows || []).filter(x => x.route === ntMode);
   if (!rows.length) {
-    tb.innerHTML = '<tr><td colspan="12" class="loading-msg">Geen Stage 1-namen met genoeg vroege signalen in deze run.</td></tr>';
+    tb.innerHTML = `<tr><td colspan="12" class="loading-msg">${NT_EMPTY[ntMode]}</td></tr>`;
     return;
   }
   tb.innerHTML = rows.map(r => {
@@ -1927,8 +1945,10 @@ function chRender() {
 // Why is this ticker in section 06? DNA rank, theme rank, or the Notable scan.
 function whyPills(m) {
   let out = '';
-  if (m.why === 'notable')
-    out += `<span class="ch-why nt" title="Stage 1 met ${m.early_score || 0} vroege signalen — watchlist, geen koopsignaal">NOTABLE</span>`;
+  if (m.why === 'notable') {
+    const rec = m.route === 'recovery';
+    out += `<span class="ch-why nt" title="${rec ? 'gecorrigeerde naam die omdraait' : 'Stage 1-base met vroege Stage 2-signalen'} — ${m.early_score || 0} signalen — watchlist, geen koopsignaal">${rec ? 'RECOVERY' : 'BASE'}</span>`;
+  }
   if (m.dna_rank)
     out += `<span class="ch-why dna" title="DNA-passer #${m.dna_rank} op setup score">DNA #${m.dna_rank}</span>`;
   (m.theme_picks || []).forEach(t => {

@@ -253,9 +253,11 @@ def analyse(ticker, df, spy_chg):
     last10 = df.iloc[-11:-1]
     down_vols = last10.loc[last10["Close"] < last10["Close"].shift(1).fillna(last10["Close"]), "Volume"]
     up_today = close > float(c.iloc[-2])
-    # Only meaningful inside a base or an uptrend — in a Stage 4 decline the
-    # same volume signature is almost always a short-covering bounce.
-    pocket_pivot = bool(stage in (1, 2) and up_today and len(down_vols) > 0
+    # Suppressed only in a Stage 4 decline, where the same volume signature is
+    # almost always a short-covering bounce (IONQ/RGTI/ARQQ/QBTS, nov 2026). In a
+    # Stage 3 correction it marks the turn: TMO printed three of these on 27-29
+    # May 2026, the exact reversal days.
+    pocket_pivot = bool(stage != 4 and up_today and len(down_vols) > 0
                         and float(v.iloc[-1]) > float(down_vols.max()))
 
     rng3 = float(h.iloc[-3:].max() - l.iloc[-3:].min())
@@ -300,6 +302,7 @@ def analyse(ticker, df, spy_chg):
         "atr_mult_50": r2(atr_mult_50), "pct_from_50": r2(pct_from_50, 1),
         "off_52w_high": r2(off_52w_high, 1), "avg_dollar_vol": r2(avg_dollar_vol, 0),
         "lod_dist": r2(lod_dist, 0), "stage": stage,
+        "above_s200": (bool(close > s200_now) if (s200 is not None and not np.isnan(float(s200.iloc[-1]))) else None),
         "s200_slope_20": r2(s200_slope_20, 4), "s200_slope_60": r2(s200_slope_60, 4),
         "rs_raw": rs_raw(c), "rs_rating": None,
         # structure

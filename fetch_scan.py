@@ -64,7 +64,9 @@ RS_LOOKBACK_1M = 21       # trading days back for the "RS a month ago" percentil
 RS_TURN_MIN    = 15       # rs_chg_1m needed for the rs_turn signal
 NOTABLE_PATH   = "data/notable.json"
 NOTABLE_MIN_SIGNALS = 1   # of 6 — one real signal makes a name notable; the score ranks them
-NOTABLE_MAX     = 20
+NOTABLE_MAX_BASE     = 15  # Stage 1 bases with early Stage 2 signs
+NOTABLE_MAX_RECOVERY = 10  # corrected names (Stage 1/3) turning back up: >=2 signals incl. a turn signal
+NOTABLE_RECOVERY_OFF_HIGH = -15   # "really corrected": below the 200 SMA or at least this far off the high
 NOTABLE_MIN_DOLLAR_VOL = 50_000_000
 NOTABLE_MIN_ABOVE_LOW  = 1.05    # dead-cat guard only. 25% cut the wrong names:
                                  # a quiet consolidation sits close to BOTH its 52w low
@@ -500,8 +502,11 @@ def main():
         m["rs_chg_1m"] = (m["rs_rating"] - m["rs_rating_1m"]) \
             if (m["rs_rating"] is not None and m["rs_rating_1m"] is not None) else None
         early = m.get("early") or {}
+        # One definition everywhere: dRS >= +15 with RS still under 85. The old floor of 50
+        # ("turning into strength") blocked deep turns by construction — TMO sat at RS 33
+        # on its 29 May 2026 reversal day with dRS +15.
         early["rs_turn"] = bool(m["rs_chg_1m"] is not None and m["rs_chg_1m"] >= RS_TURN_MIN
-                                and m["rs_rating"] is not None and 50 <= m["rs_rating"] < 85)
+                                and m["rs_rating"] is not None and m["rs_rating"] < 85)
         m["early"] = early
         m["early_score"] = sum(1 for v in early.values() if v)
         sm = smap.get(t) or {}
@@ -714,13 +719,18 @@ def main():
     with open(OUTPUT_PATH, "w") as f:
         json.dump(payload, f, separators=(",", ":"))
 
-    # ── 6a. Notable: Stage 1 names showing early signs of a Stage 2 turn ──
-    # Watchlist seeding for the first pullback after the transition, NOT a buy list.
+    # ── 6a. Notable: two routes, NOT a buy list ──
+    #   BASE     — Stage 1 base with early Stage 2 signs. Seeds the watchlist for the
+    #              first pullback after the 1 -> 2 transition.
+    #   RECOVERY — a really corrected name (Stage 1/3, below the 200 or >= 15% off its
+    #              high) turning back up: >= 2 signals of which at least one is a turn
+    #              signal. Catches a V-recovery inside a larger uptrend, which is never
+    #              Stage 1 and so invisible to the base route (case study: TMO, whose
+    #              27-29 May 2026 reversal this gate flags on 29 May at $492).
     notable = []
+    TURN_SIGNALS = ("ma200_turn", "reclaim50", "rs_turn")
     try:
         for r in rows:
-            if r.get("stage") != 1 or (r.get("early_score") or 0) < NOTABLE_MIN_SIGNALS:
-                continue
             if (r.get("avg_dollar_vol") or 0) < NOTABLE_MIN_DOLLAR_VOL:
                 continue
             if (r.get("rs_rating") or 0) >= DNA["rs_rating_min"]:
@@ -734,26 +744,38 @@ def main():
             lo252 = float(df["Low"].iloc[-252:].min())
             if not lo252 or (r.get("price") or 0) < NOTABLE_MIN_ABOVE_LOW * lo252:
                 continue            # still making lows
+            e = r.get("early") or {}
+            sc = r.get("early_score") or 0
+            turn = any(e.get(k) for k in TURN_SIGNALS)
+            corrected = (r.get("above_s200") is False
+                         or (r.get("off_52w_high") or 0) <= NOTABLE_RECOVERY_OFF_HIGH)
+            route = None
+            if r.get("stage") == 1 and sc >= NOTABLE_MIN_SIGNALS:
+                route = "base"
+            elif r.get("stage") in (1, 3) and corrected and sc >= 2 and turn:
+                route = "recovery"
+            if route is None:
+                continue
             notable.append({k: r.get(k) for k in (
                 "ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating",
                 "rs_chg_1m", "avg_dollar_vol", "off_52w_high", "early", "early_score",
                 "setup_score", "plan_stop", "plan_stop_pct", "plan_stop_basis",
-                "plan_entry_lo", "plan_entry_hi", "confluence_n", "rvol")})
-        # Scores cluster at 1, so the cap would otherwise truncate arbitrarily.
-        # Rank by: score, then how many of the signals are actual TURN signals
-        # (the 200 turning, a 50 reclaim, RS turning) rather than merely
-        # constructive ones (accumulation, higher lows, a pocket pivot), then dRS.
-        TURN_SIGNALS = ("ma200_turn", "reclaim50", "rs_turn")
+                "plan_entry_lo", "plan_entry_hi", "confluence_n", "rvol")} | {"route": route})
+        # Rank: score, then the number of actual TURN signals over merely constructive
+        # ones (accumulation, higher lows, a pocket pivot), then dRS.
         notable.sort(key=lambda r: ((r["early_score"] or 0),
                                     sum(1 for k in TURN_SIGNALS if (r.get("early") or {}).get(k)),
                                     (r["rs_chg_1m"] if r["rs_chg_1m"] is not None else -999)), reverse=True)
-        notable = notable[:NOTABLE_MAX]
+        notable = ([r for r in notable if r["route"] == "base"][:NOTABLE_MAX_BASE]
+                   + [r for r in notable if r["route"] == "recovery"][:NOTABLE_MAX_RECOVERY])
         with open(NOTABLE_PATH, "w") as f:
             json.dump({"updated_at": payload["updated_at"],
                        "thresholds": {"min_signals": NOTABLE_MIN_SIGNALS, "min_dollar_vol": NOTABLE_MIN_DOLLAR_VOL,
-                                      "min_above_low": NOTABLE_MIN_ABOVE_LOW, "rs_max": DNA["rs_rating_min"]},
+                                      "min_above_low": NOTABLE_MIN_ABOVE_LOW, "rs_max": DNA["rs_rating_min"],
+                                      "recovery_off_high": NOTABLE_RECOVERY_OFF_HIGH},
                        "rows": notable}, f, separators=(",", ":"))
-        print(f"  Saved {NOTABLE_PATH} ({len(notable)} Stage 1 names with >= {NOTABLE_MIN_SIGNALS} early signals)")
+        nb = sum(1 for r in notable if r["route"] == "base")
+        print(f"  Saved {NOTABLE_PATH} ({nb} base + {len(notable) - nb} recovery)")
     except Exception as e:
         notable = []
         print(f"  (notable scan skipped: {e})")
@@ -778,6 +800,7 @@ def main():
                     continue
                 chart_rows.append(r); seen.add(tk); why[tk] = "theme"
 
+        nt_route = {r["ticker"]: r["route"] for r in notable}
         for r in notable:
             tk = r["ticker"]
             if tk not in seen and tk in by_t:
@@ -798,7 +821,7 @@ def main():
                               "theme_picks": picks_for(tk),
                               "dna_rank": dna_rank.get(tk),
                               "early": r.get("early"), "early_score": r.get("early_score"),
-                              "why": why.get(tk, "dna")},
+                              "why": why.get(tk, "dna"), "route": nt_route.get(tk)},
                           "bars": chart_bars(full[tk])}
         with open(CHART_PATH, "w") as f:
             json.dump({"updated": payload["updated_at"], "charts": charts}, f, separators=(",", ":"))
