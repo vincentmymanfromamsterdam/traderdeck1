@@ -308,6 +308,20 @@ def analyse(ticker, df, spy_chg):
     # one recognisable pattern per list -- on the first live run 9 of 14 rows were
     # earnings repricings -- and because their swing entry comes on a later retest,
     # well outside this gate's five-session window.
+    # The pattern also runs over TWO days: day 1 breaks the support and closes
+    # BELOW it, day 2 closes back above on volume. Same five requirements, with
+    # the reference for requirement 5 moved back one bar -- to the close before
+    # day 1, where the damage started. Taking day 1's OPEN as the reference (the
+    # obvious choice) would leave a gap on day 1 outside the measurement, so a
+    # name could close neatly at day 1's open with the whole gap still open.
+    # Rare: 4 hits in 120 sessions over 394 names, ~0.14/day on the full pool.
+    # The same volume threshold separates signal from noise here as in the
+    # one-day case -- at >= 2x: +4.4% median / 75% win over 10 days; relaxed to
+    # 1.5x: 12 hits and -1.2% median, i.e. back to the universe baseline. Two
+    # independent variants agreeing on that threshold is the strongest evidence
+    # in this gate; n = 4 is still too small to call it proven.
+    # Day 1's volume is typically BELOW average (median 0.93x) -- a breakdown
+    # nobody sold into, which is the point.
     UR_LOOKBACK, UR_MIN_HELD, UR_MAX_UNDER = 30, 5, 0.07
     UR_VOL, UR_LOD, UR_MAX_AGE, UR_MAX_CLOSE_BELOW_PC = 2.0, 0.6, 5, -3.0
     ur = None
@@ -315,7 +329,19 @@ def analyse(ticker, df, spy_chg):
         lo_v, hi_v, cl_v, vo_v, e50_v = l.values, h.values, c.values, v.values, e50.values
         op_v = df["Open"].values
         v20_v = pd.Series(vo_v).rolling(20).mean().values
-        for i in range(max(len(df) - UR_MAX_AGE, UR_LOOKBACK + 1), len(df)):
+
+        def _support(upto, j_start):
+            """Most recent low before j_start that then held as support until `upto`."""
+            for j in range(j_start, max(upto - UR_LOOKBACK, 0) - 1, -1):
+                if j + 1 >= upto:
+                    continue
+                ref = float(lo_v[j])
+                if ref >= float(np.min(lo_v[j + 1:upto])):
+                    continue                          # never acted as support
+                return j, ref
+            return None, None
+
+        for i in range(max(len(df) - UR_MAX_AGE, UR_LOOKBACK + 2), len(df)):
             day_lo, day_hi, day_cl = float(lo_v[i]), float(hi_v[i]), float(cl_v[i])
             rng = day_hi - day_lo
             if rng <= 0 or np.isnan(v20_v[i]) or v20_v[i] <= 0:
@@ -325,27 +351,41 @@ def analyse(ticker, df, spy_chg):
             vol_x = float(vo_v[i]) / float(v20_v[i])
             if vol_x < UR_VOL:
                 continue
+            found = None
+
+            # -- one day: today undercuts the support and reclaims it on the close
             prev_cl = float(cl_v[i - 1])
-            close_vs_pc = (day_cl / prev_cl - 1) * 100
-            if close_vs_pc <= UR_MAX_CLOSE_BELOW_PC:
-                continue                          # gap left open, not reclaimed
-            low_vs_pc = (day_lo / prev_cl - 1) * 100
-            gap_pct = (float(op_v[i]) / prev_cl - 1) * 100
-            # Walk back for the most recent low that then held as support for at
-            # least UR_MIN_HELD bars, was undercut today and sits below the close.
-            for j in range(i - 1 - UR_MIN_HELD, max(i - UR_LOOKBACK, 0) - 1, -1):
-                ref = float(lo_v[j])
-                if ref >= float(np.min(lo_v[j + 1:i])):
-                    continue                          # never acted as support
-                if day_lo < ref < day_cl and (ref - day_lo) / ref <= UR_MAX_UNDER:
-                    ur = {"date": str(df.index[i].date()), "ref": r2(ref), "low": r2(day_lo),
-                          "under_pct": r2((ref - day_lo) / ref * 100, 2), "vol_x": r2(vol_x),
-                          "held": int(i - 1 - j), "age": int(len(df) - 1 - i),
-                          "close_vs_pc": r2(close_vs_pc, 1), "low_vs_pc": r2(low_vs_pc, 1),
-                          "gap_pct": r2(gap_pct, 1),
-                          "stop_dist_pct": r2((day_cl - day_lo) / day_cl * 100, 1),
-                          "at_ema50": bool(day_lo < float(e50_v[i]) <= day_cl)}
-                    break
+            if (day_cl / prev_cl - 1) * 100 > UR_MAX_CLOSE_BELOW_PC:
+                j, ref = _support(i, i - 1 - UR_MIN_HELD)
+                if ref is not None and day_lo < ref < day_cl and (ref - day_lo) / ref <= UR_MAX_UNDER:
+                    found = (1, ref, i - 1 - j, day_lo, prev_cl, None)
+
+            # -- two days: day 1 closed below the support, today closes back above
+            if found is None:
+                k = i - 1
+                base = float(cl_v[k - 1])
+                if (day_cl / base - 1) * 100 > UR_MAX_CLOSE_BELOW_PC:
+                    d1_lo, d1_cl = float(lo_v[k]), float(cl_v[k])
+                    j, ref = _support(k, k - 1 - UR_MIN_HELD)
+                    if (ref is not None and d1_lo < ref and (ref - d1_lo) / ref <= UR_MAX_UNDER
+                            and d1_cl < ref < day_cl):
+                        v1 = float(vo_v[k]) / float(v20_v[k]) if v20_v[k] else None
+                        found = (2, ref, k - 1 - j, min(d1_lo, day_lo), base, v1)
+
+            if found is not None:
+                span, ref, held, stop_lo, base, v1 = found
+                ur = {"date": str(df.index[i].date()), "span": span,
+                      "ref": r2(ref), "low": r2(stop_lo),
+                      "under_pct": r2((ref - stop_lo) / ref * 100, 2), "vol_x": r2(vol_x),
+                      "vol_x_day1": r2(v1), "held": int(held), "age": int(len(df) - 1 - i),
+                      # close_vs_pc / low_vs_pc are measured against the close the rule
+                      # gated on: the previous close for a one-day U&R, the close before
+                      # day 1 for a two-day one. gap_pct is always the reclaim day's gap.
+                      "close_vs_pc": r2((day_cl / base - 1) * 100, 1),
+                      "low_vs_pc": r2((stop_lo / base - 1) * 100, 1),
+                      "gap_pct": r2((float(op_v[i]) / float(cl_v[i - 1]) - 1) * 100, 1),
+                      "stop_dist_pct": r2((day_cl - stop_lo) / day_cl * 100, 1),
+                      "at_ema50": bool(stop_lo < float(e50_v[i]) <= day_cl)}
 
     hi20_pos = int(np.argmax(h.iloc[-20:].values))
     days_since_20d_high = 19 - hi20_pos

@@ -1826,8 +1826,8 @@ const NT_HEAD = {
   </tr>`,
   ur: `<tr>
     <th>Ticker</th><th>Price</th><th>1D %</th>
-    <th title="datum van de undercut &amp; reclaim, met leeftijd in handelsdagen">U&amp;R</th>
-    <th title="het steunniveau dat werd ondergeschoten, en hoeveel dagen het hield">Steun</th>
+    <th title="datum van de reclaim, met leeftijd in handelsdagen. 2D = tweedaags: dag 1 brak de steun en sloot eronder, dag 2 sloot er weer boven">U&amp;R</th>
+    <th title="het steunniveau dat werd ondergeschoten, en hoeveel dagen het hield. Bij een tweedaagse U&amp;R is de stop de laagste van beide lows">Steun</th>
     <th title="hoeveel procent de dag-low onder de steun dook">Under</th>
     <th title="volume op de U&amp;R-dag t.o.v. het 20-daags gemiddelde">Vol &times;</th>
     <th title="positie t.o.v. 50 EMA en 200 SMA &middot; @50 = de U&amp;R-low raakte de 50 EMA">50 / 200</th>
@@ -1900,7 +1900,7 @@ function renderNotable() {
             <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
         <td>$${fmtPrice(r.price)}</td>
         <td>${pct(r.chg_1d)}</td>
-        <td>${urDate(u.date)} <span style="color:var(--muted)">\u00b7 ${u.age == null ? '?' : u.age}d</span></td>
+        <td>${urDate(u.date)} <span style="color:var(--muted)">\u00b7 ${u.age == null ? '?' : u.age}d</span>${u.span === 2 ? ' <span class="sig-tag ur-on" title="tweedaags: dag 1 brak de steun en sloot eronder, dag 2 sloot er weer boven op volume">2D</span>' : ''}</td>
         <td>$${fmtPrice(u.ref)} <span style="color:var(--muted)">\u00b7 ${u.held == null ? '?' : u.held}d</span></td>
         <td>${u.under_pct == null ? '\u2014' : u.under_pct.toFixed(1) + '%'}</td>
         <td style="color:var(--blue);font-weight:600">${u.vol_x == null ? '\u2014' : u.vol_x.toFixed(2) + '\u00d7'}</td>
@@ -2022,7 +2022,8 @@ function whyPills(m) {
   let out = '';
   if (m.ur) {
     const u = m.ur;
-    out += `<span class="ch-why ur" title="undercut &amp; reclaim op ${u.date} — steun $${u.ref} hield ${u.held} dagen, low $${u.low} (${u.under_pct}% eronder), slot erboven op ${u.vol_x}× volume — stop net onder $${u.low}">U&R ${urDate(u.date)}</span>`;
+    const two = u.span === 2;
+    out += `<span class="ch-why ur" title="undercut &amp; reclaim ${two ? 'over twee dagen (dag 1 sloot onder de steun, dag 2 erboven)' : 'op één dag'} — reclaim ${u.date}, steun $${u.ref} hield ${u.held} dagen, low $${u.low} (${u.under_pct}% eronder), slot erboven op ${u.vol_x}× volume — stop net onder $${u.low}">U&R ${urDate(u.date)}${two ? ' 2D' : ''}</span>`;
   }
   if (m.why === 'notable' && m.route !== 'ur') {
     const rec = m.route === 'recovery';
