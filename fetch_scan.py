@@ -29,7 +29,7 @@ import yfinance as yf
 from fetch_swing import (
     DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw, set_tt_rs,
 )
-from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results, load_earnings
+from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results, load_earnings, apply_industry_map
 
 INDUSTRY_HISTORY_PATH = "data/industry_history.json"
 
@@ -452,6 +452,11 @@ def main():
         print(f"  {len(unclassified_t)} liquid names without sector — yfinance fallback (max 200)")
         for t, v in yf_fallback(unclassified_t, max_new=200).items():
             smap[t].update(v)
+    # v7.2: Yahoo industry over the SIC-based screener label (solar out of "Semiconductors")
+    try:
+        apply_industry_map(smap, liquid, fetch_new=not TIME_BUDGET)
+    except Exception as e:
+        print(f"  (industry map skipped: {e})")
 
     # ── 4. Full analysis ─────────────────────────────────
     # 480 days ~= 334 trading days: enough for a 252-bar RS window PLUS the

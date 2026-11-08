@@ -21,6 +21,8 @@ import time
 import requests
 
 CACHE_PATH = "data/sector_map.json"
+INDUSTRY_MAP_PATH = "data/industry_map.json"   # v7.2: Yahoo (GICS-like) industry per ticker, over the SIC label
+INDUSTRY_MAP_NEW_PER_RUN = 50
 SCREENER_URL = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
@@ -137,6 +139,59 @@ def load_directory(verbose=True):
             print(f"  Directory: using cached list from {cache.get('_date')} ({len(cache['symbols'])} symbols)")
         return cache["symbols"]
     raise RuntimeError("No symbol directory available (Nasdaq screener down and no cache)")
+
+
+def load_industry_map():
+    """{ticker: {"industry": ..., "sector": ...}} from Yahoo. The Nasdaq screener labels
+    industries by SIC code, which lumps solar (FSLR, ENPH, SEDG, NXT, SHLS) and semicap
+    equipment (AMAT, KLIC, FORM) under "Semiconductors". The industry drives sector
+    rotation (03), the industry ranking and the group confirmation (GRP) in 05b."""
+    try:
+        with open(INDUSTRY_MAP_PATH) as f:
+            return json.load(f).get("map", {})
+    except Exception:
+        return {}
+
+
+def apply_industry_map(smap, tickers, verbose=True, fetch_new=True):
+    """Override smap[t] industry AND sector/ETF with Yahoo's (GICS-like) classification.
+    The screener's sector is SIC-based as well and put insurers, internet retail and
+    casinos under "Technology"; Yahoo's sectors line up with the SPDR sector ETFs.
+    Missing names are looked up, at most INDUSTRY_MAP_NEW_PER_RUN per run, and added
+    to the map file."""
+    imap = load_industry_map()
+    missing = [t for t in tickers if t not in imap]
+    added = 0
+    if fetch_new and missing:
+        import yfinance as yf
+        for t in missing[:INDUSTRY_MAP_NEW_PER_RUN]:
+            try:
+                info = yf.Ticker(t.replace(".", "-")).get_info() or {}
+                imap[t] = {"industry": info.get("industry"), "sector": info.get("sector")}
+                added += 1
+            except Exception:
+                time.sleep(1)
+        if added:
+            try:
+                with open(INDUSTRY_MAP_PATH, "w") as f:
+                    json.dump({"_updated": dt.date.today().isoformat(), "_source": "yfinance info.industry",
+                               "map": dict(sorted(imap.items()))}, f, separators=(",", ":"))
+            except Exception:
+                pass
+    n = 0
+    for t in tickers:
+        e = imap.get(t) or {}
+        ind, sec = e.get("industry"), e.get("sector")
+        if ind and t in smap:
+            smap[t]["industry"] = ind
+            if sec and SECTOR_ETF.get(sec):
+                smap[t]["sector"] = sec
+                smap[t]["etf"] = SECTOR_ETF[sec]
+            n += 1
+    if verbose:
+        print(f"  Industry map: {n}/{len(tickers)} names on Yahoo industry ({added} newly looked up, "
+              f"{max(0, len(missing) - added)} still missing)")
+    return smap
 
 
 def yf_fallback(tickers, max_new=200, verbose=True):
