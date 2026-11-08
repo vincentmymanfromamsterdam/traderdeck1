@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-11-07 21:37 UTC",
-  "updated_date": "2026-11-07",
+  "updated_at": "2026-11-08 05:53 UTC",
+  "updated_date": "2026-11-08",
   "thresholds": {
     "adr_pct_min": 3.0,
     "avg_dollar_vol_min": 50000000,
@@ -43,6 +43,12 @@
       },
       {
         "date": "2026-11-07",
+        "pct_strong": 8.3,
+        "sp500_pct_strong": 43.3,
+        "regime": "red"
+      },
+      {
+        "date": "2026-11-08",
         "pct_strong": 8.3,
         "sp500_pct_strong": 43.3,
         "regime": "red"
@@ -269,7 +275,7 @@
       "rs_rating_1m": 90,
       "rs_chg_1m": 9,
       "earnings_date": "2026-11-10",
-      "earnings_days": 3,
+      "earnings_days": 2,
       "dna": {
         "adr": true,
         "vol": true,
@@ -354,7 +360,7 @@
       "rs_rating_1m": 89,
       "rs_chg_1m": 7,
       "earnings_date": "2026-11-19",
-      "earnings_days": 12,
+      "earnings_days": 11,
       "dna": {
         "adr": false,
         "vol": true,
@@ -1367,7 +1373,7 @@
       "rs_rating_1m": 94,
       "rs_chg_1m": -2,
       "earnings_date": "2026-11-18",
-      "earnings_days": 11,
+      "earnings_days": 10,
       "dna": {
         "adr": true,
         "vol": true,
@@ -1536,7 +1542,7 @@
       "rs_rating_1m": 6,
       "rs_chg_1m": -4,
       "earnings_date": "2026-11-10",
-      "earnings_days": 3,
+      "earnings_days": 2,
       "dna": {
         "adr": true,
         "vol": false,
@@ -2214,7 +2220,7 @@
       "rs_rating_1m": 23,
       "rs_chg_1m": -20,
       "earnings_date": "2026-11-09",
-      "earnings_days": 2,
+      "earnings_days": 1,
       "dna": {
         "adr": true,
         "vol": true,
@@ -2299,7 +2305,7 @@
       "rs_rating_1m": 11,
       "rs_chg_1m": -9,
       "earnings_date": "2026-11-12",
-      "earnings_days": 5,
+      "earnings_days": 4,
       "dna": {
         "adr": true,
         "vol": true,
@@ -2384,7 +2390,7 @@
       "rs_rating_1m": 2,
       "rs_chg_1m": -1,
       "earnings_date": "2026-11-09",
-      "earnings_days": 2,
+      "earnings_days": 1,
       "dna": {
         "adr": true,
         "vol": true,
@@ -2721,7 +2727,7 @@
       "rs_rating_1m": 92,
       "rs_chg_1m": -67,
       "earnings_date": "2026-11-12",
-      "earnings_days": 5,
+      "earnings_days": 4,
       "dna": {
         "adr": true,
         "vol": true,
@@ -2972,7 +2978,7 @@
       "rs_rating_1m": 38,
       "rs_chg_1m": -24,
       "earnings_date": "2026-11-09",
-      "earnings_days": 2,
+      "earnings_days": 1,
       "dna": {
         "adr": true,
         "vol": true,
@@ -3142,7 +3148,7 @@
       "rs_rating_1m": 35,
       "rs_chg_1m": -30,
       "earnings_date": "2026-11-16",
-      "earnings_days": 9,
+      "earnings_days": 8,
       "dna": {
         "adr": true,
         "vol": true,
@@ -3397,7 +3403,7 @@
       "rs_rating_1m": 15,
       "rs_chg_1m": -14,
       "earnings_date": "2026-11-10",
-      "earnings_days": 3,
+      "earnings_days": 2,
       "dna": {
         "adr": true,
         "vol": true,
@@ -3734,7 +3740,7 @@
       "rs_rating_1m": 74,
       "rs_chg_1m": -54,
       "earnings_date": "2026-11-17",
-      "earnings_days": 10,
+      "earnings_days": 9,
       "dna": {
         "adr": false,
         "vol": true,
