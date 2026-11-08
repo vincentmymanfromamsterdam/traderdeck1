@@ -38,6 +38,12 @@ jobs:
         run: |
           python -m playwright install chromium --with-deps
 
+      # ── STEP 0: Market regime (Nasdaq DD/FTD, S&P, Russell) ──
+      - name: Market regime
+        run: |
+          python fetch_regime.py
+        continue-on-error: true
+
       # ── STEP 1: Market Data (Yahoo Finance) ──────────────
       - name: Fetch market data
         run: |
@@ -80,6 +86,7 @@ jobs:
           git add data/earnings.json data/chart_data.json data/themes_data.json data/theme_history.json || true
           git add data/sa_news.json || true
           git add data/notable.json || true
+          git add data/regime.json data/setups.json data/setups_log.json || true
           git add data/ibd.json || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
