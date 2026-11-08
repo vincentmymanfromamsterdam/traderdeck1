@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08 18:22 UTC",
+  "updated_at": "2026-11-08 19:27 UTC",
   "updated_date": "2026-11-08",
   "futures": [
     {
@@ -112,41 +112,41 @@
     {
       "ticker": "EURUSD=X",
       "name": "EUR/USD",
-      "price": 1.1228,
-      "chg_1d": -0.06,
-      "chg_1w": 0.41,
-      "chg_52w_hi": -2.73,
-      "chg_ytd": -4.44,
+      "price": 1.1143,
+      "chg_1d": -0.76,
+      "chg_1w": -0.12,
+      "chg_52w_hi": -3.47,
+      "chg_ytd": -5.17,
       "spark": [
-        -0.23,
         0.31,
         0.13,
-        0.25
+        0.25,
+        -0.06
       ]
     },
     {
       "ticker": "GBPUSD=X",
       "name": "GBP/USD",
-      "price": 1.3456,
-      "chg_1d": -0.16,
-      "chg_1w": 0.58,
-      "chg_52w_hi": 2.38,
-      "chg_ytd": -0.13,
+      "price": 1.3351,
+      "chg_1d": -0.78,
+      "chg_1w": -0.26,
+      "chg_52w_hi": 1.58,
+      "chg_ytd": -0.91,
       "spark": [
-        0.05,
         0.18,
         0.18,
-        0.32
+        0.32,
+        -0.16
       ]
     },
     {
       "ticker": "USDJPY=X",
       "name": "USD/JPY",
-      "price": 158.425,
-      "chg_1d": 0.59,
-      "chg_1w": 0.47,
-      "chg_52w_hi": 3.0,
-      "chg_ytd": 1.08,
+      "price": 158.341,
+      "chg_1d": 0.54,
+      "chg_1w": 0.42,
+      "chg_52w_hi": 2.94,
+      "chg_ytd": 1.03,
       "spark": [
         0.15,
         0.35,
@@ -204,11 +204,11 @@
     {
       "ticker": "PL=F",
       "name": "Platinum Futures",
-      "price": 1538.2,
-      "chg_1d": 0.91,
-      "chg_1w": 6.97,
-      "chg_52w_hi": -3.32,
-      "chg_ytd": -27.64,
+      "price": 1536.9,
+      "chg_1d": 0.82,
+      "chg_1w": 6.88,
+      "chg_52w_hi": -3.41,
+      "chg_ytd": -27.7,
       "spark": [
         1.46,
         -1.82,
@@ -766,11 +766,11 @@
     {
       "ticker": "BTC-USD",
       "name": "Bitcoin",
-      "price": 75796.7578,
-      "chg_1d": 0.06,
-      "chg_1w": -2.0,
-      "chg_52w_hi": -27.62,
-      "chg_ytd": -14.58,
+      "price": 75785.8828,
+      "chg_1d": 0.05,
+      "chg_1w": -2.02,
+      "chg_52w_hi": -27.63,
+      "chg_ytd": -14.59,
       "spark": [
         3.96,
         -5.55,
@@ -781,11 +781,11 @@
     {
       "ticker": "ETH-USD",
       "name": "Ethereum",
-      "price": 2231.8799,
-      "chg_1d": -0.2,
-      "chg_1w": -1.8,
-      "chg_52w_hi": -37.7,
-      "chg_ytd": -25.61,
+      "price": 2230.3799,
+      "chg_1d": -0.27,
+      "chg_1w": -1.86,
+      "chg_52w_hi": -37.74,
+      "chg_ytd": -25.66,
       "spark": [
         6.58,
         -7.75,
