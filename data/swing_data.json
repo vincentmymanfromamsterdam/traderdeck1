@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08 06:13 UTC",
+  "updated_at": "2026-11-08 18:23 UTC",
   "updated_date": "2026-11-08",
   "thresholds": {
     "adr_pct_min": 3.0,
@@ -170,6 +170,19 @@
       "tight": false,
       "accum_ratio": 1.16,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -255,6 +268,10 @@
       "tight": false,
       "accum_ratio": 3.26,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": null,
+      "tt": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -340,6 +357,19 @@
       "tight": false,
       "accum_ratio": 1.06,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -425,6 +455,19 @@
       "tight": false,
       "accum_ratio": 2.05,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 7,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -509,6 +552,19 @@
       "tight": true,
       "accum_ratio": 0.69,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -593,6 +649,28 @@
       "tight": false,
       "accum_ratio": 1.49,
       "ur": null,
+      "bo": null,
+      "gu": {
+        "date": "2026-11-04",
+        "gap_pct": 4.0,
+        "gap_atr": 1.22,
+        "vol_x": 1.64,
+        "low": 464.13,
+        "held": false,
+        "dist_low_pct": -0.8,
+        "age": 2
+      },
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -678,6 +756,19 @@
       "tight": false,
       "accum_ratio": 1.4,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -763,6 +854,19 @@
       "tight": false,
       "accum_ratio": 0.88,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 8,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -849,6 +953,19 @@
       "tight": false,
       "accum_ratio": 1.92,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 4,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -934,6 +1051,28 @@
       "tight": false,
       "accum_ratio": 1.11,
       "ur": null,
+      "bo": null,
+      "gu": {
+        "date": "2026-11-04",
+        "gap_pct": 4.1,
+        "gap_atr": 1.27,
+        "vol_x": 2.07,
+        "low": 453.69,
+        "held": false,
+        "dist_low_pct": -0.2,
+        "age": 2
+      },
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1018,6 +1157,19 @@
       "tight": false,
       "accum_ratio": 0.56,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": true
+      },
+      "tt": 7,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1103,6 +1255,19 @@
       "tight": false,
       "accum_ratio": 0.72,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 5,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1187,6 +1352,19 @@
       "tight": false,
       "accum_ratio": 1.81,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 6,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1271,6 +1449,19 @@
       "tight": false,
       "accum_ratio": 1.19,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 5,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1353,6 +1544,19 @@
       "tight": false,
       "accum_ratio": 0.55,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 6,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1435,6 +1639,19 @@
       "tight": false,
       "accum_ratio": 0.39,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": false
+      },
+      "tt": 5,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1522,6 +1739,19 @@
       "tight": false,
       "accum_ratio": 0.85,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1606,6 +1836,19 @@
       "tight": false,
       "accum_ratio": 0.85,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 5,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1690,6 +1933,19 @@
       "tight": false,
       "accum_ratio": 0.34,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": true,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": true,
+        "rs_70": false
+      },
+      "tt": 6,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1775,6 +2031,19 @@
       "tight": false,
       "accum_ratio": 0.93,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1861,6 +2130,19 @@
       "tight": false,
       "accum_ratio": 0.87,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -1946,6 +2228,19 @@
       "tight": false,
       "accum_ratio": 0.76,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2030,6 +2325,19 @@
       "tight": false,
       "accum_ratio": 1.35,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2115,6 +2423,19 @@
       "tight": false,
       "accum_ratio": 0.65,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2200,6 +2521,19 @@
       "tight": false,
       "accum_ratio": 1.18,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2285,6 +2619,19 @@
       "tight": false,
       "accum_ratio": 0.96,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2370,6 +2717,19 @@
       "tight": false,
       "accum_ratio": 0.81,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2454,6 +2814,19 @@
       "tight": false,
       "accum_ratio": 0.62,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": true
+      },
+      "tt": 5,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2538,6 +2911,19 @@
       "tight": false,
       "accum_ratio": 0.44,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": true,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2622,6 +3008,10 @@
       "tight": false,
       "accum_ratio": 0.77,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": null,
+      "tt": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2707,6 +3097,19 @@
       "tight": false,
       "accum_ratio": 0.77,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2789,6 +3192,28 @@
       "tight": false,
       "accum_ratio": 1.8,
       "ur": null,
+      "bo": null,
+      "gu": {
+        "date": "2026-11-04",
+        "gap_pct": 8.6,
+        "gap_atr": 1.31,
+        "vol_x": 4.54,
+        "low": 103.96,
+        "held": false,
+        "dist_low_pct": 0.9,
+        "age": 2
+      },
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": true,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": true,
         "ma200_turn": false,
@@ -2873,6 +3298,19 @@
       "tight": false,
       "accum_ratio": 0.57,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -2958,6 +3396,19 @@
       "tight": false,
       "accum_ratio": 0.43,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3043,6 +3494,19 @@
       "tight": false,
       "accum_ratio": 0.97,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3128,6 +3592,10 @@
       "tight": false,
       "accum_ratio": 0.83,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": null,
+      "tt": null,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3213,6 +3681,19 @@
       "tight": false,
       "accum_ratio": 0.53,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3298,6 +3779,19 @@
       "tight": false,
       "accum_ratio": 0.5,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 1,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3383,6 +3877,19 @@
       "tight": false,
       "accum_ratio": 0.62,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 1,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3468,6 +3975,19 @@
       "tight": false,
       "accum_ratio": 0.8,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 1,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3552,6 +4072,19 @@
       "tight": false,
       "accum_ratio": 0.63,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3636,6 +4169,19 @@
       "tight": false,
       "accum_ratio": 0.67,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3720,6 +4266,19 @@
       "tight": false,
       "accum_ratio": 0.53,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": true,
+        "rs_70": false
+      },
+      "tt": 4,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3804,6 +4363,19 @@
       "tight": false,
       "accum_ratio": 0.67,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": true,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3888,6 +4460,19 @@
       "tight": false,
       "accum_ratio": 0.71,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": true,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 3,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -3972,6 +4557,19 @@
       "tight": false,
       "accum_ratio": 0.71,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 1,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -4056,6 +4654,19 @@
       "tight": false,
       "accum_ratio": 0.88,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": true,
+        "s200_rising": true,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 2,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
@@ -4140,6 +4751,19 @@
       "tight": false,
       "accum_ratio": 0.52,
       "ur": null,
+      "bo": null,
+      "gu": null,
+      "tt_flags": {
+        "above_150_200": false,
+        "s150_gt_200": false,
+        "s200_rising": false,
+        "s50_gt_150_200": false,
+        "above_50": false,
+        "above_low_30": false,
+        "near_high_25": false,
+        "rs_70": false
+      },
+      "tt": 0,
       "early": {
         "reclaim50": false,
         "ma200_turn": false,
