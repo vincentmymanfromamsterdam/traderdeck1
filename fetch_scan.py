@@ -27,7 +27,7 @@ import pandas as pd
 import yfinance as yf
 
 from fetch_swing import (
-    DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw,
+    DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw, set_tt_rs,
 )
 from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results, load_earnings
 
@@ -77,13 +77,26 @@ NOTABLE_MIN_ABOVE_LOW  = 1.05    # dead-cat guard only. 25% cut the wrong names:
                                  # a quiet consolidation sits close to BOTH its 52w low
                                  # and high, so distance-from-low says nothing about quality.
 
+# ── 8. Setup module (section 05b, v7) ──
+SETUPS_PATH      = "data/setups.json"
+SETUPS_LOG_PATH  = "data/setups_log.json"     # live measurement log: every new hit, no outcomes
+SETUP_CAP        = 15
+SETUP_MIN_PRICE  = 15.0                       # O'Neil: no stocks under $15 in the setup module
+SETUP_MIN_DOLLAR_VOL = 50_000_000
+SETUP_MIN_CAP    = 2_000_000_000
+SETUP_PB_RS_MIN  = 85
+SETUP_PB_MIN_LAYERS = 3
+SETUP_GU_RS_MIN  = 70
+SETUPS_LOG_MAX   = 5000
+GRP_RS_MIN       = 80                          # group confirmation: peers in the same industry with RS >= 80
+
 CHART_PATH  = "data/chart_data.json"
 CHART_MAX   = 40          # max DNA passers with chart data
 CHART_BARS  = 130         # ~6 months of daily bars
 CHART_META  = ("ticker", "name", "industry", "rs_rating", "rs_chg_1m", "stage", "adr_pct", "atr_mult_50", "off_52w_high",
                "setup_score", "rvol", "earnings_date", "earnings_days", "plan_stop", "plan_stop_pct",
                "plan_stop_basis", "plan_entry_lo", "plan_entry_hi", "dna", "confluence", "pocket_pivot", "tight",
-               "ur", "in_universe")
+               "ur", "bo", "gu", "tt", "grp", "in_universe")
 
 SA_NEWS_PATH    = "data/sa_news.json"
 SA_FEED         = "https://seekingalpha.com/api/sa/combined/{}.xml"   # public per-symbol RSS, no login
@@ -506,6 +519,7 @@ def main():
         m["rs_rating_1m"] = rs_1m_of(df)
         m["rs_chg_1m"] = (m["rs_rating"] - m["rs_rating_1m"]) \
             if (m["rs_rating"] is not None and m["rs_rating_1m"] is not None) else None
+        set_tt_rs(m)
         early = m.get("early") or {}
         # One definition everywhere: dRS >= +15 with RS still under 85. The old floor of 50
         # ("turning into strength") blocked deep turns by construction — TMO sat at RS 33
@@ -561,6 +575,17 @@ def main():
             if m:
                 extra[t] = m
 
+    # Group confirmation (O'Neil p388): how many OTHER names in the same industry
+    # are leaders (RS >= 80). Counted over the liquid pool only.
+    grp_n = {}
+    for r in rows:
+        if r.get("industry") and (r.get("rs_rating") or 0) >= GRP_RS_MIN:
+            grp_n[r["industry"]] = grp_n.get(r["industry"], 0) + 1
+    in_pool = {id(r) for r in rows}
+    for r in list(rows) + list(extra.values()):
+        own = 1 if (r.get("rs_rating") or 0) >= GRP_RS_MIN and id(r) in in_pool else 0
+        r["grp"] = (grp_n.get(r.get("industry"), 0) - own) if r.get("industry") else None
+
     rows.sort(key=lambda x: (x["dna_pass"], x["setup_score"], x["rs_rating"] or 0), reverse=True)
     passed = [r for r in rows if r["dna_pass"]]
     keep = {r["ticker"]: r for r in passed}
@@ -577,7 +602,7 @@ def main():
     COMPACT = ("ticker", "name", "sector", "industry", "etf", "market_cap", "price", "chg_1d", "rs_rating", "stage",
                "rs_rating_1m", "rs_chg_1m",
                "adr_pct", "atr_mult_50", "off_52w_high", "avg_dollar_vol", "lod_dist", "confluence",
-               "confluence_n", "dist_atr", "pocket_pivot", "tight", "ur", "vol_ratio_5_20", "wis_count_20d",
+               "confluence_n", "dist_atr", "pocket_pivot", "tight", "ur", "bo", "gu", "tt", "grp", "vol_ratio_5_20", "wis_count_20d",
                "wis_today", "dna", "dna_pass", "dna_score", "extension", "setup_score", "in_universe",
                "above_ema9", "above_ema21", "above_ema50", "ema9_rising", "ema21_rising",
                "rvol", "earnings_date", "earnings_days",
@@ -768,7 +793,7 @@ def main():
             route = None
             ur = r.get("ur")
             if ur and r.get("above_s200"):
-                route = "ur"
+                continue            # v7: lives in the setup module (05b) while the U&R is fresh
             elif strong:
                 continue            # already strong enough for the screener
             elif r.get("stage") == 1 and not falling200 and sc >= NOTABLE_MIN_SIGNALS:
@@ -790,12 +815,8 @@ def main():
         notable.sort(key=lambda r: ((r["early_score"] or 0),
                                     sum(1 for k in TURN_SIGNALS if (r.get("early") or {}).get(k)),
                                     (r["rs_chg_1m"] if r["rs_chg_1m"] is not None else -999)), reverse=True)
-        ur_rows = sorted((r for r in notable if r["route"] == "ur"),
-                         key=lambda r: ((r.get("ur") or {}).get("age", 99),
-                                        -((r.get("ur") or {}).get("vol_x") or 0)))
         notable = ([r for r in notable if r["route"] == "base"][:NOTABLE_MAX_BASE]
-                   + [r for r in notable if r["route"] == "recovery"][:NOTABLE_MAX_RECOVERY]
-                   + ur_rows[:NOTABLE_MAX_UR])
+                   + [r for r in notable if r["route"] == "recovery"][:NOTABLE_MAX_RECOVERY])
         with open(NOTABLE_PATH, "w") as f:
             json.dump({"updated_at": payload["updated_at"],
                        "thresholds": {"min_signals": NOTABLE_MIN_SIGNALS, "min_dollar_vol": NOTABLE_MIN_DOLLAR_VOL,
@@ -806,13 +827,115 @@ def main():
                        "rows": notable}, f, separators=(",", ":"))
         nb = sum(1 for r in notable if r["route"] == "base")
         nr = sum(1 for r in notable if r["route"] == "recovery")
-        nu = sum(1 for r in notable if r["route"] == "ur")
-        print(f"  Saved {NOTABLE_PATH} ({nb} base + {nr} recovery + {nu} U&R)")
+        print(f"  Saved {NOTABLE_PATH} ({nb} base + {nr} recovery; U&R moved to {SETUPS_PATH})")
         if notable:
             print("    " + ", ".join(f"{r['ticker']}:{r['route'][:3]}{r['early_score']}" for r in notable[:12]))
     except Exception as e:
         notable = []
         print(f"  (notable scan skipped: {e})")
+
+    # ── 8. Setup module (section 05b): four watchlists, one per setup ──
+    #   pullback  — Stage 2 leader in a confluence zone (Mijn swing strategie, step 3)
+    #   ur        — undercut & reclaim, the former Notable route, unchanged rules
+    #   breakout  — base breakout (fetch_swing bo), measured in T2
+    #   gapup     — buyable gap-up after Morales & Kacher (fetch_swing gu), measured live
+    # All lists share: price >= $15, $vol >= 50M, cap >= $2B. The dashboard labels
+    # each tab with the regime warning; nothing is hidden by regime.
+    setups = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
+    setup_of = {}
+    try:
+        SU_KEYS = ("ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating", "rs_chg_1m",
+                   "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days",
+                   "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi",
+                   "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu")
+        cand = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
+        for r in rows:
+            if (r.get("price") or 0) < SETUP_MIN_PRICE or (r.get("avg_dollar_vol") or 0) < SETUP_MIN_DOLLAR_VOL:
+                continue
+            cap = r.get("market_cap")
+            if cap is not None and cap < SETUP_MIN_CAP:
+                continue
+            rs = r.get("rs_rating") or 0
+            if r.get("stage") == 2 and rs >= SETUP_PB_RS_MIN and (r.get("confluence_n") or 0) >= SETUP_PB_MIN_LAYERS:
+                cand["pullback"].append(r)
+            if r.get("ur") and r.get("above_s200"):
+                cand["ur"].append(r)
+            if r.get("bo"):
+                cand["breakout"].append(r)
+            if r.get("gu") and r.get("stage") == 2 and rs >= SETUP_GU_RS_MIN:
+                cand["gapup"].append(r)
+
+        def near(r):
+            d = [abs(v) for v in (r.get("dist_atr") or {}).values() if v is not None]
+            return min(d) if d else 99
+        cand["pullback"].sort(key=lambda r: (-(r.get("confluence_n") or 0), near(r)))
+        cand["ur"].sort(key=lambda r: (r["ur"].get("age", 99), -(r["ur"].get("vol_x") or 0)))
+        cand["breakout"].sort(key=lambda r: (r["bo"].get("age", 99), -(r.get("rs_rating") or 0)))
+        cand["gapup"].sort(key=lambda r: (not r["gu"].get("held"), r["gu"].get("age", 99), -(r.get("rs_rating") or 0)))
+
+        for k, lst in cand.items():
+            setups[k] = [{f: r.get(f) for f in SU_KEYS} for r in lst[:SETUP_CAP]]
+            for r in lst[:SETUP_CAP]:
+                setup_of.setdefault(r["ticker"], []).append({"pullback": "pb", "ur": "ur", "breakout": "bo", "gapup": "gu"}[k])
+        su_payload = {"updated_at": payload["updated_at"],
+                      "n_total": {k: len(v) for k, v in cand.items()},
+                      "n_gapup_held": sum(1 for r in cand["gapup"] if r["gu"].get("held")),
+                      "thresholds": {"cap": SETUP_CAP, "min_price": SETUP_MIN_PRICE,
+                                     "min_dollar_vol": SETUP_MIN_DOLLAR_VOL, "min_cap": SETUP_MIN_CAP,
+                                     "pullback": {"stage": 2, "rs_min": SETUP_PB_RS_MIN, "min_layers": SETUP_PB_MIN_LAYERS},
+                                     "ur": {"min_held": 5, "min_vol_x": 2.0, "max_under_pct": 7.0, "max_age_days": 5,
+                                            "gate": "close > SMA200"},
+                                     "breakout": {"pivot": "260-session high, >= 25 sessions old", "max_depth_pct": 35,
+                                                  "max_ext_pct": 5, "min_vol_x": 1.5, "max_age_days": 5},
+                                     "gapup": {"gap": "open - prior high >= 0.75 x ATR(40)", "min_vol_x": 1.5,
+                                               "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5}},
+                      "lists": setups}
+        with open(SETUPS_PATH, "w") as f:
+            json.dump(su_payload, f, separators=(",", ":"))
+        print(f"  Saved {SETUPS_PATH} (" + ", ".join(f"{k} {len(setups[k])}/{len(cand[k])}" for k in setups) + ")")
+
+        # Live measurement log: one row per NEW hit (age 0), deduplicated on (date, ticker, setup).
+        try:
+            log = []
+            if os.path.exists(SETUPS_LOG_PATH):
+                with open(SETUPS_LOG_PATH) as f:
+                    log = json.load(f).get("rows", [])
+            model_regime = None
+            try:
+                with open("data/regime.json") as f:
+                    model_regime = json.load(f).get("model", {}).get("regime")
+            except Exception:
+                pass
+            seen_keys = {(x["date"], x["ticker"], x["setup"]) for x in log}
+            shown_pb = {id(r) for r in cand["pullback"][:SETUP_CAP]}
+            added = 0
+            for k, lst in cand.items():
+                for r in lst:
+                    obj = {"pullback": None, "ur": r.get("ur"), "breakout": r.get("bo"), "gapup": r.get("gu")}[k]
+                    if k == "pullback":
+                        d = today_s                      # a pullback has no event date: log once per day
+                    else:
+                        if not obj or obj.get("age") != 0:
+                            continue
+                        d = obj["date"]
+                    key = (d, r["ticker"], k)
+                    if key in seen_keys:
+                        continue
+                    if k == "pullback" and id(r) not in shown_pb:
+                        continue                         # only log the pullbacks that were shown
+                    ref = {"ur": "low", "breakout": "pivot", "gapup": "low"}.get(k)
+                    log.append({"date": d, "ticker": r["ticker"], "setup": k, "regime_model": model_regime,
+                                "price": r.get("price"), "ref": obj.get(ref) if (obj and ref) else None,
+                                "rs": r.get("rs_rating"), "stage": r.get("stage")})
+                    seen_keys.add(key); added += 1
+            log = log[-SETUPS_LOG_MAX:]
+            with open(SETUPS_LOG_PATH, "w") as f:
+                json.dump({"updated_at": payload["updated_at"], "rows": log}, f, separators=(",", ":"))
+            print(f"  Saved {SETUPS_LOG_PATH} (+{added}, {len(log)} total)")
+        except Exception as e:
+            print(f"  (setups log skipped: {e})")
+    except Exception as e:
+        print(f"  (setup module skipped: {e})")
 
     # ── 6b. Chart data for section 06 ──
     #   DNA passers (top CHART_MAX by setup score)
@@ -839,6 +962,9 @@ def main():
             tk = r["ticker"]
             if tk not in seen and tk in by_t:
                 chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "notable"
+        for tk in setup_of:
+            if tk not in seen and tk in by_t:
+                chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "setup"
 
         def picks_for(tk):
             return [{"id": th["id"], "name": th["name"], "rank": th["chart_tickers"].index(tk) + 1,
@@ -855,13 +981,14 @@ def main():
                               "theme_picks": picks_for(tk),
                               "dna_rank": dna_rank.get(tk),
                               "early": r.get("early"), "early_score": r.get("early_score"),
-                              "why": why.get(tk, "dna"), "route": nt_route.get(tk)},
+                              "why": why.get(tk, "dna"), "route": nt_route.get(tk),
+                              "setups": setup_of.get(tk, [])},
                           "bars": chart_bars(full[tk])}
         with open(CHART_PATH, "w") as f:
             json.dump({"updated": payload["updated_at"], "charts": charts}, f, separators=(",", ":"))
-        n_by = {w: sum(1 for t in charts if charts[t]["meta"]["why"] == w) for w in ("dna", "theme", "notable")}
+        n_by = {w: sum(1 for t in charts if charts[t]["meta"]["why"] == w) for w in ("dna", "theme", "notable", "setup")}
         print(f"  Saved {CHART_PATH} ({len(charts)} tickers: {n_by['dna']} DNA, "
-              f"{n_by['theme']} theme, {n_by['notable']} notable)")
+              f"{n_by['theme']} theme, {n_by['notable']} notable, {n_by['setup']} setup)")
     except Exception as e:
         print(f"  (chart data skipped: {e})")
 

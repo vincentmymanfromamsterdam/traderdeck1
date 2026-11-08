@@ -321,6 +321,33 @@
   .th-actions .dir-btn { flex:0 0 auto; padding:5px 9px; font-size:9.5px; }
   svg.th-sp { vertical-align:middle; }
   @media (max-width:800px) { .th-kpis { grid-template-columns:1fr 1fr; } }
+  /* ── v7: regime bar (section 01) ── */
+  .rg-wrap { display:flex; flex-wrap:wrap; gap:12px; align-items:stretch; margin-bottom:18px; }
+  .rg-card { flex:1 1 240px; min-width:0; padding:12px 14px; border:1px solid var(--border); background:var(--bg2); display:flex; flex-direction:column; gap:6px; }
+  .rg-lbl { font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
+  .rg-big { font-size:26px; font-weight:700; line-height:1; }
+  .rg-light { flex:0 0 auto; display:flex; gap:12px; padding:12px 14px; border:1px solid var(--border2); background:var(--bg2); }
+  .rg-lamps { display:flex; flex-direction:column; gap:6px; padding:6px; background:var(--bg); border:1px solid var(--border); }
+  .rg-lamp { width:18px; height:18px; border-radius:50%; border:1px solid var(--border2); background:var(--bg2); }
+  .rg-dots { display:flex; gap:4px; flex-wrap:wrap; }
+  .rg-dot { width:9px; height:9px; border-radius:50%; background:var(--border2); }
+  .rg-dot.on { background:var(--red); }
+  .rg-segs { display:flex; gap:3px; }
+  .rg-seg { flex:1; height:7px; background:var(--border); }
+  .rg-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 12px; font-size:11px; }
+  .rg-grid .k { color:var(--muted); } .rg-grid .v { text-align:right; }
+  .rg-flag { padding:1px 6px; border:1px solid; font-weight:600; font-size:9.5px; letter-spacing:0.08em; }
+  .rg-strip { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:9.5px; margin:-6px 0 18px; }
+  .rg-chip { padding:2px 8px; border:1px solid var(--border2); color:var(--muted); white-space:nowrap; }
+  /* ── v7: setup module (05b) ── */
+  .su-badge { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; padding:9px 12px; margin-bottom:10px; border:1px solid var(--border2); font-size:11px; }
+  .su-badge .tag { font-size:9.5px; font-weight:700; letter-spacing:0.12em; white-space:nowrap; }
+  .su-badge .def { font-size:9.5px; color:var(--muted); flex:1 1 280px; }
+  .su-badge .txt { flex:1 1 380px; }
+  .su-chip { font-family:var(--mono); font-size:8.5px; padding:1px 4px; margin-right:3px; border:1px solid var(--amber); color:var(--amber); background:rgba(255,179,0,0.10); }
+  .ch-why.bo { color:var(--amber); border-color:var(--amber); }
+  .ch-why.gu { color:var(--amber); border-color:var(--amber); border-style:dashed; }
+  html[data-theme="light"] .rg-dot.on { background:var(--red); }
 </style>
 </head>
 <body>
@@ -425,6 +452,8 @@
       <div class="section-title">Market Breadth & Sentiment</div>
       <div class="section-subtitle">TOP-500 US STOCKS BY MARKET CAP · DAILY EOD</div>
     </div>
+    <div class="rg-wrap" id="regime-bar"><div class="loading-msg">Regime laden…</div></div>
+    <div class="rg-strip" id="regime-strip"></div>
     <div class="gauge-grid" id="breadth-gauges">
       <div class="gauge-cell">
         <div class="gauge-label">% Above MA200</div>
@@ -719,6 +748,30 @@
       <span>Signals: PP = pocket pivot · DRY = vol 5d/20d &lt;0.8 · TIGHT = 3-day range ≤1.5 ATR · WIS n = green on red SPY days (20d)</span>
       <span>Score = DNA (0–6) + confluence + DRY + TIGHT + PP + WIS (max 3)</span>
     </div>
+
+    <div id="setups" style="margin-top:30px">
+      <div class="section-header" style="margin-bottom:12px">
+        <div class="section-num">05b</div>
+        <div class="section-title">Setup-module</div>
+        <div class="section-subtitle">WATCHLIST PER SETUP · REGIME-LABEL PER TAB <span id="su-updated" style="color:var(--muted)"></span></div>
+      </div>
+      <div class="ch-toolbar" style="margin-bottom:10px">
+        <button class="dir-btn" id="sub-pb" onclick="suShow('pb')" title="Stage 2-leider (RS &ge; 85) in een zone met &ge; 3 supportlagen binnen 1 ATR">PULLBACK <span id="suc-pb" style="color:var(--muted)"></span></button>
+        <button class="dir-btn" id="sub-ur" onclick="suShow('ur')" title="Undercut &amp; reclaim: steun die &ge; 5 dagen hield, intraday ondergeschoten en heroverd op &ge; 2&times; volume, boven de 200 SMA">U&amp;R <span id="suc-ur" style="color:var(--muted)"></span></button>
+        <button class="dir-btn active-long" id="sub-bo" onclick="suShow('bo')" title="Base breakout: slot boven de 52-weeks high (pivot &ge; 5 weken oud), base &le; 35% diep, volume &ge; 1,5&times;, &le; 5% boven de pivot">BREAKOUT <span id="suc-bo" style="color:var(--muted)"></span></button>
+        <button class="dir-btn" id="sub-gu" onclick="suShow('gu')" title="Buyable gap-up (Morales &amp; Kacher): gap &ge; 0,75 &times; ATR(40) boven de vorige high, volume &ge; 1,5&times;, Stage 2, RS &ge; 70">GAP-UP <span id="suc-gu" style="color:var(--muted)"></span></button>
+      </div>
+      <div class="su-badge" id="su-badge"></div>
+      <div class="table-wrap"><table>
+        <thead id="su-thead"></thead>
+        <tbody id="su-tbody"><tr><td colspan="13" class="loading-msg">Loading...</td></tr></tbody>
+      </table></div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:14px;font-size:9px;color:var(--muted);letter-spacing:0.05em">
+        <span>Alle tabs: prijs &ge; $15 · $vol &ge; 50M · cap &ge; $2B · max 15 · setups zijn 5 sessies vers</span>
+        <span>TT = Trend Template (x/8, Minervini) · GRP = groepsgenoten met RS &ge; 80 · Base# = welke base sinds Stage 2</span>
+        <span>Watchlist, geen koopsignaal &mdash; de trigger blijft intraday</span>
+      </div>
+    </div>
   </div>
 
     <!-- 04 POSITION CALC -->
@@ -748,6 +801,7 @@
       <button class="dir-btn" data-chf="new" onclick="chShow(this)">NEW ONLY</button>
       <button class="dir-btn" data-chf="uni" onclick="chShow(this)">MY UNIVERSE</button>
       <button class="dir-btn" data-chf="notable" onclick="chShow(this)">NOTABLE</button>
+      <button class="dir-btn" data-chf="setups" onclick="chShow(this)">SETUPS</button>
       <button class="dir-btn" id="chf-theme" style="display:none" onclick="chShow(this)" data-chf="theme">THEME</button>
     </div>
     <div class="ch-grid" id="ch-grid"><div class="loading-msg">Loading charts...</div></div>
@@ -762,7 +816,7 @@
     <div class="ch-toolbar" style="margin-bottom:10px">
       <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1 met een vlakke of stijgende 200 &mdash; de klassieke Weinstein-base. Rustig; wachten op de 1&rightarrow;2-transitie en dan de eerste pullback.">BASE &middot; VLAKKE 200 <span id="ntc-base" style="color:var(--muted)"></span></button>
       <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Draaiend na een echte correctie: Stage 1 met een nog d&aacute;lende 200 (verse reclaim) of Stage 3 die gecorrigeerd is. Minimaal 2 signalen waarvan &eacute;&eacute;n omslagsignaal (R50 / 200&uarr; / RS&uarr;).">RECOVERY &middot; DRAAIEND <span id="ntc-recovery" style="color:var(--muted)"></span></button>
-      <button class="dir-btn" id="ntb-ur" onclick="ntShow('ur')" title="Undercut &amp; reclaim: een steun die minstens 5 dagen hield wordt intraday ondergeschoten en op de slotkoers heroverd, op &ge;2&times; volume, met de prijs boven de 200 SMA. Geen stage- en geen RS-filter. Stop net onder de undercut-low; de setup is vijf sessies vers.">U&amp;R &middot; UNDERCUT <span id="ntc-ur" style="color:var(--muted)"></span></button>
+      <span style="font-size:9.5px;color:var(--muted);align-self:center;margin-left:6px">U&amp;R staat nu in de setup-module (05b)</span>
     </div>
     <div class="table-wrap"><table>
       <thead id="nt-thead"></thead>
@@ -1807,7 +1861,7 @@ function sigTags(early, compact) {
 }
 
 let ntMode = 'base';
-const NT_MODES = ['base', 'recovery', 'ur'];
+const NT_MODES = ['base', 'recovery'];
 function ntShow(mode) {
   ntMode = mode;
   NT_MODES.forEach(m => { const b = $('ntb-' + m); if (b) b.classList.toggle('active-long', m === mode); });
@@ -1936,9 +1990,9 @@ function renderNotable() {
 }
 
 // Jump from a Notable row to its chart in section 06.
-function chShowTicker(tk) {
-  chFilter = 'notable';
-  document.querySelectorAll('[data-chf]').forEach(x => x.classList.toggle('active-long', x.dataset.chf === 'notable'));
+function chShowTicker(tk, filt) {
+  chFilter = filt || 'notable';
+  document.querySelectorAll('[data-chf]').forEach(x => x.classList.toggle('active-long', x.dataset.chf === chFilter));
   chRender();
   const sec = document.getElementById('charts');
   if (sec) sec.scrollIntoView({ behavior: 'smooth' });
@@ -2011,6 +2065,7 @@ function chRender() {
   if (chFilter === 'new') items = items.filter(i => !i.meta.in_universe);
   if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
   if (chFilter === 'notable') items = items.filter(i => i.meta.why === 'notable');
+  if (chFilter === 'setups') items = items.filter(i => (i.meta.setups || []).length);
   if (chFilter.startsWith('theme:')) { const id = chFilter.slice(6); items = items.filter(i => (i.meta.themes || []).includes(id)); }
   else { const b = $('chf-theme'); if (b) b.style.display = 'none'; }
   items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
@@ -2024,6 +2079,15 @@ function whyPills(m) {
     const u = m.ur;
     const two = u.span === 2;
     out += `<span class="ch-why ur" title="undercut &amp; reclaim ${two ? 'over twee dagen (dag 1 sloot onder de steun, dag 2 erboven)' : 'op één dag'} — reclaim ${u.date}, steun $${u.ref} hield ${u.held} dagen, low $${u.low} (${u.under_pct}% eronder), slot erboven op ${u.vol_x}× volume — stop net onder $${u.low}">U&R ${urDate(u.date)}${two ? ' 2D' : ''}</span>`;
+  }
+  const ms = m.setups || [];
+  if (m.bo && ms.includes('bo')) {
+    const b = m.bo;
+    out += `<span class="ch-why bo" title="base breakout ${b.date} — pivot $${b.pivot}, base ${b.base_wk} wk / −${b.depth_pct}%, base #${b.base_n}, ${b.vol_x}× volume${b.retest ? ' — retest gezien' : ''}">BO ${urDate(b.date)}${b.retest ? ' RT' : ''}</span>`;
+  }
+  if (m.gu && ms.includes('gu')) {
+    const g = m.gu;
+    out += `<span class="ch-why gu" title="buyable gap-up ${g.date} — gap +${g.gap_pct}% (${g.gap_atr}× ATR40) op ${g.vol_x}× volume — stop onder de low van de gapdag $${g.low}${g.held ? '' : ' (low al gebroken)'}">GAP ${urDate(g.date)}</span>`;
   }
   if (m.why === 'notable' && m.route !== 'ur') {
     const rec = m.route === 'recovery';
@@ -2218,13 +2282,323 @@ async function loadThemes() {
 }
 
 // ────────────────────────────────────────────────
+//  v7 — REGIME BAR (01) + SETUP MODULE (05b)
+// ────────────────────────────────────────────────
+// Regime label: the IBD status is primary; the own DD/FTD model (data/regime.json)
+// is the supporting count and takes over only when IBD is stale. Thresholds and
+// badge texts come from MEETRESULTATEN-T1-T2.md.
+let rgData = null, curRegime = null, suData = null, suMode = 'bo';
+const RG_COL = { A: 'var(--green)', B: 'var(--green2)', C: 'var(--amber)', D: 'var(--red)' };
+const RG_NAME = { A: 'WINDOW', B: 'UPTREND', C: 'UNDER PRESSURE', D: 'CORRECTION' };
+const RG_TIP = { A: 'bevestigde uptrend, ≤ 25 sessies na de omslag en ≤ 2 distribution days',
+                 B: 'bevestigde uptrend', C: 'uptrend under pressure / sell-standby', D: 'correctie' };
+
+function weekdaysBetween(a, b) {          // sessions after a, up to and including b (holidays ignored)
+  const d1 = new Date(a + 'T12:00:00Z'), d2 = new Date(b + 'T12:00:00Z');
+  if (!(d2 > d1)) return 0;
+  let n = 0;
+  for (let d = new Date(d1); d < d2; ) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w && w < 6) n++; }
+  return n;
+}
+function ibdLetter(o) {
+  const l = (o || '').toLowerCase();
+  return l.includes('confirmed') ? 'UP' : l.includes('pressure') ? 'C' : l.includes('correction') ? 'D' : null;
+}
+function regimeLetter(ibd, rg) {
+  const today = new Date().toISOString().slice(0, 10);
+  const model = rg && rg.model ? rg.model.regime : null;
+  const ibdOk = ibd && ibd.ok !== false && ibd.outlook && ibd.updated_date && weekdaysBetween(ibd.updated_date, today) <= 3;
+  if (!ibdOk) return { letter: model, source: model ? 'model' : null, stale: !!(ibd && ibd.outlook), days: rg && rg.ftd ? rg.ftd.days_since : null };
+  const kind = ibdLetter(ibd.outlook);
+  if (kind === 'C' || kind === 'D') return { letter: kind, source: 'ibd', stale: false, days: null };
+  if (kind !== 'UP') return { letter: model, source: 'model', stale: false, days: null };
+  // Confirmed Uptrend: A while the switch is fresh and distribution is light
+  const hist = (ibd.outlook_history || []).slice().sort((x, y) => x.date < y.date ? -1 : 1);
+  let since = null;
+  for (let i = hist.length - 1; i >= 0; i--) { if (ibdLetter(hist[i].outlook) === 'UP') since = hist[i].date; else break; }
+  const ref = rg && rg.asof ? rg.asof : today;
+  let days = since ? weekdaysBetween(since, ref) : null;
+  if (days == null && rg && rg.ftd && rg.ftd.days_since != null) days = rg.ftd.days_since;
+  const dd = rg && rg.nasdaq ? rg.nasdaq.dd20 : 99;
+  return { letter: (days != null && days <= 25 && dd <= 2) ? 'A' : 'B', source: 'ibd', stale: false, days };
+}
+
+async function loadRegime() {
+  try {
+    const r = await fetch('data/regime.json?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    rgData = await r.json();
+  } catch (err) { rgData = null; }
+}
+
+const fmtN = v => v == null ? '—' : Number(v).toLocaleString('nl-NL', { maximumFractionDigits: 0 });
+const sgn = (v, d = 1) => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d).replace('.', ',') + '%';
+const sgnCol = v => v == null ? 'var(--muted)' : v >= 0 ? 'var(--green)' : 'var(--red)';
+
+function renderRegime() {
+  const box = $('regime-bar'); if (!box) return;
+  const rg = rgData, ibd = ibdData;
+  if (!rg && !(ibd && ibd.outlook)) { box.innerHTML = '<div class="loading-msg">Nog geen regime-data — verschijnt na de volgende run.</div>'; return; }
+  const R = regimeLetter(ibd, rg); curRegime = R;
+  const L = R.letter, col = RG_COL[L] || 'var(--muted)';
+  const lamps = ['A', 'B', 'C', 'D'].map(k => k === L
+      ? `<div class="rg-lamp" title="${k} · ${RG_TIP[k]}" style="background:${RG_COL[k]};border-color:${RG_COL[k]};box-shadow:0 0 12px ${RG_COL[k]}"></div>`
+      : `<div class="rg-lamp" title="${k} · ${RG_TIP[k]}"></div>`).join('');
+  const srcTxt = R.source === 'ibd' ? 'bron: IBD' : R.stale ? 'bron: eigen model · IBD stale' : 'bron: eigen model';
+  const light = `<div class="rg-light" style="border-color:${col}">
+      <div class="rg-lamps">${lamps}</div>
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:2px">
+        <div class="rg-lbl">Regime</div>
+        <div style="font-size:40px;font-weight:700;line-height:1;color:${col}">${L || '—'}</div>
+        <div style="font-size:10.5px;font-weight:600;letter-spacing:0.12em;color:${col}">${RG_NAME[L] || ''}</div>
+        <div style="font-size:9.5px;color:var(--muted)">${srcTxt}${L === 'A' && R.days != null ? ' · dag ' + R.days : ''}</div>
+      </div></div>`;
+
+  // IBD card
+  let ibdCard = '';
+  if (ibd && ibd.outlook) {
+    const k = ibdLetter(ibd.outlook), c = k === 'UP' ? 'var(--green)' : k === 'C' ? 'var(--amber)' : 'var(--red)';
+    const band = ibd.exposure_band || [0, 0];
+    const segs = [20, 40, 60, 80, 100].map(v => `<div class="rg-seg" style="${v <= band[1] ? 'background:' + c : ''}"></div>`).join('');
+    const hist = (ibd.outlook_history || []).slice().sort((x, y) => x.date < y.date ? -1 : 1);
+    const cur = hist.length ? hist[hist.length - 1] : null, prev = hist.length > 1 ? hist[hist.length - 2] : null;
+    ibdCard = `<div class="rg-card">
+      <div class="rg-lbl">IBD Market Pulse · primair${R.stale ? ' · <span style="color:var(--amber)">stale</span>' : ''}</div>
+      <div style="font-size:15px;font-weight:700;color:${c};letter-spacing:0.04em">${esc(ibd.outlook.toUpperCase())}</div>
+      <div class="rg-segs">${segs}</div>
+      <div style="font-size:11px">Exposure <b>${band[0]}–${band[1]}%</b>${cur ? ' · sinds ' + urDate(cur.date) : ''}</div>
+      <div style="font-size:9.5px;color:var(--muted)">${prev ? 'Was: ' + esc(prev.outlook) + ' (' + urDate(prev.date) + ')' : ''}${ibd.summary ? ' · ' + esc(ibd.summary) : ''}</div>
+    </div>`;
+  }
+  if (!rg) { box.innerHTML = light + ibdCard; renderRegimeStrip(); return; }
+
+  const nq = rg.nasdaq || {}, sp = rg.sp500 || {}, ru = rg.russell || {};
+  const dots = (nq.last20 || []).map(x => `<div class="rg-dot${x.dd ? ' on' : ''}" title="${urDate(x.d)}${x.dd ? ' · distribution day' : ''}"></div>`).join('');
+  const ddCol = nq.dd20 >= 5 ? 'var(--red)' : nq.dd20 >= 3 ? 'var(--amber)' : 'var(--text)';
+  const ddCard = `<div class="rg-card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="rg-lbl">Distribution days · Nasdaq · 20 sessies</div>
+        ${nq.dd20 >= 5 ? '<span style="font-size:9.5px;color:var(--amber);font-weight:600">STANDBY</span>' : ''}</div>
+      <div style="display:flex;align-items:baseline;gap:6px"><span class="rg-big" style="color:${ddCol}">${nq.dd20 ?? '—'}</span><span style="color:var(--muted)">/ 5</span>
+        <span style="font-size:9.5px;color:var(--muted);margin-left:auto">S&amp;P: ${sp.dd20 ?? '—'}/5 (info)</span></div>
+      <div class="rg-dots">${dots}</div>
+      <div style="font-size:9.5px;color:var(--muted)">${(nq.dd_dates || []).map(urDate).join(' · ') || 'geen'} — DD = ≤ −0,1% op hoger volume of vlak met slot in onderste 25%; vervalt na 20 sessies of +5%</div>
+    </div>`;
+
+  let ftdCard;
+  const f = rg.ftd || null;
+  const ftdLine = f ? `Laatste FTD ${urDate(f.last)} (+${String(f.pct).replace('.', ',')}%)${f.status === 'failed' ? ', gefaald ' + urDate(f.failed_on) : f.status === 'active' ? ' · actief' : ''}` : 'Nog geen FTD in de historie';
+  if (rg.rally) {
+    const d = rg.rally.day;
+    const segs = [1, 2, 3, 4, 5, 6, 7].map(k => `<div class="rg-seg" style="${k <= d ? 'background:var(--blue);' : ''}${k >= 4 ? 'outline:1px solid var(--green);' : ''}"></div>`).join('');
+    ftdCard = `<div class="rg-card">
+      <div class="rg-lbl">Rally-telling &amp; follow-through</div>
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="rg-big">Dag ${d}</span><span style="font-size:10.5px;color:var(--muted)">sinds ${urDate(rg.rally.start)}</span></div>
+      <div class="rg-segs">${segs}</div>
+      <div style="font-size:11px">FTD ${d >= 4 ? '<b style="color:var(--green)">mogelijk</b>' : 'mogelijk vanaf <b style="color:var(--green)">' + urDate(rg.rally.ftd_from) + '</b>'} · Nasdaq of S&amp;P ≥ <b>+${String(rg.rally.ftd_thr).replace('.', ',')}%</b> op hoger volume</div>
+      <div style="font-size:9.5px;color:var(--muted)">Reset onder ${fmtN(rg.rally.low)} · ${ftdLine}</div>
+    </div>`;
+  } else if (rg.model && rg.model.state === 'CORR') {
+    ftdCard = `<div class="rg-card"><div class="rg-lbl">Rally-telling &amp; follow-through</div>
+      <div class="rg-big">—</div><div style="font-size:11px">Wacht op dag 1: een hogere slot na een nieuwe low</div>
+      <div style="font-size:9.5px;color:var(--muted)">${ftdLine}</div></div>`;
+  } else {
+    const ds = f && f.days_since != null ? f.days_since : null;
+    const win = ds != null && ds >= 11 && ds <= 25;
+    const sb = rg.standby ? `Standby: sell onder ${fmtN(rg.standby.low)}, herstel boven ${fmtN(rg.standby.high)}` : '';
+    ftdCard = `<div class="rg-card"><div class="rg-lbl">Follow-through</div>
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="rg-big">${ds != null ? 'Dag ' + ds : '—'}</span><span style="font-size:10.5px;color:var(--muted)">na de FTD</span>
+        ${win ? '<span class="rg-flag" style="color:var(--green);border-color:var(--green)">BREAKOUT-VENSTER</span>' : ''}</div>
+      <div style="font-size:11px">${ftdLine}</div>
+      <div style="font-size:9.5px;color:var(--muted)">${sb || 'Breakout-venster = dag 11–25 na de FTD (gemeten: +0,8% mediaan, 58% win)'}</div></div>`;
+  }
+
+  const strong = scData && scData.stats ? scData.stats.pct_strong : null;
+  const agree = R.source === 'ibd' && rg.model ? ((L === rg.model.regime) || ('AB'.includes(L) && 'AB'.includes(rg.model.regime))) : null;
+  const lvl = `<div class="rg-card">
+      <div class="rg-lbl">Niveaus &amp; breedte</div>
+      <div class="rg-grid">
+        <span class="k">Nasdaq ${fmtN(nq.close)}</span><span class="v"><span style="color:${sgnCol(nq.vs50)}">${sgn(nq.vs50)}</span> / <span style="color:${sgnCol(nq.vs200)}">${sgn(nq.vs200)}</span></span>
+        <span class="k">S&amp;P 500 ${fmtN(sp.close)}</span><span class="v"><span style="color:${sgnCol(sp.vs50)}">${sgn(sp.vs50)}</span> / <span style="color:${sgnCol(sp.vs200)}">${sgn(sp.vs200)}</span></span>
+        <span class="k">Russell 2000 ${fmtN(ru.close)}</span><span class="v"><span style="color:${sgnCol(ru.vs50)}">${sgn(ru.vs50)}</span> / <span style="color:${sgnCol(ru.vs200)}">${sgn(ru.vs200)}</span></span>
+        <span class="k">Small caps vs S&amp;P</span><span class="v" style="color:${ru.ratio_vs50 ? 'var(--green)' : 'var(--red)'}" title="Russell 2000 / S&amp;P 500 t.o.v. het eigen 50-daags gemiddelde · ${sgn(ru.ratio_chg20)} in 20 sessies">${ru.ratio_vs50 ? 'leiden ↑' : 'achter ↓'}</span>
+        <span class="k">Watchlist-breadth</span><span class="v" style="color:${strong == null ? 'var(--muted)' : strong >= 60 ? 'var(--green)' : strong >= 40 ? 'var(--amber)' : 'var(--red)'}">${strong == null ? '—' : String(strong).replace('.', ',') + '%'}</span>
+        <span class="k">Chop (flips/60d)</span><span class="v" style="color:${rg.chop && rg.chop.flag ? 'var(--amber)' : 'var(--text)'}">${rg.chop ? rg.chop.flips60 + (rg.chop.flag ? ' · choppy' : ' · rustig') : '—'}</span>
+      </div>
+      <div style="margin-top:auto;padding-top:6px;border-top:1px solid var(--border);font-size:9.5px;display:flex;gap:8px;align-items:center">
+        ${agree == null ? `<span style="color:var(--muted)">Eigen model: ${rg.model ? rg.model.regime : '—'}</span>`
+          : `<span class="rg-flag" style="color:${agree ? 'var(--green)' : 'var(--amber)'};border-color:${agree ? 'var(--green)' : 'var(--amber)'}">${agree ? 'EENS' : 'ONEENS'}</span>
+             <span style="color:var(--muted)">IBD ${L} · eigen model ${rg.model.regime} (sinds ${urDate(rg.model.since)})</span>`}
+      </div></div>`;
+  box.innerHTML = light + ibdCard + ddCard + ftdCard + lvl;
+  renderRegimeStrip();
+}
+
+// Badge texts per setup and regime — numbers from MEETRESULTATEN-T1-T2.md
+const SU_BADGE = {
+  bo: { A: ['g', 'Beste breakout-omgeving: dag 11–25 na de FTD +0,8% mediaan, 58% win. Retest in A: +1,3%, 60% win.'],
+        A0: ['n', 'Eerste twee weken na de FTD zijn rommelig (+0,2%, 52% win). Liever de retest of dag 11+.'],
+        B: ['n', '+0,6% mediaan over 10 dagen, 55% win (basislijn +0,5%).'],
+        C: ['r', 'Verhoogd risico: geen edge (0,0%, 50% win), 8 van 10 jaar ≤ 0.'],
+        D: ['a', 'Volatiel: mediaan +0,6%, maar 1 op 3 faalt en 31% raakt een 8%-stop.'],
+        def: 'Slot boven de 52-weeks high (pivot ≥ 5 wk oud), base ≤ 35% diep, vol ≥ 1,5×, ≤ 5% boven de pivot, 50 > 200 stijgend. RT = retest gezien.' },
+  gu: { A: ['n', 'MK: kopen op de open, stop onder de low van de gapdag. Nog niet gemeten (T4) — de meetlog loopt.'],
+        B: ['n', 'MK: kopen op de open, stop onder de low van de gapdag. Nog niet gemeten (T4) — de meetlog loopt.'],
+        C: ['a', 'Nog niet gemeten; MK: voorzichtig bij een zwak model.'],
+        D: ['r', 'MK: geen gap-ups kopen als het model op sell staat.'],
+        def: 'Open − vorige high ≥ 0,75 × ATR(40), vol ≥ 1,5× 50d, Stage 2, RS ≥ 70. Stop = low van de gapdag; "houdt" = die low staat nog.' },
+  ur: { A: ['b', 'Gemeten (120 sessies): boven de 200 en vol ≥ 2× → +2,9% mediaan, 71% win in 10 dagen. Nog niet per regime gesplitst.'],
+        B: ['b', 'Gemeten (120 sessies): boven de 200 en vol ≥ 2× → +2,9% mediaan, 71% win in 10 dagen. Nog niet per regime gesplitst.'],
+        C: ['b', 'Alleen leiders. Gemeten: +2,9% mediaan / 71% win (n klein, niet per regime gesplitst).'],
+        D: ['b', 'Alleen leiders. Gemeten: +2,9% mediaan / 71% win (n klein, niet per regime gesplitst).'],
+        def: 'Steun hield ≥ 5 bars, undercut ≤ 7%, slot boven de steun in de bovenste 40%, vol ≥ 2×, slot ≤ 3% onder de referentie. 2D = tweedaags.' },
+  pb: { A: ['n', 'Actief · 0,5% risico per trade.'], B: ['n', 'Actief · 0,5% risico per trade.'],
+        C: ['a', 'Geel: 0,25–0,3% risico, max 2–3 posities.'],
+        D: ['m', 'Geen nieuwe longs (eigen regel). Klaarzetten voor de FTD; trigger blijft intraday.'],
+        def: 'Stage 2, RS ≥ 85, ≥ 3 lagen (EMA 9/21/50, 10W, AVWAP) binnen 1 ATR. Sortering: aantal lagen, dan afstand.' }
+};
+const SU_TONE = { g: ['var(--green)', 'rgba(0,230,118,0.07)'], n: ['var(--muted)', 'transparent'],
+                  r: ['var(--red)', 'rgba(255,23,68,0.07)'], a: ['var(--amber)', 'rgba(255,179,0,0.07)'],
+                  b: ['var(--blue)', 'rgba(64,196,255,0.06)'], m: ['var(--muted)', 'var(--bg2)'] };
+const SU_NAME = { pb: 'PULLBACK', ur: 'U&R', bo: 'BREAKOUT', gu: 'GAP-UP' };
+const SU_LIST = { pb: 'pullback', ur: 'ur', bo: 'breakout', gu: 'gapup' };
+
+function suBadge(mode) {
+  const R = curRegime || {}, L = R.letter;
+  const t = SU_BADGE[mode];
+  if (!L) return { tone: 'n', text: 'Regime onbekend.', def: t.def };
+  let e = t[L];
+  if (mode === 'bo' && L === 'A' && R.days != null && R.days <= 10) e = t.A0;
+  let text = e[1];
+  const ru = rgData && rgData.russell;
+  if (mode === 'bo' && ru && ru.vs50 != null && ru.vs50 < 0) text += ' Russell onder zijn 50d: meer mislukte breakouts (in A 41% vs 29%).';
+  return { tone: e[0], text, def: t.def };
+}
+function renderRegimeStrip() {
+  const el = $('regime-strip'); if (!el) return;
+  const L = curRegime && curRegime.letter;
+  if (!L) { el.innerHTML = ''; return; }
+  el.innerHTML = '<span class="rg-lbl" style="margin-right:4px">Setups in regime ' + L + '</span>' + ['pb', 'ur', 'bo', 'gu'].map(m => {
+    const b = suBadge(m), c = SU_TONE[b.tone][0];
+    return `<a class="rg-chip" href="#setups" onclick="suShow('${m}')" style="color:${c};border-color:${b.tone === 'n' || b.tone === 'm' ? 'var(--border2)' : c};text-decoration:none" title="${esc(b.text)}">${SU_NAME[m]}</a>`;
+  }).join('');
+}
+
+const SU_HEAD = {
+  pb: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
+       <th title="supportlagen binnen 1 ATR">Lagen</th><th>n</th><th title="afstand tot de dichtstbijzijnde laag, in ATR">Dichtst</th><th title="slot t.o.v. de dagrange (0 = low)">LoD</th><th>ADR %</th>
+       <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th title="voorgestelde stop onder structuur · klik om in de calculator te laden">Stop &middot; %</th><th></th></tr>`,
+  ur: NT_HEAD.ur.replace('<th>$ Vol</th>', '<th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th>'),
+  bo: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th title="datum van de breakout · RT = retest van de pivot gezien">Breakout</th><th>Pivot</th><th title="slot op de breakoutdag t.o.v. de pivot">Ext.</th><th title="volume op de breakoutdag t.o.v. het 50-daags gemiddelde">Vol &times;</th>
+       <th title="lengte en diepte van de base">Base</th><th title="welke base sinds het laatste slot onder de 200 (1–2 = vroeg, 3+ = laat)">Base#</th><th>RS</th>
+       <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th title="huidige koers t.o.v. de pivot">Nu vs pivot</th><th></th></tr>`,
+  gu: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th title="datum van de gap">Gap-up</th><th title="open t.o.v. het vorige slot">Gap</th><th title="open − vorige high, in ATR(40)">Gap / ATR</th><th title="volume op de gapdag t.o.v. het 50-daags gemiddelde">Vol &times;</th>
+       <th title="stop = low van de gapdag · klik om in de calculator te laden">Stop (low)</th><th title="koers t.o.v. de low van de gapdag">Boven low</th><th title="staat de low van de gapdag nog?">Low houdt</th><th>RS</th>
+       <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th></th></tr>`
+};
+const SU_EMPTY = { pb: 'Geen Stage 2-leiders in een confluence-zone van ≥ 3 lagen.', ur: 'Geen verse undercut &amp; reclaim — deze setup vult zich vooral op omslagdagen.',
+                   bo: 'Geen base breakouts in de laatste 5 sessies.', gu: 'Geen buyable gap-ups in de laatste 5 sessies.' };
+const LAYER = { ema9: '9', ema21: '21', ema50: '50', ma10w: '10W', avwap: 'AV' };
+const ttCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 8 ? 'var(--green)' : v >= 6 ? 'var(--text)' : 'var(--muted)'}">${v}/8</span>`;
+const grpCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 1 ? 'var(--text)' : 'var(--amber)'}" title="${v === 0 ? 'geen groepsbevestiging (O\'Neil: liever niet kopen)' : v + ' groepsgenoten met RS ≥ 80'}">${v}</span>`;
+function tkCell(r) {
+  return `<td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+          <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>`;
+}
+
+async function loadSetups() {
+  try {
+    const r = await fetch('data/setups.json?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    suData = await r.json();
+    const n = suData.n_total || {}, L = suData.lists || {};
+    const cnt = (k) => { const shown = (L[SU_LIST[k]] || []).length, tot = n[SU_LIST[k]] ?? shown; return '(' + (tot > shown ? shown + '/' + tot : shown) + ')'; };
+    ['pb', 'ur', 'bo'].forEach(k => { const c = $('suc-' + k); if (c) c.textContent = cnt(k); });
+    const cg = $('suc-gu'); if (cg) cg.textContent = '(' + (suData.n_gapup_held ?? 0) + ' houdt / ' + (n.gapup ?? 0) + ')';
+    const u = $('su-updated'); if (u) u.textContent = '· ' + (suData.updated_at || '');
+  } catch (err) { suData = null; }
+}
+function suShow(mode) {
+  suMode = mode;
+  ['pb', 'ur', 'bo', 'gu'].forEach(m => { const b = $('sub-' + m); if (b) b.classList.toggle('active-long', m === mode); });
+  renderSetups();
+}
+function renderSetups() {
+  const tb = $('su-tbody'); if (!tb) return;
+  const th = $('su-thead'); if (th) th.innerHTML = SU_HEAD[suMode];
+  const bd = $('su-badge');
+  if (bd) {
+    const b = suBadge(suMode), [c, bg] = SU_TONE[b.tone];
+    const L = curRegime && curRegime.letter;
+    bd.style.borderColor = b.tone === 'n' ? 'var(--border2)' : c; bd.style.background = bg;
+    bd.innerHTML = `<span class="tag" style="color:${c}">REGIME ${L || '?'} · ${SU_NAME[suMode]}</span><span class="txt">${esc(b.text)}</span><span class="def">${esc(b.def)}</span>`;
+  }
+  if (!suData) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Nog geen setup-data — verschijnt na de volgende nachtelijke run.</td></tr>`; return; }
+  const rows = (suData.lists || {})[SU_LIST[suMode]] || [];
+  if (!rows.length) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">${SU_EMPTY[suMode]}</td></tr>`; return; }
+  const open = tk => `onclick="chShowTicker('${tk}','setups')" title="klik voor de chart"`;
+  if (suMode === 'pb') {
+    tb.innerHTML = rows.map(r => {
+      const dist = Object.values(r.dist_atr || {}).filter(v => v != null);
+      const near = dist.length ? dist.reduce((a, b) => Math.abs(b) < Math.abs(a) ? b : a) : null;
+      return `<tr class="nt-row" ${open(r.ticker)}>${tkCell(r)}
+        <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td><td>${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
+        <td>${(r.confluence || []).map(k => `<span class="su-chip">${LAYER[k] || k}</span>`).join('')}</td>
+        <td style="font-weight:600">${r.confluence_n ?? '—'}</td>
+        <td>${near == null ? '—' : (near > 0 ? '+' : '') + near.toFixed(2)}</td>
+        <td>${r.lod_dist == null ? '—' : r.lod_dist + '%'}</td><td>${r.adr_pct == null ? '—' : r.adr_pct.toFixed(1)}</td>
+        <td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td><td>${planCell(r)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
+    }).join('');
+  } else if (suMode === 'ur') {
+    tb.innerHTML = rows.map(r => {
+      const u = r.ur || {};
+      return `<tr class="nt-row" ${open(r.ticker)}>${tkCell(r)}
+        <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td>
+        <td>${urDate(u.date)} <span style="color:var(--muted)">· ${u.age == null ? '?' : u.age}d</span>${u.span === 2 ? ' <span class="sig-tag ur-on" title="tweedaags: dag 1 brak de steun en sloot eronder, dag 2 sloot er weer boven op volume">2D</span>' : ''}</td>
+        <td>$${fmtPrice(u.ref)} <span style="color:var(--muted)">· ${u.held == null ? '?' : u.held}d</span></td>
+        <td>${u.under_pct == null ? '—' : u.under_pct.toFixed(1) + '%'}</td>
+        <td style="color:var(--blue);font-weight:600">${u.vol_x == null ? '—' : u.vol_x.toFixed(2) + '×'}</td>
+        <td>${maPills(r)}</td><td>${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
+        <td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td>
+        <td>${urStopCell(r)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
+    }).join('');
+  } else if (suMode === 'bo') {
+    tb.innerHTML = rows.map(r => {
+      const b = r.bo || {};
+      return `<tr class="nt-row" ${open(r.ticker)}>${tkCell(r)}
+        <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td>
+        <td>${urDate(b.date)} <span style="color:var(--muted)">· ${b.age == null ? '?' : b.age}d</span>${b.retest ? ' <span class="sig-tag on" title="na de breakout raakte de koers de pivot (≤ +2%) en sloot erboven — de entry die in regime A het best deed">RT</span>' : ''}</td>
+        <td style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.price}, ${b.pivot})" title="pivot als referentie · klik om in de calculator te laden">$${fmtPrice(b.pivot)}</td>
+        <td>+${b.ext_pct ?? '—'}%</td><td style="font-weight:600">${b.vol_x == null ? '—' : b.vol_x.toFixed(1) + '×'}</td>
+        <td>${b.base_wk ?? '?'} wk · −${b.depth_pct ?? '?'}%</td>
+        <td style="color:${(b.base_n || 0) >= 3 ? 'var(--amber)' : 'var(--text)'}" title="${(b.base_n || 0) >= 3 ? 'late base: faalt vaker (O\'Neil, Minervini)' : 'vroege base'}">${b.base_n ?? '—'}</td>
+        <td>${r.rs_rating ?? '—'}</td><td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td>
+        <td>${pct(b.now_vs_pivot, 1)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
+    }).join('');
+  } else {
+    tb.innerHTML = rows.map(r => {
+      const g = r.gu || {};
+      return `<tr class="nt-row" ${open(r.ticker)}>${tkCell(r)}
+        <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td>
+        <td>${urDate(g.date)} <span style="color:var(--muted)">· ${g.age == null ? '?' : g.age}d</span></td>
+        <td>${pct(g.gap_pct, 1)}</td><td>${g.gap_atr == null ? '—' : g.gap_atr.toFixed(2) + '×'}</td>
+        <td style="font-weight:600">${g.vol_x == null ? '—' : g.vol_x.toFixed(1) + '×'}</td>
+        <td style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.price}, ${g.low})" title="stop onder de low van de gapdag · klik om in de calculator te laden">$${fmtPrice(g.low)}</td>
+        <td>${pct(g.dist_low_pct, 1)}</td>
+        <td style="color:${g.held ? 'var(--green)' : 'var(--red)'};font-weight:600">${g.held ? 'JA' : 'NEE'}</td>
+        <td>${r.rs_rating ?? '—'}</td><td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
+    }).join('');
+  }
+}
+
+// ────────────────────────────────────────────────
 //  INIT
 // ────────────────────────────────────────────────
 loadData();
 loadCarnivorePortfolios();
 loadSwingData();
-loadScanData();
-loadIbd();
+const _pScan = loadScanData();
+const _pIbd = loadIbd();
+Promise.allSettled([_pScan, _pIbd, loadRegime(), loadSetups()]).then(() => { renderRegime(); renderSetups(); });
 loadSaNews().then(loadChartData);
 loadNotable();
 loadThemes();

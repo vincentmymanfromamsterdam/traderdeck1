@@ -143,6 +143,13 @@ def r2(v, d=2):
         return None
 
 
+def set_tt_rs(m):
+    """Trend Template criterion 8 (RS >= 70) once the RS percentile is known."""
+    if m.get("tt_flags"):
+        m["tt_flags"]["rs_70"] = bool((m.get("rs_rating") or 0) >= 70)
+        m["tt"] = int(sum(m["tt_flags"].values()))
+
+
 def analyse(ticker, df, spy_chg):
     """Return a metrics dict for one ticker. df = OHLCV daily, oldest first."""
     df = df.dropna(subset=["Close", "High", "Low", "Volume"])
@@ -387,6 +394,115 @@ def analyse(ticker, df, spy_chg):
                       "stop_dist_pct": r2((day_cl - stop_lo) / day_cl * 100, 1),
                       "at_ema50": bool(stop_lo < float(e50_v[i]) <= day_cl)}
 
+    # -- Base breakout (v7, setup module) ---------------------------------------
+    # Measured 2015-2026 on 1,810 liquid names (MEETRESULTATEN-T1-T2.md, T2):
+    # a buy-stop on the pivot has a small edge over a random Stage-2 day
+    # (+0.6% vs +0.4% median over 10 sessions) except under pressure (regime C:
+    # 0.0%, 8 of 10 years <= 0). Correction (D) is not worse in the median but
+    # 1 in 3 fail. The best entry measured was the RETEST in regime A (+1.3%,
+    # 60% win). Quality filters (tightness, dry-up, RS >= 80) did not help, so
+    # there are none here -- the regime label in the dashboard carries the risk.
+    BO_WIN, BO_BASE_MIN, BO_MAX_DEPTH, BO_MAX_EXT, BO_VOL = 260, 25, 0.35, 0.05, 1.5
+    SETUP_MAX_AGE = 5
+    bo = None
+    s200_v = s200.values if s200 is not None else None
+    if s200_v is not None and len(df) >= BO_WIN + 25:
+        lo_b, hi_b, cl_b, vo_b = l.values, h.values, c.values, v.values
+        s50_v = s50.values
+        av50_b = pd.Series(vo_b).rolling(50).mean().shift(1).values
+
+        def _bo_at(i, need_vol):
+            k = i - 1
+            if k - 20 < 0 or np.isnan(s200_v[k]) or np.isnan(s200_v[k - 20]) or np.isnan(s50_v[k]):
+                return None
+            if not (cl_b[k] > s50_v[k] > s200_v[k] and s200_v[k] > s200_v[k - 20]):
+                return None
+            win = hi_b[i - BO_WIN:i]
+            if len(win) < BO_WIN:
+                return None
+            jmax = int(np.argmax(win)); pivot = float(win[jmax]); age_p = BO_WIN - jmax
+            if age_p < BO_BASE_MIN or not (cl_b[i] > pivot >= cl_b[k]):
+                return None
+            depth = 1 - float(lo_b[i - age_p:i].min()) / pivot
+            if depth > BO_MAX_DEPTH or cl_b[i] > pivot * (1 + BO_MAX_EXT):
+                return None
+            vx = float(vo_b[i]) / float(av50_b[i]) if av50_b[i] and not np.isnan(av50_b[i]) else None
+            if need_vol and (vx is None or vx < BO_VOL):
+                return None
+            return pivot, age_p, depth, vx
+
+        # base count: breakouts (without the volume requirement) since the last
+        # close below the 200 -- within the downloaded window
+        start = max(BO_WIN + 1, 21)
+        last_below = start
+        for i in range(start, len(df)):
+            if not np.isnan(s200_v[i]) and cl_b[i] < s200_v[i]:
+                last_below = i
+        n_before = 0
+        for i in range(last_below + 1, len(df)):
+            hit = _bo_at(i, need_vol=False)
+            if hit is None:
+                continue
+            n_before += 1
+            if i < len(df) - SETUP_MAX_AGE:
+                continue
+            full = _bo_at(i, need_vol=True)
+            if full is None:
+                continue
+            pivot, age_p, depth, vx = full
+            after = range(i + 1, len(df))
+            retest = any(lo_b[j] <= pivot * 1.02 and cl_b[j] > pivot for j in after)
+            bo = {"date": str(df.index[i].date()), "pivot": r2(pivot),
+                  "ext_pct": r2((cl_b[i] / pivot - 1) * 100, 1), "vol_x": r2(vx),
+                  "base_wk": int(round(age_p / 5)), "depth_pct": r2(depth * 100, 0),
+                  "base_n": n_before, "now_vs_pivot": r2((close / pivot - 1) * 100, 1),
+                  "retest": bool(retest), "age": int(len(df) - 1 - i)}
+
+    # -- Buyable gap-up (v7, Morales & Kacher p187-203) ---------------------------
+    # Gap = open minus yesterday's HIGH >= 0.75 x ATR(40) of yesterday, on volume
+    # >= 1.5x the 50-day average, from above the 50-day. Stop = low of the gap
+    # day; "held" says whether that low still stands. Not yet measured (T4) --
+    # data/setups_log.json records every new hit so it can be measured live.
+    GU_ATR_K, GU_VOL = 0.75, 1.5
+    gu = None
+    if len(df) >= 60:
+        o_g, h_g, l_g, c_g, v_g = df["Open"].values, h.values, l.values, c.values, v.values
+        prev_c = np.r_[np.nan, c_g[:-1]]
+        tr_g = np.nanmax(np.vstack([h_g - l_g, np.abs(h_g - prev_c), np.abs(l_g - prev_c)]), axis=0)
+        atr40_g = pd.Series(tr_g).rolling(40).mean().values
+        av50_g = pd.Series(v_g).rolling(50).mean().values
+        s50_g = s50.values
+        for i in range(max(len(df) - SETUP_MAX_AGE, 51), len(df)):
+            k = i - 1
+            if np.isnan(atr40_g[k]) or np.isnan(av50_g[k]) or np.isnan(s50_g[k]) or av50_g[k] <= 0:
+                continue
+            gap = float(o_g[i] - h_g[k])
+            if gap < GU_ATR_K * atr40_g[k] or v_g[i] < GU_VOL * av50_g[k] or not c_g[k] > s50_g[k]:
+                continue
+            low_g = float(l_g[i])
+            held = bool(i == len(df) - 1 or float(np.min(l_g[i + 1:])) >= low_g)
+            gu = {"date": str(df.index[i].date()), "gap_pct": r2((o_g[i] / c_g[k] - 1) * 100, 1),
+                  "gap_atr": r2(gap / atr40_g[k]), "vol_x": r2(v_g[i] / av50_g[k]),
+                  "low": r2(low_g), "held": held,
+                  "dist_low_pct": r2((close / low_g - 1) * 100, 1), "age": int(len(df) - 1 - i)}
+
+    # -- Trend Template (Minervini p94), 7 of 8 here; RS >= 70 is set where RS exists
+    tt_flags = None
+    if s200 is not None and len(c) >= 252 and not np.isnan(float(s200.iloc[-1])):
+        s150 = c.rolling(150).mean()
+        s50n, s150n, s200n = float(s50.iloc[-1]), float(s150.iloc[-1]), float(s200.iloc[-1])
+        lo52 = float(l.iloc[-252:].min())
+        tt_flags = {
+            "above_150_200": bool(close > s150n and close > s200n),
+            "s150_gt_200":   bool(s150n > s200n),
+            "s200_rising":   bool(s200n > float(s200.iloc[-22])),
+            "s50_gt_150_200": bool(s50n > s150n and s50n > s200n),
+            "above_50":      bool(close > s50n),
+            "above_low_30":  bool(close >= 1.3 * lo52),
+            "near_high_25":  bool(close >= 0.75 * hi52),
+            "rs_70":         False,
+        }
+
     hi20_pos = int(np.argmax(h.iloc[-20:].values))
     days_since_20d_high = 19 - hi20_pos
 
@@ -423,7 +539,8 @@ def analyse(ticker, df, spy_chg):
         # behaviour
         "vol_ratio_5_20": r2(vol_ratio), "rvol": r2(rvol), "pocket_pivot": pocket_pivot, "tight": tight,
         "accum_ratio": r2(accum_ratio),
-        "ur": ur,
+        "ur": ur, "bo": bo, "gu": gu,
+        "tt_flags": tt_flags, "tt": (sum(tt_flags.values()) if tt_flags else None),
         "early": {"reclaim50": reclaim50, "ma200_turn": ma200_turn, "pocket_pivot": pocket_pivot,
                   "accum": bool(accum_ratio is not None and accum_ratio >= 1.3),
                   "higher_low": higher_low, "rs_turn": False,
@@ -524,6 +641,7 @@ def main():
         m["rs_rating_1m"] = rs_1m_of(df)
         m["rs_chg_1m"] = (m["rs_rating"] - m["rs_rating_1m"]) \
             if (m["rs_rating"] is not None and m["rs_rating_1m"] is not None) else None
+        set_tt_rs(m)
         er = earnings.get(t)
         m["earnings_date"] = er
         m["earnings_days"] = (dt.date.fromisoformat(er) - dt.date.today()).days if er else None
