@@ -406,7 +406,7 @@ def analyse(ticker, df, spy_chg):
     SETUP_MAX_AGE = 5
     bo = None
     s200_v = s200.values if s200 is not None else None
-    if s200_v is not None and len(df) >= BO_WIN + 25:
+    if s200_v is not None and len(df) >= 221:
         lo_b, hi_b, cl_b, vo_b = l.values, h.values, c.values, v.values
         s50_v = s50.values
         av50_b = pd.Series(vo_b).rolling(50).mean().shift(1).values
@@ -417,10 +417,14 @@ def analyse(ticker, df, spy_chg):
                 return None
             if not (cl_b[k] > s50_v[k] > s200_v[k] and s200_v[k] > s200_v[k - 20]):
                 return None
-            win = hi_b[i - BO_WIN:i]
-            if len(win) < BO_WIN:
+            # Full 260-bar window for a live signal; for the base COUNT further back
+            # a shorter window (>= 120 bars) is allowed, so the count is not limited
+            # to the last few months of the download.
+            w_len = min(BO_WIN, i)
+            if w_len < 120:
                 return None
-            jmax = int(np.argmax(win)); pivot = float(win[jmax]); age_p = BO_WIN - jmax
+            win = hi_b[i - w_len:i]
+            jmax = int(np.argmax(win)); pivot = float(win[jmax]); age_p = w_len - jmax
             if age_p < BO_BASE_MIN or not (cl_b[i] > pivot >= cl_b[k]):
                 return None
             depth = 1 - float(lo_b[i - age_p:i].min()) / pivot
@@ -433,7 +437,7 @@ def analyse(ticker, df, spy_chg):
 
         # base count: breakouts (without the volume requirement) since the last
         # close below the 200 -- within the downloaded window
-        start = max(BO_WIN + 1, 21)
+        start = 121
         last_below = start
         for i in range(start, len(df)):
             if not np.isnan(s200_v[i]) and cl_b[i] < s200_v[i]:
@@ -568,7 +572,7 @@ def main():
 
     # 480 days: same window as fetch_scan.py — a 252-bar RS window plus the
     # 21-bar offset for rs_rating_1m needs ~274 trading days.
-    start = (dt.date.today() - dt.timedelta(days=480)).strftime("%Y-%m-%d")
+    start = (dt.date.today() - dt.timedelta(days=730)).strftime("%Y-%m-%d")   # v7.1: same window as fetch_scan.py
     print(f"  Downloading {len(tickers)} tickers from {start}...", end=" ", flush=True)
     data = yf.download(tickers, start=start, interval="1d", group_by="ticker",
                        auto_adjust=True, progress=False, threads=True)

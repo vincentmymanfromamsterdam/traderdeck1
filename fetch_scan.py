@@ -59,7 +59,8 @@ THEME_DATA_PATH    = "data/themes_data.json"
 THEME_HISTORY_PATH = "data/theme_history.json"
 THEME_CHART_TOP    = 5                          # per theme: top-N by RS get chart data
 
-HISTORY_DAYS   = 480      # calendar days of daily history to download
+HISTORY_DAYS   = 730      # calendar days of daily history (v7.1: 480 -> 730 so the breakout base count
+                          # can look back ~13 months; it needs the SMA200 plus a 120-260 bar pivot window)
 RS_LOOKBACK_1M = 21       # trading days back for the "RS a month ago" percentile
 RS_TURN_MIN    = 15       # rs_chg_1m needed for the rs_turn signal
 NOTABLE_PATH   = "data/notable.json"
@@ -92,6 +93,8 @@ GRP_RS_MIN       = 80                          # group confirmation: peers in th
 
 CHART_PATH  = "data/chart_data.json"
 CHART_MAX   = 40          # max DNA passers with chart data
+CHART_SHOW  = 45          # v7.1: cards in the default view (TOP), ranked on "potential"; the rest go to chart_more.json
+CHART_MORE_PATH = "data/chart_more.json"   # lazy-loaded by the dashboard: other candidates + scan leaders + universe + themes
 CHART_BARS  = 130         # ~6 months of daily bars
 CHART_META  = ("ticker", "name", "industry", "rs_rating", "rs_chg_1m", "stage", "adr_pct", "atr_mult_50", "off_52w_high",
                "setup_score", "rvol", "earnings_date", "earnings_days", "plan_stop", "plan_stop_pct",
@@ -456,7 +459,7 @@ def main():
     start400 = (dt.date.today() - dt.timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
     themes_def = load_themes()
     theme_tickers = sorted({t for th in themes_def for t in th["tickers"]})
-    need = sorted(set(liquid) | set(sp500) | set(theme_tickers) | {"SPY"})
+    need = sorted(set(liquid) | set(sp500) | set(theme_tickers) | set(universe) | {"SPY"})
     print(f"  Full history for {len(need)} names...")
     full = download(need, start400, "full")
 
@@ -971,24 +974,58 @@ def main():
                      "label": th.get("label"), "rel_1w": th.get("rel_1w")}
                     for th in themes_out if tk in th["chart_tickers"]]
 
+        # v7.1 "potential": which cards earn a place in the default view (TOP 45).
+        # setup score + 3 per active setup in 05b (gap-up only while its low holds)
+        # + 2 for a DNA pass + RS/25 - 3 when extended (ATR x 50 > 15), -1 above 10.
+        def potential(r):
+            act = sum(1 for k in setup_of.get(r["ticker"], [])
+                      if k != "gu" or (r.get("gu") or {}).get("held"))
+            ext = r.get("extension")
+            return round((r.get("setup_score") or 0) + 3 * act + (2 if r.get("dna_pass") else 0)
+                         + (r.get("rs_rating") or 0) / 25
+                         - (3 if ext == "reduce" else 1 if ext == "caution" else 0), 1)
+
+        def card(r, why_tk):
+            tk = r["ticker"]
+            return {"meta": {k: r.get(k) for k in CHART_META} | {
+                        "themes": [th["id"] for th in themes_out if tk in th["chart_tickers"]],
+                        "theme_picks": picks_for(tk),
+                        "dna_rank": dna_rank.get(tk),
+                        "early": r.get("early"), "early_score": r.get("early_score"),
+                        "why": why_tk, "route": nt_route.get(tk),
+                        "setups": setup_of.get(tk, []),
+                        "dna_pass": r.get("dna_pass"), "potential": potential(r)},
+                    "bars": chart_bars(full[tk])}
+
         charts = {}
         for r in chart_rows:
-            tk = r["ticker"]
-            if tk not in full:
-                continue
-            charts[tk] = {"meta": {k: r.get(k) for k in CHART_META} | {
-                              "themes": [th["id"] for th in themes_out if tk in th["chart_tickers"]],
-                              "theme_picks": picks_for(tk),
-                              "dna_rank": dna_rank.get(tk),
-                              "early": r.get("early"), "early_score": r.get("early_score"),
-                              "why": why.get(tk, "dna"), "route": nt_route.get(tk),
-                              "setups": setup_of.get(tk, [])},
-                          "bars": chart_bars(full[tk])}
+            if r["ticker"] in full:
+                charts[r["ticker"]] = card(r, why.get(r["ticker"], "dna"))
+        ranked = sorted(charts, key=lambda t: -charts[t]["meta"]["potential"])
+        top = set(ranked[:CHART_SHOW])
+        for i, t in enumerate(ranked):
+            charts[t]["meta"]["top"] = t in top
+            charts[t]["meta"]["pot_rank"] = i + 1
         with open(CHART_PATH, "w") as f:
-            json.dump({"updated": payload["updated_at"], "charts": charts}, f, separators=(",", ":"))
+            json.dump({"updated": payload["updated_at"], "n_core": len(charts), "n_top": len(top),
+                       "charts": {t: charts[t] for t in ranked if t in top}}, f, separators=(",", ":"))
+        # Everything else a table can point at: the other candidates, the scan leaders
+        # (05 Market Scan), my universe (05 screener) and every theme basket name (03b).
+        more = {t: charts[t] for t in ranked if t not in top}
+        extra_rows = list(out_rows) + [by_t[t] for t in universe if t in by_t] \
+                     + [by_t[t] for th in themes_def for t in th["tickers"] if t in by_t]
+        for r in extra_rows:
+            tk = r["ticker"]
+            if tk in charts or tk in more or tk not in full:
+                continue
+            c = card(r, "extra"); c["meta"]["top"] = False
+            more[tk] = c
+        with open(CHART_MORE_PATH, "w") as f:
+            json.dump({"updated": payload["updated_at"], "charts": more}, f, separators=(",", ":"))
         n_by = {w: sum(1 for t in charts if charts[t]["meta"]["why"] == w) for w in ("dna", "theme", "notable", "setup")}
-        print(f"  Saved {CHART_PATH} ({len(charts)} tickers: {n_by['dna']} DNA, "
-              f"{n_by['theme']} theme, {n_by['notable']} notable, {n_by['setup']} setup)")
+        print(f"  Saved {CHART_PATH} ({len(top)} of {len(charts)} candidates by potential: {n_by['dna']} DNA, "
+              f"{n_by['theme']} theme, {n_by['notable']} notable, {n_by['setup']} setup) + "
+              f"{CHART_MORE_PATH} ({len(more)} tickers)")
     except Exception as e:
         print(f"  (chart data skipped: {e})")
 

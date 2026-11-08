@@ -339,6 +339,11 @@
   .rg-flag { padding:1px 6px; border:1px solid; font-weight:600; font-size:9.5px; letter-spacing:0.08em; }
   .rg-strip { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:9.5px; margin:-6px 0 18px; }
   .rg-chip { padding:2px 8px; border:1px solid var(--border2); color:var(--muted); white-space:nowrap; }
+  /* ── v7.1: chart links + sets ── */
+  .ch-ln { font-family:var(--mono); font-size:9px; margin-left:4px; padding:0 3px; border:1px solid var(--border2); color:var(--muted); cursor:pointer; text-decoration:none; vertical-align:1px; }
+  .ch-ln:hover { color:var(--accent); border-color:var(--accent); }
+  .ch-more { display:flex; justify-content:center; padding:14px; grid-column:1 / -1; }
+  .ch-setchip { display:inline-flex; gap:6px; align-items:center; }
   /* ── v7: setup module (05b) ── */
   .su-badge { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; padding:9px 12px; margin-bottom:10px; border:1px solid var(--border2); font-size:11px; }
   .su-badge .tag { font-size:9.5px; font-weight:700; letter-spacing:0.12em; white-space:nowrap; }
@@ -705,6 +710,7 @@
       <button class="dir-btn" id="swf-lt"   onclick="swFilter('lt')">CARNIVORE LT</button>
       <button class="dir-btn" id="swf-wl"   onclick="swFilter('wl')">WATCHLIST</button>
       <button class="dir-btn" id="swf-mkt"  onclick="swFilter('mkt')">+ MARKET DNA PASS</button>
+      <span style="margin-left:auto"></span><button class="dir-btn" onclick="chShowList('sw', 'SCREENER')" title="open alle tickers van deze lijst als chartkaarten in 06">▦ CHARTS</button>
     </div>
 
     <div class="table-wrap"><table>
@@ -731,6 +737,7 @@
         <button class="dir-btn" id="scf-pass" onclick="scFilter('pass')">DNA PASS (ALL)</button>
         <button class="dir-btn" id="scf-setup" onclick="scFilter('setup')">SETUP (CONFLUENCE ≥2)</button>
         <button class="dir-btn" id="scf-all"  onclick="scFilter('all')">TOP 150</button>
+        <span style="margin-left:auto"></span><button class="dir-btn" onclick="chShowList('sc', 'MARKET SCAN')" title="open alle tickers van deze lijst als chartkaarten in 06">▦ CHARTS</button>
       </div>
       <div class="table-wrap"><table>
         <thead><tr>
@@ -759,6 +766,7 @@
         <button class="dir-btn" id="sub-pb" onclick="suShow('pb')" title="Stage 2-leider (RS &ge; 85) in een zone met &ge; 3 supportlagen binnen 1 ATR">PULLBACK <span id="suc-pb" style="color:var(--muted)"></span></button>
         <button class="dir-btn" id="sub-ur" onclick="suShow('ur')" title="Undercut &amp; reclaim: steun die &ge; 5 dagen hield, intraday ondergeschoten en heroverd op &ge; 2&times; volume, boven de 200 SMA">U&amp;R <span id="suc-ur" style="color:var(--muted)"></span></button>
         <button class="dir-btn active-long" id="sub-bo" onclick="suShow('bo')" title="Base breakout: slot boven de 52-weeks high (pivot &ge; 5 weken oud), base &le; 35% diep, volume &ge; 1,5&times;, &le; 5% boven de pivot">BREAKOUT <span id="suc-bo" style="color:var(--muted)"></span></button>
+        <span style="margin-left:auto;order:9"></span><button class="dir-btn" style="order:10" onclick="chShowList('su', 'SETUP ' + SU_NAME[suMode])" title="open alle tickers van deze tab als chartkaarten in 06">▦ CHARTS</button>
         <button class="dir-btn" id="sub-gu" onclick="suShow('gu')" title="Buyable gap-up (Morales &amp; Kacher): gap &ge; 0,75 &times; ATR(40) boven de vorige high, volume &ge; 1,5&times;, Stage 2, RS &ge; 70">GAP-UP <span id="suc-gu" style="color:var(--muted)"></span></button>
       </div>
       <div class="su-badge" id="su-badge"></div>
@@ -794,15 +802,18 @@
       <button class="dir-btn" data-chn="60" onclick="chRange(this)">3M</button>
       <button class="dir-btn active-long" data-chn="130" onclick="chRange(this)">6M</button>
       <span class="ch-lbl">SORT</span>
-      <button class="dir-btn active-long" data-chs="setup_score" onclick="chSort(this)">SETUP</button>
+      <button class="dir-btn active-long" data-chs="potential" onclick="chSort(this)" title="potentie = setup score + 3 per actieve setup (05b) + 2 bij DNA-pass + RS/25 − extensie">POTENTIE</button>
+      <button class="dir-btn" data-chs="setup_score" onclick="chSort(this)">SETUP</button>
       <button class="dir-btn" data-chs="rs_rating" onclick="chSort(this)">RS</button>
       <span class="ch-lbl">SHOW</span>
-      <button class="dir-btn active-long" data-chf="all" onclick="chShow(this)">ALL</button>
+      <button class="dir-btn active-long" data-chf="top" onclick="chShow(this)" title="de kaarten met de meeste potentie">TOP <span id="chf-top-n"></span></button>
+      <button class="dir-btn" data-chf="all" onclick="chShow(this)" title="alle kandidaten (laadt de rest bij)">ALL <span id="chf-all-n"></span></button>
       <button class="dir-btn" data-chf="new" onclick="chShow(this)">NEW ONLY</button>
       <button class="dir-btn" data-chf="uni" onclick="chShow(this)">MY UNIVERSE</button>
       <button class="dir-btn" data-chf="notable" onclick="chShow(this)">NOTABLE</button>
       <button class="dir-btn" data-chf="setups" onclick="chShow(this)">SETUPS</button>
       <button class="dir-btn" id="chf-theme" style="display:none" onclick="chShow(this)" data-chf="theme">THEME</button>
+      <span class="ch-setchip" id="chf-set" style="display:none"><button class="dir-btn active-long" data-chf="set" onclick="chShow(this)" id="chf-set-lbl">SET</button><button class="dir-btn" onclick="chClearSet()" title="sluiten">&times;</button></span>
     </div>
     <div class="ch-grid" id="ch-grid"><div class="loading-msg">Loading charts...</div></div>
   </div>
@@ -817,6 +828,7 @@
       <button class="dir-btn active-long" id="ntb-base" onclick="ntShow('base')" title="Stage 1 met een vlakke of stijgende 200 &mdash; de klassieke Weinstein-base. Rustig; wachten op de 1&rightarrow;2-transitie en dan de eerste pullback.">BASE &middot; VLAKKE 200 <span id="ntc-base" style="color:var(--muted)"></span></button>
       <button class="dir-btn" id="ntb-recovery" onclick="ntShow('recovery')" title="Draaiend na een echte correctie: Stage 1 met een nog d&aacute;lende 200 (verse reclaim) of Stage 3 die gecorrigeerd is. Minimaal 2 signalen waarvan &eacute;&eacute;n omslagsignaal (R50 / 200&uarr; / RS&uarr;).">RECOVERY &middot; DRAAIEND <span id="ntc-recovery" style="color:var(--muted)"></span></button>
       <span style="font-size:9.5px;color:var(--muted);align-self:center;margin-left:6px">U&amp;R staat nu in de setup-module (05b)</span>
+      <span style="margin-left:auto"></span><button class="dir-btn" onclick="chShowList('nt', 'NOTABLE ' + ntMode.toUpperCase())" title="open alle tickers van deze tab als chartkaarten in 06">▦ CHARTS</button>
     </div>
     <div class="table-wrap"><table>
       <thead id="nt-thead"></thead>
@@ -1336,7 +1348,7 @@ function renderPortfolioTable(tbodyId, positions) {
 
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker)}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker)}${chLink(p.ticker)}</td>
       <td style="color:var(--muted)">${p.name && p.name !== p.ticker ? p.name : '—'}</td>
       <td>${p.shares != null ? Number(p.shares).toLocaleString() : '—'}</td>
       <td>${p.avg_cost != null ? '$' + fmtPrice(p.avg_cost) : '—'}</td>
@@ -1370,7 +1382,7 @@ function renderLongTermTable(tbodyId, positions) {
 
     return `<tr style="${rowStyle}">
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
-      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker)}</td>
+      <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker)}${chLink(p.ticker)}</td>
       <td style="color:var(--muted);font-size:10px">${p.name || '—'}</td>
       <td style="color:var(--muted);font-size:10px">${p.entry_date || '—'}</td>
       <td>$${p.avg_cost != null ? p.avg_cost.toFixed(2) : '—'}</td>
@@ -1836,7 +1848,54 @@ applyThemeBtn();
 // ────────────────────────────────────────────────
 //  06 CHARTS — DNA pass
 // ────────────────────────────────────────────────
-let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'setup_score', chFilter = 'all';
+let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'potential', chFilter = 'top';
+// v7.1: default view = TOP (by potential); the rest (data/chart_more.json) loads on demand.
+let chMoreState = 'no', chMorePromise = null, chSet = [], chSetLabel = '', chPinned = [], chLimit = 60;
+const LIST_TK = {};          // per table: the tickers it currently shows (for "▦ CHARTS")
+function chLink(tk) {
+  if (!tk || tk === '—') return '';
+  return `<a class="ch-ln" onclick="event.stopPropagation(); chPin('${tk}')" title="toon de chart van ${tk} in 06 (vastgepind)">▦</a>`;
+}
+function chEnsureMore() {
+  if (chMoreState === 'yes') return Promise.resolve();
+  if (!chMorePromise) chMorePromise = fetch('data/chart_more.json?t=' + Date.now())
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j && j.charts && chData) Object.entries(j.charts).forEach(([t, c]) => { if (!chData.charts[t]) chData.charts[t] = c; }); chMoreState = 'yes'; chCounts(); })
+    .catch(() => { chMoreState = 'yes'; });
+  return chMorePromise;
+}
+function chCounts() {
+  if (!chData) return;
+  const all = Object.values(chData.charts);
+  const t = $('chf-top-n'); if (t) t.textContent = all.filter(i => i.meta.top).length || '';
+  const a = $('chf-all-n'); if (a) a.textContent = chMoreState === 'yes' ? all.filter(i => i.meta.why !== 'extra').length : (chData.n_core || '');
+}
+function chOpenSet(list, label) {
+  chSet = Array.from(new Set(list || [])); chSetLabel = label; chFilter = 'set'; chLimit = 60;
+  const box = $('chf-set'); if (box) box.style.display = '';
+  const l = $('chf-set-lbl'); if (l) l.textContent = label + ' (' + chSet.length + ')';
+  document.querySelectorAll('[data-chf]').forEach(x => x.classList.toggle('active-long', x.dataset.chf === 'set'));
+  chEnsureMore().then(() => { chRender(); document.getElementById('charts').scrollIntoView({ behavior: 'smooth' }); });
+}
+function chShowList(key, label) { chOpenSet(LIST_TK[key] || [], label); }
+function chPin(tk) {
+  if (!chPinned.includes(tk)) chPinned.push(tk);
+  chOpenSet(chPinned, 'GEPIND');
+  setTimeout(() => chFlash(tk), 500);
+}
+function chClearSet() {
+  chSet = []; chPinned = []; const box = $('chf-set'); if (box) box.style.display = 'none';
+  const b = document.querySelector('[data-chf="top"]'); if (b) chShow(b);
+}
+function chFlash(tk) {
+  const card = Array.from(document.querySelectorAll('.ch-card')).find(c => c.querySelector('.ch-tk') && c.querySelector('.ch-tk').textContent.trim() === tk);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 1500);
+}
+function listBtn(key, label) {
+  return `<button class="dir-btn" onclick="chShowList('${key}', '${label}')" title="open alle tickers van deze lijst als chartkaarten in 06">▦ CHARTS</button>`;
+}
 
 // ── Seeking Alpha headlines (data/sa_news.json, written by fetch_scan.py) ──
 let saNews = null;
@@ -1942,6 +2001,7 @@ function renderNotable() {
   const tb = $('nt-tbody'); if (!tb || !ntData) return;
   const th = $('nt-thead'); if (th) th.innerHTML = NT_HEAD[ntMode] || NT_HEAD.base;
   const rows = (ntData.rows || []).filter(x => x.route === ntMode);
+  LIST_TK.nt = rows.map(r => r.ticker);
   if (!rows.length) {
     tb.innerHTML = `<tr><td colspan="13" class="loading-msg">${NT_EMPTY[ntMode]}</td></tr>`;
     return;
@@ -1950,7 +2010,7 @@ function renderNotable() {
     tb.innerHTML = rows.map(r => {
       const u = r.ur || {};
       return `<tr class="nt-row" onclick="chShowTicker('${r.ticker}')" title="klik voor de chart">
-        <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+        <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)}
             <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
         <td>$${fmtPrice(r.price)}</td>
         <td>${pct(r.chg_1d)}</td>
@@ -1972,7 +2032,7 @@ function renderNotable() {
     const e = r.early || {};
     const dots = sigTags(e, false);
     return `<tr class="nt-row" onclick="chShowTicker('${r.ticker}')" title="klik voor de chart">
-      <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+      <td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)}
           <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
@@ -1991,7 +2051,10 @@ function renderNotable() {
 
 // Jump from a Notable row to its chart in section 06.
 function chShowTicker(tk, filt) {
-  chFilter = filt || 'notable';
+  chEnsureMore().then(() => chShowTicker2(tk, filt));
+}
+function chShowTicker2(tk, filt) {
+  chFilter = filt || 'notable'; chLimit = 200;
   document.querySelectorAll('[data-chf]').forEach(x => x.classList.toggle('active-long', x.dataset.chf === chFilter));
   chRender();
   const sec = document.getElementById('charts');
@@ -2045,13 +2108,19 @@ function chSetActive(btns, b) { btns.forEach(x => x.classList.toggle('active-lon
 function chLayer(b) { chLayers[b.dataset.chl] = !chLayers[b.dataset.chl]; b.classList.toggle('active-long'); chRender(); }
 function chRange(b) { chN = +b.dataset.chn; chSetActive(document.querySelectorAll('[data-chn]'), b); chRender(); }
 function chSort(b)  { chSortKey = b.dataset.chs; chSetActive(document.querySelectorAll('[data-chs]'), b); chRender(); }
-function chShow(b)  { if (b.dataset.chf === 'theme') return; chFilter = b.dataset.chf; chSetActive(document.querySelectorAll('[data-chf]'), b); chRender(); }
+function chShow(b)  {
+  if (b.dataset.chf === 'theme') return;
+  chFilter = b.dataset.chf; chLimit = 60; chSetActive(document.querySelectorAll('[data-chf]'), b);
+  if (chFilter === 'top' || chFilter === 'set') chRender(); else chEnsureMore().then(chRender);
+}
 
 async function loadChartData() {
   try {
     const r = await fetch('data/chart_data.json?t=' + Date.now());
     if (!r.ok) throw new Error(r.status);
     chData = await r.json();
+    Object.values(chData.charts).forEach(c => { if (c.meta.top == null) c.meta.top = true; });   // pre-v7.1 file: all top
+    chCounts();
     $('charts-updated').textContent = '· ' + (chData.updated || '').replace('T', ' ').slice(0, 16) + ' UTC';
     chRender();
   } catch (err) {
@@ -2062,6 +2131,9 @@ function chRender() {
   if (!chData) return;
   const g = $('ch-grid'); g.innerHTML = '';
   let items = Object.values(chData.charts);
+  if (chFilter === 'top') items = items.filter(i => i.meta.top);
+  else if (chFilter === 'set') { const S = new Set(chSet); items = items.filter(i => S.has(i.meta.ticker)); }
+  else if (!chFilter.startsWith('theme:')) items = items.filter(i => i.meta.why !== 'extra');
   if (chFilter === 'new') items = items.filter(i => !i.meta.in_universe);
   if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
   if (chFilter === 'notable') items = items.filter(i => i.meta.why === 'notable');
@@ -2069,8 +2141,22 @@ function chRender() {
   if (chFilter.startsWith('theme:')) { const id = chFilter.slice(6); items = items.filter(i => (i.meta.themes || []).includes(id)); }
   else { const b = $('chf-theme'); if (b) b.style.display = 'none'; }
   items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
-  if (!items.length) { g.innerHTML = '<div class="loading-msg">No tickers match.</div>'; return; }
-  items.forEach(it => g.appendChild(chCard(it)));
+  if (chFilter === 'set') {
+    const have = new Set(items.map(i => i.meta.ticker));
+    const miss = chSet.filter(t => !have.has(t));
+    if (miss.length) {
+      const m = document.createElement('div'); m.className = 'loading-msg ch-more';
+      m.innerHTML = 'Geen chartdata voor ' + miss.slice(0, 12).map(t => `${t} <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(t)}" target="_blank" rel="noopener noreferrer">TV</a>`).join(' · ') + (miss.length > 12 ? ' …' : '');
+      g.appendChild(m);
+    }
+  }
+  if (!items.length) { if (!g.children.length) g.innerHTML = '<div class="loading-msg">No tickers match.</div>'; return; }
+  items.slice(0, chLimit).forEach(it => g.appendChild(chCard(it)));
+  if (items.length > chLimit) {
+    const more = document.createElement('div'); more.className = 'ch-more';
+    more.innerHTML = `<button class="dir-btn" onclick="chLimit += 60; chRender()">TOON MEER (${items.length - chLimit} over)</button>`;
+    g.appendChild(more);
+  }
 }
 // Why is this ticker in section 06? DNA rank, theme rank, or the Notable scan.
 function whyPills(m) {
@@ -2123,7 +2209,7 @@ function chCard(it) {
       <span class="ch-ic" title="expand">⤢</span>
     </div>
     <div class="ch-stats">
-      <span>RS <b>${m.rs_rating ?? '—'}</b></span><span>STAGE <b>${m.stage ?? '—'}</b></span><span>ADR <b>${chF(m.adr_pct, 1)}%</b></span>
+      ${m.potential != null ? `<span title="potentie (rang ${m.pot_rank || '?'})">POT <b>${m.potential}</b></span>` : ''}<span>RS <b>${m.rs_rating ?? '—'}</b></span><span>STAGE <b>${m.stage ?? '—'}</b></span><span>ADR <b>${chF(m.adr_pct, 1)}%</b></span>
       <span>ATR×50 <b class="${m.atr_mult_50 > 6 ? 'warn' : ''}">${chF(m.atr_mult_50, 1)}</b></span>
       <span>OFF HIGH <b>${chF(m.off_52w_high, 1)}%</b></span>
       <span>RVOL <b class="${last.rv >= 1.5 ? 'good' : ''}">${chF(last.rv)}</b></span>
@@ -2248,7 +2334,7 @@ function renderThemes() {
     <tr class="th-sub ${open ? 'open' : ''}"><td colspan="17"><table class="th-subtbl">
       <thead><tr><th>Ticker</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th>DNA</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th>Stage</th><th>Off 52W</th><th>Strong</th><th>Confl.</th><th>Score</th><th title="click to load in calculator">Stop · %</th><th>ER</th></tr></thead>
       <tbody>${t.tickers.map(r => `<tr>
-        <td data-tk="${r.ticker}" style="font-weight:600;color:var(--text)">${r.ticker}${saLink(r.ticker)}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
+        <td data-tk="${r.ticker}" style="font-weight:600;color:var(--text)">${r.ticker}${saLink(r.ticker)}${chLink(r.ticker)}${r.in_universe ? '' : ' <span style="color:var(--blue);font-size:8.5px">NEW</span>'}</td><td>${r.price ?? '—'}</td>
         <td class="${thC(r.chg_1d)}">${thF(r.chg_1d)}%</td><td class="${thC(r.chg_1w)}">${thF(r.chg_1w)}%</td><td class="${thC(r.chg_1m)}">${thF(r.chg_1m)}%</td><td class="${thC(r.ytd)}">${thF(r.ytd, 1)}%</td>
         <td>${dots(r)}</td><td class="${r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 70 ? 'amb' : ''}">${r.rs_rating ?? '—'}</td>
         <td>${rsDelta(r.rs_chg_1m)}</td><td>${r.stage ?? '—'}</td><td class="${r.off_52w_high > -10 ? 'pos' : r.off_52w_high < -25 ? 'neg' : ''}">${thF(r.off_52w_high, 1, false)}%</td>
@@ -2501,7 +2587,7 @@ const LAYER = { ema9: '9', ema21: '21', ema50: '50', ma10w: '10W', avwap: 'AV' }
 const ttCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 8 ? 'var(--green)' : v >= 6 ? 'var(--text)' : 'var(--muted)'}">${v}/8</span>`;
 const grpCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 1 ? 'var(--text)' : 'var(--amber)'}" title="${v === 0 ? 'geen groepsbevestiging (O\'Neil: liever niet kopen)' : v + ' groepsgenoten met RS ≥ 80'}">${v}</span>`;
 function tkCell(r) {
-  return `<td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}
+  return `<td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)}
           <span style="font-size:8px;color:var(--muted)">${esc((r.industry || '').slice(0, 22))}</span></td>`;
 }
 
@@ -2534,6 +2620,7 @@ function renderSetups() {
   }
   if (!suData) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Nog geen setup-data — verschijnt na de volgende nachtelijke run.</td></tr>`; return; }
   const rows = (suData.lists || {})[SU_LIST[suMode]] || [];
+  LIST_TK.su = rows.map(r => r.ticker);
   if (!rows.length) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">${SU_EMPTY[suMode]}</td></tr>`; return; }
   const open = tk => `onclick="chShowTicker('${tk}','setups')" title="klik voor de chart"`;
   if (suMode === 'pb') {
@@ -2643,6 +2730,7 @@ function renderSwing() {
     const extra = ((scData && scData.leaders) || []).filter(r => r.dna_pass && !mine.has(r.ticker));
     rows = [...rows.filter(r => r.dna_pass), ...extra].sort((a, b) => (b.rs_rating || 0) - (a.rs_rating || 0) || b.setup_score - a.setup_score);
   }
+  LIST_TK.sw = rows.map(r => r.ticker);
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="18" class="loading-msg">No tickers match</td></tr>'; return; }
 
   tb.innerHTML = rows.map(swRow).join('');
@@ -2691,7 +2779,7 @@ function swRow(r) {
     const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : '', (r.in_universe === false) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
-      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
       <td><span class="dna-dots">${dots}</span></td>
@@ -2814,6 +2902,7 @@ function renderScan() {
   if (scMode === 'new')   rows = rows.filter(r => r.dna_pass && !r.in_universe);
   if (scMode === 'setup') rows = rows.filter(r => r.stage === 2 && r.confluence_n >= 2);
   rows = rows.slice(0, 150);
+  LIST_TK.sc = rows.map(r => r.ticker);
   tb.innerHTML = rows.length ? rows.map(swRow).join('') : '<tr><td colspan="18" class="loading-msg">No tickers match</td></tr>';
 }
 async function loadScanData() {
