@@ -1,10 +1,15 @@
 {
- "updated_at": "2026-11-09 12:48 UTC",
+ "updated_at": "2026-11-09 16:46 UTC",
  "tickers": [
   {
    "ticker": "NVDA",
    "added": "2026-11-09",
    "source": "05 watchlist"
+  },
+  {
+   "ticker": "BLLN",
+   "added": "2026-11-09",
+   "source": "06 chart"
   }
  ]
 }
