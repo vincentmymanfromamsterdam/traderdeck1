@@ -90,6 +90,14 @@ SETUP_PB_MIN_LAYERS = 3
 SETUP_GU_RS_MIN  = 70
 SETUPS_LOG_MAX   = 5000
 GRP_RS_MIN       = 80                          # group confirmation: peers in the same industry with RS >= 80
+# v7.5 bottom checklist: signal 3 (fewer new lows on the retest) and 4 (RS-houders tab)
+REGIME_PATH      = "data/regime.json"          # written by fetch_regime.py earlier in the same run
+NL_SESSIONS      = 40                          # sessions of the new-52w-low count kept for the dashboard
+RH_RS_MIN        = 85                          # RS-houders: leaders that hold up while the index corrects
+RH_OFF_HIGH_MAX  = 8.0                         #   <= 8% under the 52w high
+RH_PER_INDUSTRY  = 2                           #   in the tab: at most 2 per industry (counts cover all)
+RH_HOLD_MIN      = 10                          # signal 4 is met when >= 10 leaders held their low
+RH_REF_PAD       = 2                           # own reference low = min low within +-2 sessions of the prior heavy day
 
 CHART_PATH  = "data/chart_data.json"
 CHART_MAX   = 40          # max DNA passers with chart data
@@ -889,7 +897,87 @@ def main():
             setups[k] = [{f: r.get(f) for f in SU_KEYS} for r in lst[:SETUP_CAP]]
             for r in lst[:SETUP_CAP]:
                 setup_of.setdefault(r["ticker"], []).append({"pullback": "pb", "ur": "ur", "breakout": "bo", "gapup": "gu"}[k])
+        # ── 8b. Bottom checklist (v7.5): new-52w-low count + RS-houders ──
+        bottom = None
+        holders_all = []
+        try:
+            try:
+                with open(REGIME_PATH) as f:
+                    rgb = (json.load(f) or {}).get("bottom")
+            except Exception:
+                rgb = None
+            # new 52w lows per session across the analysed (liquid) names
+            nl_cnt, nl_n = {}, 0
+            for r in rows:
+                df = full.get(r["ticker"])
+                if df is None or len(df) < 260:
+                    continue
+                lo = df["Low"]
+                flag = (lo <= lo.rolling(252, min_periods=252).min()).iloc[-NL_SESSIONS:]
+                nl_n += 1
+                for ts, v in flag.items():
+                    if v:
+                        k = str(ts.date()); nl_cnt[k] = nl_cnt.get(k, 0) + 1
+            ref_df = full.get("SPY")
+            if ref_df is None:
+                ref_df = max((x for x in full.values() if x is not None), key=len)
+            spy_idx = ref_df.index[-NL_SESSIONS:]
+            nl_series = [{"d": str(ts.date()), "n": nl_cnt.get(str(ts.date()), 0)} for ts in spy_idx]
+            nl_of = {x["d"]: x["n"] for x in nl_series}
+            s3 = None
+            if rgb and rgb.get("test"):
+                ref_n = max([nl_of.get(x, 0) for x in rgb["ref"]["dates"]] + [nl_of.get(rgb["anchor"]["date"], 0)])
+                t_n = nl_of.get(rgb["test"]["date"])
+                s3 = {"ref_n": ref_n, "test_n": t_n, "fewer": t_n is not None and t_n < ref_n}
+            # RS-houders: leaders near their highs; with an index undercut, did they hold their own low?
+            lt = (rgb or {}).get("leader_test")
+            for r in rows:
+                if (r.get("price") or 0) < SETUP_MIN_PRICE or (r.get("avg_dollar_vol") or 0) < SETUP_MIN_DOLLAR_VOL:
+                    continue
+                cap = r.get("market_cap")
+                if cap is not None and cap < SETUP_MIN_CAP:
+                    continue
+                if (r.get("rs_rating") or 0) < RH_RS_MIN or (r.get("off_52w_high") is None) \
+                        or r["off_52w_high"] < -RH_OFF_HIGH_MAX or not r.get("above_ema50"):
+                    continue
+                h = {"held": None, "ref_low": None, "test_low": None, "vs_ref_pct": None}
+                df = full.get(r["ticker"])
+                if lt and df is not None and len(df) > 30:
+                    ix = df.index
+                    p = ix.searchsorted(pd.Timestamp(lt["prior"]))
+                    a = ix.searchsorted(pd.Timestamp(lt["undercut"]))
+                    if p < len(ix) and a < len(ix) and a > p:
+                        ref = float(df["Low"].iloc[max(0, p - RH_REF_PAD):min(a, p + RH_REF_PAD + 1)].min())
+                        tst = float(df["Low"].iloc[a:].min())
+                        h = {"held": bool(tst > ref), "ref_low": round(ref, 2), "test_low": round(tst, 2),
+                             "vs_ref_pct": round((float(df["Close"].iloc[-1]) / ref - 1) * 100, 1)}
+                holders_all.append(dict(r, rh=h))
+            holders_all.sort(key=lambda r: (r["rh"]["held"] is not True, -(r.get("rs_rating") or 0),
+                                            r.get("off_52w_high") is None, -(r.get("off_52w_high") or -99)))
+            n_held = sum(1 for r in holders_all if r["rh"]["held"] is True)
+            n_broke = sum(1 for r in holders_all if r["rh"]["held"] is False)
+            per_ind, shown = {}, []
+            for r in holders_all:
+                k = r.get("industry") or "?"
+                if per_ind.get(k, 0) >= RH_PER_INDUSTRY:
+                    continue
+                per_ind[k] = per_ind.get(k, 0) + 1
+                shown.append(r)
+                if len(shown) >= SETUP_CAP:
+                    break
+            setups["holders"] = [dict({f: r.get(f) for f in SU_KEYS}, off_52w_high=r.get("off_52w_high"), rh=r["rh"])
+                                 for r in shown]
+            cand["holders"] = holders_all
+            bottom = {"newlows": {"universe": nl_n, "series": nl_series}, "s3": s3,
+                      "holders": {"n": len(holders_all), "n_held": n_held, "n_broke": n_broke,
+                                  "test": lt, "ok": bool(lt) and n_held >= RH_HOLD_MIN, "hold_min": RH_HOLD_MIN}}
+            print(f"  Bottom: new lows today {nl_series[-1]['n'] if nl_series else '?'} / {nl_n} · "
+                  f"RS-houders {len(holders_all)} ({n_held} held, {n_broke} broke)" + (f" · test {lt['undercut']}" if lt else ""))
+        except Exception as e:
+            print(f"  (bottom checklist skipped: {e})")
+
         su_payload = {"updated_at": payload["updated_at"],
+                      "bottom": bottom,
                       "n_total": {k: len(v) for k, v in cand.items()},
                       "n_gapup_held": sum(1 for r in cand["gapup"] if r["gu"].get("held")),
                       "n_gapup_rejected": len(gu_rejected),
@@ -902,7 +990,9 @@ def main():
                                                   "max_ext_pct": 5, "min_vol_x": 1.5, "max_age_days": 5},
                                      "gapup": {"gap": "open - prior high >= 0.75 x ATR(40)", "min_vol_x": 1.5,
                                                "close": "close > prior high and in the upper half of the range",
-                                               "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5}},
+                                               "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5},
+                                     "holders": {"rs_min": RH_RS_MIN, "off_high_max": RH_OFF_HIGH_MAX, "above": "EMA50",
+                                                 "per_industry": RH_PER_INDUSTRY, "hold_min": RH_HOLD_MIN}},
                       "lists": setups}
         with open(SETUPS_PATH, "w") as f:
             json.dump(su_payload, f, separators=(",", ":"))
@@ -924,6 +1014,8 @@ def main():
             shown_pb = {id(r) for r in cand["pullback"][:SETUP_CAP]}
             added = 0
             for k, lst in cand.items():
+                if k == "holders":
+                    continue                             # a watch list, not a setup with an event date
                 for r in lst:
                     obj = {"pullback": None, "ur": r.get("ur"), "breakout": r.get("bo"), "gapup": r.get("gu")}[k]
                     if k == "pullback":

@@ -332,6 +332,18 @@
   .rg-dots { display:flex; gap:4px; flex-wrap:wrap; }
   .rg-dot { width:9px; height:9px; border-radius:50%; background:var(--border2); }
   .rg-dot.on { background:var(--red); }
+  /* ── v7.5: bottom checklist + strip markers ── */
+  .rg-day { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .rg-cap { width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:7px solid var(--ch-purple); }
+  .rg-cap.off { border-bottom-color:transparent; }
+  .rg-dot.vx { box-shadow:0 0 0 2px var(--amber); }
+  .rg-bot { flex:1 1 100%; min-width:0; padding:12px 14px; border:1px solid var(--ch-purple); background:var(--bg2); display:flex; flex-direction:column; gap:2px; }
+  .rg-bot .it { display:grid; grid-template-columns:14px minmax(0,1fr) auto; gap:2px 10px; align-items:start; padding:5px 0; border-bottom:1px solid var(--border); font-size:11px; }
+  .rg-bot .it:last-child { border-bottom:none; }
+  .rg-bot .pip { width:11px; height:11px; border-radius:50%; border:1.5px solid var(--muted); margin-top:3px; box-sizing:border-box; }
+  .rg-bot .pip.ok { background:var(--green); border-color:var(--green); }
+  .rg-bot .pip.no { border-color:var(--red); }
+  .rg-bot .rule { font-size:9.5px; color:var(--muted); }
   .rg-segs { display:flex; gap:3px; }
   .rg-seg { flex:1; height:7px; background:var(--border); }
   .rg-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 12px; font-size:11px; }
@@ -790,6 +802,7 @@
         <button class="dir-btn" id="sub-ur" onclick="suShow('ur')" title="Undercut &amp; reclaim: steun die &ge; 5 dagen hield, intraday ondergeschoten en heroverd op &ge; 2&times; volume, boven de 200 SMA">U&amp;R <span id="suc-ur" style="color:var(--muted)"></span></button>
         <button class="dir-btn active-long" id="sub-bo" onclick="suShow('bo')" title="Base breakout: slot boven de 52-weeks high (pivot &ge; 5 weken oud), base &le; 35% diep, volume &ge; 1,5&times;, &le; 5% boven de pivot">BREAKOUT <span id="suc-bo" style="color:var(--muted)"></span></button>
         <span style="margin-left:auto;order:9"></span><button class="dir-btn" style="order:10" onclick="chShowList('su', 'SETUP ' + SU_NAME[suMode])" title="open alle tickers van deze tab als chartkaarten in 06">▦ CHARTS</button>
+        <button class="dir-btn" id="sub-rh" style="display:none" onclick="suShow('rh')" title="Leiders (RS &ge; 85, &le; 8% onder de high, boven de EMA50) die hun eigen low houden terwijl de Nasdaq een lagere low zet &mdash; zichtbaar in regime C/D">RS-HOUDERS <span id="suc-rh" style="color:var(--muted)"></span></button>
         <button class="dir-btn" id="sub-gu" onclick="suShow('gu')" title="Buyable gap-up (Morales &amp; Kacher): gap &ge; 0,75 &times; ATR(40) boven de vorige high, volume &ge; 1,5&times;, gap aan het slot nog open, Stage 2, RS &ge; 70">GAP-UP <span id="suc-gu" style="color:var(--muted)"></span></button>
       </div>
       <div class="su-badge" id="su-badge"></div>
@@ -2590,7 +2603,11 @@ function renderRegime() {
   if (!rg) { box.innerHTML = light + ibdCard; renderRegimeStrip(); return; }
 
   const nq = rg.nasdaq || {}, sp = rg.sp500 || {}, ru = rg.russell || {};
-  const dots = (nq.last20 || []).map(x => `<div class="rg-dot${x.dd ? ' on' : ''}" title="${urDate(x.d)}${x.dd ? ' · distribution day' : ''}"></div>`).join('');
+  const dots = (nq.last20 || []).map(x => {
+    const tip = urDate(x.d) + (x.dd ? ' · distribution day' : '') + (x.cap ? ' · capitulatievolume' : '') + (x.vix ? ' · VIX-spike' : '');
+    return `<div class="rg-day" title="${tip}"><div class="rg-cap${x.cap ? '' : ' off'}"></div><div class="rg-dot${x.dd ? ' on' : ''}${x.vix ? ' vx' : ''}"></div></div>`;
+  }).join('');
+  const anyMark = (nq.last20 || []).some(x => x.cap || x.vix);
   const ddCol = nq.dd20 >= 5 ? 'var(--red)' : nq.dd20 >= 3 ? 'var(--amber)' : 'var(--text)';
   const ddCard = `<div class="rg-card">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="rg-lbl">Distribution days · Nasdaq · 20 sessies</div>
@@ -2599,6 +2616,7 @@ function renderRegime() {
         <span style="font-size:9.5px;color:var(--muted);margin-left:auto">S&amp;P: ${sp.dd20 ?? '—'}/5 (info)</span></div>
       <div class="rg-dots">${dots}</div>
       <div style="font-size:9.5px;color:var(--muted)">${(nq.dd_dates || []).map(urDate).join(' · ') || 'geen'} — DD = ≤ −0,1% op hoger volume of vlak met slot in onderste 25%; vervalt na 20 sessies of +5%</div>
+      ${anyMark ? `<div style="font-size:9.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap"><span><span class="rg-cap" style="display:inline-block;vertical-align:0"></span> capitulatievolume</span><span><span class="rg-dot vx" style="display:inline-block;vertical-align:-1px;margin:0 2px"></span> VIX-spike</span></div>` : ''}
     </div>`;
 
   let ftdCard;
@@ -2646,8 +2664,73 @@ function renderRegime() {
           : `<span class="rg-flag" style="color:${agree ? 'var(--green)' : 'var(--amber)'};border-color:${agree ? 'var(--green)' : 'var(--amber)'}">${agree ? 'EENS' : 'ONEENS'}</span>
              <span style="color:var(--muted)">IBD ${L} · eigen model ${rg.model.regime} (sinds ${urDate(rg.model.since)})</span>`}
       </div></div>`;
-  box.innerHTML = light + ibdCard + ddCard + ftdCard + lvl;
+  box.innerHTML = light + ibdCard + ddCard + ftdCard + lvl + bottomCard(R, rg);
+  const rhb = $('sub-rh'); if (rhb) rhb.style.display = showBottom(R, rg) ? '' : 'none';
+  if (suMode === 'rh' && !showBottom(R, rg)) suShow('bo');
   renderRegimeStrip();
+}
+
+// v7.5 bottom checklist (O'Neil/MK, after a 5-sign list on X): visible in C/D and in
+// the first 5 sessions after an FTD. Signals 1, 2, 5 and the price half of 3 come from
+// regime.json (bottom), the new-lows half of 3 and signal 4 from setups.json (bottom).
+function showBottom(R, rg) {
+  const L = R && R.letter;
+  if (L === 'C' || L === 'D') return true;
+  const f = rg && rg.ftd;
+  return !!(f && f.status === 'active' && f.days_since != null && f.days_since <= 5);
+}
+function bottomItems(rg) {
+  const b = rg.bottom || {}, sb = (suData && suData.bottom) || {}, P = b.params || {};
+  const n2 = v => v == null ? '—' : String(v).replace('.', ',');
+  const it = [];
+  const c = b.cap || {};
+  it.push({ t: 'Capitulatievolume', st: c.ok ? 'ok' : 'no',
+    rule: `Nasdaq ≤ ${n2(P.cap_drop)}% op QQQ-volume ≥ ${n2(P.cap_vol_prev)}× de vorige sessie (en ≥ ${n2(P.cap_vol_50)}× 50d), of ≥ ${n2(P.cap_vol_alone)}× 50d · ${b.window || 30} sessies`,
+    val: c.ok ? `JA · ${urDate(c.last.date)} · ${n2(c.last.chg)}% · ${n2(c.last.vol_prev)}× vorige` : 'NEE' });
+  const v = b.vix || {};
+  it.push({ t: 'VIX-spike', st: v.ok ? 'ok' : 'no',
+    rule: `VIX ≥ +${n2(P.vix_jump)}% in één sessie, of een slot dat boven ${n2(P.vix_level)} komt · nu ${n2(v.close)}`,
+    val: v.ok ? `JA · ${urDate(v.last.date)} · ${n2(v.last.prev)} → ${n2(v.last.close)}` : 'NEE' });
+  const a = b.anchor || {}, t = b.test, s3 = sb.s3;
+  let st3 = 'wait', val3 = 'WACHT · nog geen test', rule3 = `Terug naar de low van ${urDate(a.date)} (${fmtN(a.low)}, ≤ +${n2(P.test_near)}%): kleiner verlies en minder volume dan op ${(b.ref && b.ref.dates || []).map(urDate).join(' / ') || '—'}, minder nieuwe 52w-lows`;
+  if (t) {
+    const nlOk = s3 ? s3.fewer : null;
+    const ok = t.px_ok && nlOk !== false;
+    st3 = ok ? 'ok' : 'no';
+    val3 = `${ok ? 'JA' : 'NEE'} · ${urDate(t.date)} · ${n2(t.chg)}% · vol ${t.lower_vol ? 'lager' : 'hoger'}${s3 ? ` · lows ${s3.test_n ?? '—'} vs ${s3.ref_n}` : ''}`;
+  }
+  it.push({ t: 'Volgende daling doet minder schade', st: st3, rule: rule3, val: val3 });
+  const h = sb.holders;
+  let st4 = 'wait', val4 = 'WACHT', rule4 = 'RS-houders (tab 05b) blijven boven hun eigen low terwijl de Nasdaq een lagere low zet';
+  if (h && h.test) {
+    st4 = h.ok ? 'ok' : 'no';
+    rule4 = `Nasdaq zakte op ${urDate(h.test.undercut)} ${n2(h.test.undercut_pct)}% onder de low van ${urDate(h.test.prior)}: welke leiders hielden hun eigen low? Voldaan bij ≥ ${h.hold_min}`;
+    val4 = `${h.ok ? 'JA' : 'NEE'} · ${h.n_held} van ${h.n} hielden`;
+  } else if (h) { val4 = `WACHT · ${h.n} kandidaten`; }
+  it.push({ t: 'Leiders houden stand', st: st4, rule: rule4, val: val4 });
+  const f = rg.ftd, ra = rg.rally;
+  let st5 = 'wait', val5 = 'WACHT · rally-dag 1 nodig', rule5 = 'Dag ≥ 4 van een rally-poging: Nasdaq of S&P sluit boven de drempel op hoger volume';
+  if (f && f.status === 'active' && f.days_since != null && f.days_since <= 5) { st5 = 'ok'; val5 = `JA · ${urDate(f.last)} · +${n2(f.pct)}%`; }
+  else if (ra) { val5 = ra.day >= 4 ? `MOGELIJK · dag ${ra.day} · ≥ +${n2(ra.ftd_thr)}%` : `WACHT · dag ${ra.day} · vanaf ${urDate(ra.ftd_from)} · ≥ +${n2(ra.ftd_thr)}%`; }
+  it.push({ t: 'Follow-through day', st: st5, rule: rule5, val: val5 });
+  return it;
+}
+function bottomCard(R, rg) {
+  if (!rg || !rg.bottom || !showBottom(R, rg)) return '';
+  const it = bottomItems(rg), n = it.filter(x => x.st === 'ok').length;
+  const col = { ok: 'var(--green)', no: 'var(--red)', wait: 'var(--muted)' };
+  const pips = it.map(x => `<div class="pip ${x.st}" style="margin:0"></div>`).join('');
+  return `<div class="rg-bot">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <div class="rg-lbl" style="color:var(--ch-purple)">Bodem-checklist</div>
+      <span style="font-size:22px;font-weight:700;line-height:1">${n}<span style="font-size:13px;color:var(--muted)"> / 5</span></span>
+      <span style="display:flex;gap:5px;align-self:center" aria-hidden="true">${pips}</span>
+      <span style="font-size:9.5px;color:var(--muted);margin-left:auto">correctielow ${fmtN(rg.bottom.anchor && rg.bottom.anchor.low)} (${urDate(rg.bottom.anchor && rg.bottom.anchor.date)}) · geen koopsignaal, wel de volgorde naar een nieuwe uptrend</span>
+    </div>
+    ${it.map((x, i) => `<div class="it"><div class="pip ${x.st}" role="img" aria-label="${x.st === 'ok' ? 'voldaan' : x.st === 'no' ? 'niet voldaan' : 'nog niet'}"></div>
+      <div><div style="font-weight:600">${i + 1}. ${x.t}</div><div class="rule">${esc(x.rule)}</div></div>
+      <div style="text-align:right;white-space:nowrap;color:${col[x.st]}">${esc(x.val)}</div></div>`).join('')}
+  </div>`;
 }
 
 // Badge texts per setup and regime — numbers from MEETRESULTATEN-T1-T2.md
@@ -2671,13 +2754,17 @@ const SU_BADGE = {
   pb: { A: ['n', 'Actief · 0,5% risico per trade.'], B: ['n', 'Actief · 0,5% risico per trade.'],
         C: ['a', 'Geel: 0,25–0,3% risico, max 2–3 posities.'],
         D: ['m', 'Geen nieuwe longs (eigen regel). Klaarzetten voor de FTD; trigger blijft intraday.'],
-        def: 'Stage 2, RS ≥ 85, ≥ 3 lagen (EMA 9/21/50, 10W, AVWAP) binnen 1 ATR. Sortering: aantal lagen, dan afstand.' }
+        def: 'Stage 2, RS ≥ 85, ≥ 3 lagen (EMA 9/21/50, 10W, AVWAP) binnen 1 ATR. Sortering: aantal lagen, dan afstand.' },
+  rh: { A: ['g', 'Net na de FTD: deze namen breken volgens O\'Neil/MK als eerste uit. Kijk naar breakouts en pullbacks in deze lijst.'],
+        B: ['n', 'Alleen relevant in een correctie.'], C: ['b', 'Uptrend onder druk: welke leiders blijven staan als de index zakt?'],
+        D: ['b', 'Geen koopsignaal. De leiders van de volgende rally houden hun low als de index onderuitgaat en breken als eerste uit na de FTD: klaarzetten voor de watchlist.'],
+        def: 'RS ≥ 85, ≤ 8% onder de 52w-high, boven de EMA50, prijs ≥ $15, $vol ≥ 50M, cap ≥ $2B. Max 2 per industrie in de lijst (tellers over alles). Test = low sinds de lagere index-low t.o.v. de eigen low rond de eerdere zware dag (±2 sessies).' }
 };
 const SU_TONE = { g: ['var(--green)', 'rgba(0,230,118,0.07)'], n: ['var(--muted)', 'transparent'],
                   r: ['var(--red)', 'rgba(255,23,68,0.07)'], a: ['var(--amber)', 'rgba(255,179,0,0.07)'],
                   b: ['var(--blue)', 'rgba(64,196,255,0.06)'], m: ['var(--muted)', 'var(--bg2)'] };
-const SU_NAME = { pb: 'PULLBACK', ur: 'U&R', bo: 'BREAKOUT', gu: 'GAP-UP' };
-const SU_LIST = { pb: 'pullback', ur: 'ur', bo: 'breakout', gu: 'gapup' };
+const SU_NAME = { pb: 'PULLBACK', ur: 'U&R', bo: 'BREAKOUT', gu: 'GAP-UP', rh: 'RS-HOUDERS' };
+const SU_LIST = { pb: 'pullback', ur: 'ur', bo: 'breakout', gu: 'gapup', rh: 'holders' };
 
 function suBadge(mode) {
   const R = curRegime || {}, L = R.letter;
@@ -2694,7 +2781,7 @@ function renderRegimeStrip() {
   const el = $('regime-strip'); if (!el) return;
   const L = curRegime && curRegime.letter;
   if (!L) { el.innerHTML = ''; return; }
-  el.innerHTML = '<span class="rg-lbl" style="margin-right:4px">Setups in regime ' + L + '</span>' + ['pb', 'ur', 'bo', 'gu'].map(m => {
+  el.innerHTML = '<span class="rg-lbl" style="margin-right:4px">Setups in regime ' + L + '</span>' + ['pb', 'ur', 'bo', 'gu'].concat(showBottom(curRegime, rgData) ? ['rh'] : []).map(m => {
     const b = suBadge(m), c = SU_TONE[b.tone][0];
     return `<a class="rg-chip" href="#setups" onclick="suShow('${m}')" style="color:${c};border-color:${b.tone === 'n' || b.tone === 'm' ? 'var(--border2)' : c};text-decoration:none" title="${esc(b.text)}">${SU_NAME[m]}</a>`;
   }).join('');
@@ -2710,10 +2797,14 @@ const SU_HEAD = {
        <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th title="huidige koers t.o.v. de pivot">Nu vs pivot</th><th></th></tr>`,
   gu: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th title="datum van de gap">Gap-up</th><th title="open t.o.v. het vorige slot">Gap</th><th title="open − vorige high, in ATR(40)">Gap / ATR</th><th title="volume op de gapdag t.o.v. het 50-daags gemiddelde">Vol &times;</th>
        <th title="stop = low van de gapdag · klik om in de calculator te laden">Stop (low)</th><th title="koers t.o.v. de low van de gapdag">Boven low</th><th title="staat de low van de gapdag nog?">Low houdt</th><th>RS</th>
+       <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th></th></tr>`,
+  rh: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th title="afstand tot de 52-weeks high">vs high</th>
+       <th title="eigen low rond de eerdere zware dag van de index (±2 sessies)">Eigen low</th><th title="laagste low sinds de lagere index-low">Low sinds</th><th title="HIELD = bleef boven de eigen low terwijl de Nasdaq een lagere low zette">Test</th><th title="koers t.o.v. de eigen low">vs low</th>
        <th title="Trend Template (Minervini), aantal van 8">TT</th><th title="groepsgenoten (zelfde industrie) met RS ≥ 80">GRP</th><th></th></tr>`
 };
 const SU_EMPTY = { pb: 'Geen Stage 2-leiders in een confluence-zone van ≥ 3 lagen.', ur: 'Geen verse undercut &amp; reclaim — deze setup vult zich vooral op omslagdagen.',
-                   bo: 'Geen base breakouts in de laatste 5 sessies.', gu: 'Geen buyable gap-ups in de laatste 5 sessies.' };
+                   bo: 'Geen base breakouts in de laatste 5 sessies.', gu: 'Geen buyable gap-ups in de laatste 5 sessies.',
+                   rh: 'Geen leiders die aan de RS-houders-criteria voldoen.' };
 const LAYER = { ema9: '9', ema21: '21', ema50: '50', ma10w: '10W', avwap: 'AV' };
 const ttCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 8 ? 'var(--green)' : v >= 6 ? 'var(--text)' : 'var(--muted)'}">${v}/8</span>`;
 const grpCell = v => v == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${v >= 1 ? 'var(--text)' : 'var(--amber)'}" title="${v === 0 ? 'geen groepsbevestiging (O\'Neil: liever niet kopen)' : v + ' groepsgenoten met RS ≥ 80'}">${v}</span>`;
@@ -2731,12 +2822,14 @@ async function loadSetups() {
     const cnt = (k) => { const shown = (L[SU_LIST[k]] || []).length, tot = n[SU_LIST[k]] ?? shown; return '(' + (tot > shown ? shown + '/' + tot : shown) + ')'; };
     ['pb', 'ur', 'bo'].forEach(k => { const c = $('suc-' + k); if (c) c.textContent = cnt(k); });
     const cg = $('suc-gu'); if (cg) cg.textContent = '(' + (suData.n_gapup_held ?? 0) + ' houdt / ' + (n.gapup ?? 0) + ')';
+    const ch = $('suc-rh'), hb = suData.bottom && suData.bottom.holders;
+    if (ch) ch.textContent = hb ? (hb.test ? '(' + hb.n_held + ' hield / ' + hb.n + ')' : '(' + hb.n + ')') : '';
     const u = $('su-updated'); if (u) u.textContent = '· ' + (suData.updated_at || '');
   } catch (err) { suData = null; }
 }
 function suShow(mode) {
   suMode = mode;
-  ['pb', 'ur', 'bo', 'gu'].forEach(m => { const b = $('sub-' + m); if (b) b.classList.toggle('active-long', m === mode); });
+  ['pb', 'ur', 'bo', 'gu', 'rh'].forEach(m => { const b = $('sub-' + m); if (b) b.classList.toggle('active-long', m === mode); });
   renderSetups();
 }
 function renderSetups() {
@@ -2791,6 +2884,17 @@ function renderSetups() {
         <td style="color:${(b.base_n || 0) >= 3 ? 'var(--amber)' : 'var(--text)'}" title="${(b.base_n || 0) >= 3 ? 'late base: faalt vaker (O\'Neil, Minervini)' : 'vroege base'}">${b.base_n ?? '—'}</td>
         <td>${r.rs_rating ?? '—'}</td><td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td>
         <td>${pct(b.now_vs_pivot, 1)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
+    }).join('');
+  } else if (suMode === 'rh') {
+    tb.innerHTML = rows.map(r => {
+      const h = r.rh || {};
+      const tc = h.held == null ? '<span style="color:var(--dim)">—</span>' : `<span style="color:${h.held ? 'var(--green)' : 'var(--red)'};font-weight:600">${h.held ? 'HIELD' : 'BRAK'}</span>`;
+      return `<tr class="nt-row" ${open(r.ticker)}>${tkCell(r)}
+        <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td><td style="font-weight:600">${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
+        <td>${pct(r.off_52w_high, 1)}</td>
+        <td>${h.ref_low == null ? '—' : '$' + fmtPrice(h.ref_low)}</td><td>${h.test_low == null ? '—' : '$' + fmtPrice(h.test_low)}</td>
+        <td>${tc}</td><td>${h.vs_ref_pct == null ? '—' : pct(h.vs_ref_pct, 1)}</td>
+        <td>${ttCell(r.tt)}</td><td>${grpCell(r.grp)}</td><td style="color:var(--accent)">&rarr;</td></tr>`;
     }).join('');
   } else {
     tb.innerHTML = rows.map(r => {

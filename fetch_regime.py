@@ -53,6 +53,18 @@ A_DAYS        = 25
 CHOP_WIN, CHOP_FLAG = 60, 3
 HISTORY_MAX   = 750
 
+# v7.5 bottom checklist (O'Neil/MK: capitulation, fear, a softer retest, leaders holding, FTD).
+# Measured 2015-2026: the capitulation rule fires ~4x a year (e.g. 4 Apr 2025, 9+12 Mar 2020,
+# 30 Oct + 5 Nov 2026), the VIX rule ~7x a year.
+BOT_WIN       = 30       # sessions the checklist looks back
+CAP_DROP      = -0.01    # capitulation: Nasdaq <= -1% ...
+CAP_VOL_PREV  = 2.0      # ... on QQQ volume >= 2x the prior session
+CAP_VOL_50    = 1.5      # ... and >= 1.5x its 50-session average,
+CAP_VOL_ALONE = 2.5      # ... or on QQQ volume >= 2.5x its 50-session average by itself
+VIX_JUMP      = 0.30     # VIX spike: +30% in one session ...
+VIX_LEVEL     = 25.0     # ... or a close crossing above 25
+TEST_NEAR     = 0.015    # a retest: a low back within 1.5% of the correction low (a lower low resets the anchor)
+
 
 def dd_flags(x):
     r = x["Close"].pct_change()
@@ -146,6 +158,69 @@ def run_model(q, s):
     return df, q, dd, live, thr, ftds, (stby_low, stby_high)
 
 
+def bottom_block(q, qqq, vix):
+    """Signals 1, 2 and the price/volume half of 3 for the bottom checklist, plus the
+    dates fetch_scan needs for 3 (new lows) and 4 (leaders holding). Indexed on q.
+
+    anchor A = the lowest Nasdaq low of the window (the correction low so far).
+    heavy days = capitulation days (signal 1), or else the single worst day.
+    3 (softer retest): a later session (>= A+2) back within TEST_NEAR of A's low, with a
+      smaller loss and lower QQQ volume than the worst heavy day up to A (fetch_scan adds:
+      fewer new 52w lows than on the heavy days).
+    4 (leaders hold): needs an earlier heavy day P whose low the index undercut at A; fetch_scan
+      checks which leaders stayed above their own low around P while the index made that low."""
+    n = len(q)
+    r = q["Close"].pct_change()
+    L = q["Low"].values
+    qv = qqq["Volume"].reindex(q.index)
+    qr = qv / qv.shift(1)
+    qa = qv / qv.rolling(50).mean().shift(1)
+    cap = ((r <= CAP_DROP) & (((qr >= CAP_VOL_PREV) & (qa >= CAP_VOL_50)) | (qa >= CAP_VOL_ALONE))).fillna(False)
+    vc = vix["Close"].reindex(q.index).ffill()
+    vr = vc.pct_change()
+    vsp = ((vr >= VIX_JUMP) | ((vc > VIX_LEVEL) & (vc.shift(1) <= VIX_LEVEL))).fillna(False)
+    w0 = max(1, n - BOT_WIN)
+    win = list(range(w0, n))
+    d = lambda i: str(q.index[i].date())
+    f1 = lambda v: None if v is None or pd.isna(v) else round(float(v), 2)
+    iv = lambda v: None if pd.isna(v) else int(v)
+    cap_i = [i for i in win if cap.iloc[i]]
+    vix_i = [i for i in win if vsp.iloc[i]]
+    heavy = cap_i or [min(win, key=lambda i: r.iloc[i])]
+    A = min(win, key=lambda i: L[i])
+    upto = [i for i in heavy if i <= A] or [A]
+    worst = min(upto, key=lambda i: r.iloc[i])
+    ref = {"dates": [d(i) for i in upto], "chg": f1(min(r.iloc[i] for i in upto) * 100),
+           "qqq_vol": iv(max(qv.iloc[i] for i in upto))}
+    tests = [j for j in range(A + 2, n) if L[j] <= L[A] * (1 + TEST_NEAR)]
+    test = None
+    if tests:
+        j = tests[-1]
+        test = {"date": d(j), "chg": f1(r.iloc[j] * 100), "qqq_vol": iv(qv.iloc[j]), "low": f1(L[j]),
+                "smaller_loss": bool(r.iloc[j] > min(r.iloc[i] for i in upto)),
+                "lower_vol": bool(qv.iloc[j] < max(qv.iloc[i] for i in upto)) if not pd.isna(qv.iloc[j]) else False}
+        test["px_ok"] = test["smaller_loss"] and test["lower_vol"]
+    prior = [i for i in heavy if i <= A - 2 and L[i] > L[A]]
+    P = min(prior, key=lambda i: L[i]) if prior else None
+    return {
+        "window": BOT_WIN,
+        "anchor": {"date": d(A), "low": f1(L[A]), "chg": f1(r.iloc[A] * 100), "qqq_vol": iv(qv.iloc[A])},
+        "ref": ref,
+        "cap": {"ok": bool(cap_i), "dates": [d(i) for i in cap_i],
+                "last": {"date": d(cap_i[-1]), "chg": f1(r.iloc[cap_i[-1]] * 100),
+                         "vol_prev": f1(qr.iloc[cap_i[-1]]), "vol_50": f1(qa.iloc[cap_i[-1]])} if cap_i else None},
+        "vix": {"ok": bool(vix_i), "dates": [d(i) for i in vix_i], "close": f1(vc.iloc[-1]),
+                "last": {"date": d(vix_i[-1]), "close": f1(vc.iloc[vix_i[-1]]), "prev": f1(vc.iloc[vix_i[-1] - 1]),
+                         "chg": f1(vr.iloc[vix_i[-1]] * 100)} if vix_i else None},
+        "test": test,
+        "leader_test": {"prior": d(P), "prior_low": f1(L[P]), "undercut": d(A),
+                        "undercut_pct": f1((L[A] / L[P] - 1) * 100)} if P is not None else None,
+        "params": {"cap_drop": CAP_DROP * 100, "cap_vol_prev": CAP_VOL_PREV, "cap_vol_50": CAP_VOL_50, "cap_vol_alone": CAP_VOL_ALONE,
+                   "vix_jump": VIX_JUMP * 100, "vix_level": VIX_LEVEL, "test_near": TEST_NEAR * 100},
+        "_flags": (cap, vsp),
+    }
+
+
 def vs_ma(close, n):
     ma = close.rolling(n).mean().iloc[-1]
     return round((float(close.iloc[-1]) / float(ma) - 1) * 100, 1) if ma and not np.isnan(ma) else None
@@ -163,17 +238,19 @@ def next_sessions(d, n):
 
 def main():
     print("TRADERDECK — Market regime")
-    raw = yf.download(["^IXIC", "^GSPC", "^RUT"], start=START, interval="1d",
+    raw = yf.download(["^IXIC", "^GSPC", "^RUT", "QQQ", "^VIX"], start=START, interval="1d",
                       group_by="ticker", auto_adjust=True, progress=False, threads=True)
     q = raw["^IXIC"].dropna(subset=["Close"])
     s = raw["^GSPC"].dropna(subset=["Close"])
     r = raw["^RUT"].dropna(subset=["Close"])
+    qqq = raw["QQQ"].dropna(subset=["Close"])
+    vix = raw["^VIX"].dropna(subset=["Close"])
     # A session still in progress (Yahoo returns today's partial bar) is dropped
     # when the run happens before the US close (21:00 UTC is safe all year).
     now = dt.datetime.now(dt.timezone.utc)
     if now.hour < 21:
         today = pd.Timestamp(now.date())
-        q, s, r = [x[x.index < today] for x in (q, s, r)]
+        q, s, r, qqq, vix = [x[x.index < today] for x in (q, s, r, qqq, vix)]
     df, qv, dd, live, thr, ftds, stby = run_model(q, s)
     last = df.iloc[-1]
     idx = df.index
@@ -190,7 +267,15 @@ def main():
     s_live = dd_live(s[s["Volume"] > 0], dd_s)[-1]
     s_idx = s[s["Volume"] > 0].index
 
-    last20 = [{"d": str(idx[k].date()), "dd": bool(k in ddq_live)} for k in range(len(df) - 20, len(df))]
+    try:
+        bottom = bottom_block(qv, qqq, vix)
+        capf, vixf = bottom.pop("_flags")
+    except Exception as e:
+        print(f"  (bottom checklist skipped: {e})")
+        bottom, capf, vixf = None, None, None
+    last20 = [{"d": str(idx[k].date()), "dd": bool(k in ddq_live),
+               "cap": bool(capf.iloc[k]) if capf is not None else False,
+               "vix": bool(vixf.iloc[k]) if vixf is not None else False} for k in range(len(df) - 20, len(df))]
 
     ftd_out = None
     if ftds:
@@ -232,6 +317,7 @@ def main():
         "ftd": ftd_out,
         "standby": {"low": round(float(stby[0]), 2), "high": round(float(stby[1]), 2)} if last.state == "PRES" else None,
         "chop": {"flips60": flips, "flag": flips >= CHOP_FLAG},
+        "bottom": bottom,
         "params": {"dd_win": DD_WIN, "dd_standby": DD_STANDBY, "dd_expire_up": DD_EXPIRE_UP,
                    "ftd_min_day": FTD_MIN_DAY, "a_days": A_DAYS},
     }
