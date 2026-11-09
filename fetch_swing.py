@@ -37,17 +37,25 @@ OUTPUT_PATH     = "data/swing_data.json"
 PORTFOLIO_PATH  = "data/carnivore_portfolios.json"
 
 # ─────────────────────────────────────────────────────────
-#  PERSONAL WATCHLIST  (edit freely — Carnivore tickers are added automatically)
+#  PERSONAL WATCHLIST  (v7.4: data/watchlist.json, edited from the dashboard)
 # ─────────────────────────────────────────────────────────
-WATCHLIST = [
-    "SNDK", "DOCN", "RKLB",                 # Iain examples
-    "NVDA", "AVGO", "MU", "AMD", "ARM",     # Semis
-    "PLTR", "CRWD", "PANW", "NET",          # Software / cyber
-    "HOOD", "COIN", "MSTR",                 # Fintech / crypto proxies
-    "VRT", "GEV", "CEG",                    # Power / AI infra
-    "LLY", "ISRG",                          # Health care leaders
-    "ASTS", "LUNR",                         # Space
-]
+WATCHLIST_PATH = "data/watchlist.json"
+
+
+def load_watchlist():
+    """Tickers from data/watchlist.json ({"tickers": [{"ticker", "added", "source"}]}).
+    The dashboard writes this file through the GitHub contents API; Carnivore names
+    are added separately below and are not part of it."""
+    try:
+        with open(WATCHLIST_PATH) as f:
+            d = json.load(f)
+        return [str(x["ticker"]).upper().strip() for x in d.get("tickers", []) if x.get("ticker")]
+    except Exception as e:
+        print(f"  (no watchlist file: {e})")
+        return []
+
+
+WATCHLIST = load_watchlist()
 
 # Hard filters (Stock DNA). Thresholds from "Mijn Swing Strategie".
 DNA = {
@@ -68,7 +76,7 @@ REGIME_YELLOW = 40.0
 #  UNIVERSE
 # ─────────────────────────────────────────────────────────
 def load_universe():
-    sources = {"watchlist": list(WATCHLIST), "carnivore_sr": [], "carnivore_lt": []}
+    sources = {"watchlist": load_watchlist(), "carnivore_sr": [], "carnivore_lt": []}
     try:
         with open(PORTFOLIO_PATH) as f:
             p = json.load(f)
@@ -467,7 +475,7 @@ def analyse(ticker, df, spy_chg):
     # >= 1.5x the 50-day average, from above the 50-day. Stop = low of the gap
     # day; "held" says whether that low still stands. Not yet measured (T4) --
     # data/setups_log.json records every new hit so it can be measured live.
-    GU_ATR_K, GU_VOL = 0.75, 1.5
+    GU_ATR_K, GU_VOL, GU_CLOSE_POS = 0.75, 1.5, 0.5
     gu = None
     if len(df) >= 60:
         o_g, h_g, l_g, c_g, v_g = df["Open"].values, h.values, l.values, c.values, v.values
@@ -485,10 +493,23 @@ def analyse(ticker, df, spy_chg):
                 continue
             low_g = float(l_g[i])
             held = bool(i == len(df) - 1 or float(np.min(l_g[i + 1:])) >= low_g)
-            gu = {"date": str(df.index[i].date()), "gap_pct": r2((o_g[i] / c_g[k] - 1) * 100, 1),
-                  "gap_atr": r2(gap / atr40_g[k]), "vol_x": r2(v_g[i] / av50_g[k]),
-                  "low": r2(low_g), "held": held,
-                  "dist_low_pct": r2((close / low_g - 1) * 100, 1), "age": int(len(df) - 1 - i)}
+            # v7.3: the gap must still be open at the CLOSE (close above yesterday's high)
+            # and the close in the upper half of the day's range. RVMD 5 Nov 2026 opened
+            # +4.7% (0.87 ATR) on 3.9x volume and closed on its low, -11% on the day: a
+            # gap-up reversal, not a buyable gap. Rejected gaps are still logged (valid=False)
+            # so T4 can measure whether this filter earns its place.
+            rng_g = float(h_g[i] - l_g[i])
+            close_pos = (float(c_g[i]) - float(l_g[i])) / rng_g if rng_g > 0 else 0.0
+            open_at_close = bool(c_g[i] > h_g[k])
+            hit = {"date": str(df.index[i].date()), "gap_pct": r2((o_g[i] / c_g[k] - 1) * 100, 1),
+                   "gap_atr": r2(gap / atr40_g[k]), "vol_x": r2(v_g[i] / av50_g[k]),
+                   "low": r2(low_g), "held": held,
+                   "dist_low_pct": r2((close / low_g - 1) * 100, 1), "age": int(len(df) - 1 - i),
+                   "close_pos": r2(close_pos), "open_at_close": open_at_close,
+                   "close_vs_prev_high": r2((float(c_g[i]) / float(h_g[k]) - 1) * 100, 1),
+                   "valid": bool(open_at_close and close_pos >= GU_CLOSE_POS)}
+            if hit["valid"] or gu is None or not gu.get("valid"):
+                gu = hit                                   # newest valid hit wins; else newest hit
 
     # -- Trend Template (Minervini p94), 7 of 8 here; RS >= 70 is set where RS exists
     tt_flags = None

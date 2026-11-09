@@ -857,6 +857,7 @@ def main():
                    "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi",
                    "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu")
         cand = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
+        gu_rejected = []
         for r in rows:
             if (r.get("price") or 0) < SETUP_MIN_PRICE or (r.get("avg_dollar_vol") or 0) < SETUP_MIN_DOLLAR_VOL:
                 continue
@@ -871,7 +872,10 @@ def main():
             if r.get("bo"):
                 cand["breakout"].append(r)
             if r.get("gu") and r.get("stage") == 2 and rs >= SETUP_GU_RS_MIN:
-                cand["gapup"].append(r)
+                if r["gu"].get("valid", True):
+                    cand["gapup"].append(r)
+                else:
+                    gu_rejected.append(r)          # v7.3: gap closed (or close in the lower half) -> log only
 
         def near(r):
             d = [abs(v) for v in (r.get("dist_atr") or {}).values() if v is not None]
@@ -888,6 +892,7 @@ def main():
         su_payload = {"updated_at": payload["updated_at"],
                       "n_total": {k: len(v) for k, v in cand.items()},
                       "n_gapup_held": sum(1 for r in cand["gapup"] if r["gu"].get("held")),
+                      "n_gapup_rejected": len(gu_rejected),
                       "thresholds": {"cap": SETUP_CAP, "min_price": SETUP_MIN_PRICE,
                                      "min_dollar_vol": SETUP_MIN_DOLLAR_VOL, "min_cap": SETUP_MIN_CAP,
                                      "pullback": {"stage": 2, "rs_min": SETUP_PB_RS_MIN, "min_layers": SETUP_PB_MIN_LAYERS},
@@ -896,6 +901,7 @@ def main():
                                      "breakout": {"pivot": "260-session high, >= 25 sessions old", "max_depth_pct": 35,
                                                   "max_ext_pct": 5, "min_vol_x": 1.5, "max_age_days": 5},
                                      "gapup": {"gap": "open - prior high >= 0.75 x ATR(40)", "min_vol_x": 1.5,
+                                               "close": "close > prior high and in the upper half of the range",
                                                "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5}},
                       "lists": setups}
         with open(SETUPS_PATH, "w") as f:
@@ -932,10 +938,24 @@ def main():
                     if k == "pullback" and id(r) not in shown_pb:
                         continue                         # only log the pullbacks that were shown
                     ref = {"ur": "low", "breakout": "pivot", "gapup": "low"}.get(k)
-                    log.append({"date": d, "ticker": r["ticker"], "setup": k, "regime_model": model_regime,
-                                "price": r.get("price"), "ref": obj.get(ref) if (obj and ref) else None,
-                                "rs": r.get("rs_rating"), "stage": r.get("stage")})
+                    row_log = {"date": d, "ticker": r["ticker"], "setup": k, "regime_model": model_regime,
+                               "price": r.get("price"), "ref": obj.get(ref) if (obj and ref) else None,
+                               "rs": r.get("rs_rating"), "stage": r.get("stage")}
+                    if k == "gapup":
+                        row_log["valid"] = True
+                    log.append(row_log)
                     seen_keys.add(key); added += 1
+            for r in gu_rejected:
+                g = r.get("gu") or {}
+                if g.get("age") != 0:
+                    continue
+                key = (g["date"], r["ticker"], "gapup")
+                if key in seen_keys:
+                    continue
+                log.append({"date": g["date"], "ticker": r["ticker"], "setup": "gapup", "regime_model": model_regime,
+                            "price": r.get("price"), "ref": g.get("low"), "rs": r.get("rs_rating"),
+                            "stage": r.get("stage"), "valid": False})
+                seen_keys.add(key); added += 1
             log = log[-SETUPS_LOG_MAX:]
             with open(SETUPS_LOG_PATH, "w") as f:
                 json.dump({"updated_at": payload["updated_at"], "rows": log}, f, separators=(",", ":"))

@@ -344,6 +344,15 @@
   .ch-ln:hover { color:var(--accent); border-color:var(--accent); }
   .ch-more { display:flex; justify-content:center; padding:14px; grid-column:1 / -1; }
   .ch-setchip { display:inline-flex; gap:6px; align-items:center; }
+  /* ── v7.4: watchlist ── */
+  .wl-ln { font-family:var(--mono); font-size:9px; margin-left:3px; padding:0 3px; border:1px solid var(--border2); color:var(--muted); cursor:pointer; text-decoration:none; vertical-align:1px; }
+  .wl-ln:hover { color:var(--accent); border-color:var(--accent); }
+  .wl-ln.on { color:var(--green); border-color:rgba(0,230,118,0.45); }
+  .wl-bar { display:none; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; padding:8px 10px; border:1px solid var(--border2); background:var(--bg2); font-size:10.5px; }
+  .wl-bar input { background:var(--bg); border:1px solid var(--border2); color:var(--text); font-family:var(--mono); font-size:11px; padding:5px 8px; width:120px; text-transform:uppercase; }
+  .wl-bar .st { color:var(--muted); font-size:9.5px; }
+  .wl-tok { display:none; flex-basis:100%; gap:8px; align-items:center; flex-wrap:wrap; font-size:9.5px; color:var(--muted); }
+  .wl-tok input { width:280px; text-transform:none; }
   /* ── v7: setup module (05b) ── */
   .su-badge { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; padding:9px 12px; margin-bottom:10px; border:1px solid var(--border2); font-size:11px; }
   .su-badge .tag { font-size:9.5px; font-weight:700; letter-spacing:0.12em; white-space:nowrap; }
@@ -712,6 +721,20 @@
       <button class="dir-btn" id="swf-mkt"  onclick="swFilter('mkt')">+ MARKET DNA PASS</button>
       <span style="margin-left:auto"></span><button class="dir-btn" onclick="chShowList('sw', 'SCREENER')" title="open alle tickers van deze lijst als chartkaarten in 06">▦ CHARTS</button>
     </div>
+    <div class="wl-bar" id="wl-bar">
+      <input id="wl-input" placeholder="+ TICKER" maxlength="7" onkeydown="if(event.key==='Enter') wlAddFromInput()" aria-label="ticker toevoegen aan watchlist">
+      <button class="dir-btn active-long" onclick="wlAddFromInput()">TOEVOEGEN</button>
+      <span class="st" id="wl-status">—</span>
+      <span style="margin-left:auto"></span>
+      <button class="dir-btn" onclick="wlToggleToken()" title="GitHub-token om de watchlist in de repo op te slaan">⚙ TOKEN</button>
+      <div class="wl-tok" id="wl-tok">
+        <span>Fine-grained GitHub-token met alleen <b>Contents: read &amp; write</b> op <b>traderdeck1</b>. Blijft in deze browser (localStorage), komt nooit in de repo.</span>
+        <input id="wl-tok-input" type="password" placeholder="github_pat_…" aria-label="GitHub-token">
+        <button class="dir-btn active-long" onclick="wlSaveToken()">OPSLAAN</button>
+        <button class="dir-btn" onclick="wlClearToken()">VERWIJDEREN</button>
+        <span id="wl-tok-msg"></span>
+      </div>
+    </div>
 
     <div class="table-wrap"><table>
       <thead><tr>
@@ -767,7 +790,7 @@
         <button class="dir-btn" id="sub-ur" onclick="suShow('ur')" title="Undercut &amp; reclaim: steun die &ge; 5 dagen hield, intraday ondergeschoten en heroverd op &ge; 2&times; volume, boven de 200 SMA">U&amp;R <span id="suc-ur" style="color:var(--muted)"></span></button>
         <button class="dir-btn active-long" id="sub-bo" onclick="suShow('bo')" title="Base breakout: slot boven de 52-weeks high (pivot &ge; 5 weken oud), base &le; 35% diep, volume &ge; 1,5&times;, &le; 5% boven de pivot">BREAKOUT <span id="suc-bo" style="color:var(--muted)"></span></button>
         <span style="margin-left:auto;order:9"></span><button class="dir-btn" style="order:10" onclick="chShowList('su', 'SETUP ' + SU_NAME[suMode])" title="open alle tickers van deze tab als chartkaarten in 06">▦ CHARTS</button>
-        <button class="dir-btn" id="sub-gu" onclick="suShow('gu')" title="Buyable gap-up (Morales &amp; Kacher): gap &ge; 0,75 &times; ATR(40) boven de vorige high, volume &ge; 1,5&times;, Stage 2, RS &ge; 70">GAP-UP <span id="suc-gu" style="color:var(--muted)"></span></button>
+        <button class="dir-btn" id="sub-gu" onclick="suShow('gu')" title="Buyable gap-up (Morales &amp; Kacher): gap &ge; 0,75 &times; ATR(40) boven de vorige high, volume &ge; 1,5&times;, gap aan het slot nog open, Stage 2, RS &ge; 70">GAP-UP <span id="suc-gu" style="color:var(--muted)"></span></button>
       </div>
       <div class="su-badge" id="su-badge"></div>
       <div class="table-wrap"><table>
@@ -1854,7 +1877,7 @@ let chMoreState = 'no', chMorePromise = null, chSet = [], chSetLabel = '', chPin
 const LIST_TK = {};          // per table: the tickers it currently shows (for "▦ CHARTS")
 function chLink(tk) {
   if (!tk || tk === '—') return '';
-  return `<a class="ch-ln" onclick="event.stopPropagation(); chPin('${tk}')" title="toon de chart van ${tk} in 06 (vastgepind)">▦</a>`;
+  return `<a class="ch-ln" onclick="event.stopPropagation(); chPin('${tk}')" title="toon de chart van ${tk} in 06 (vastgepind)">▦</a>` + wlLink(tk);
 }
 function chEnsureMore() {
   if (chMoreState === 'yes') return Promise.resolve();
@@ -2200,7 +2223,7 @@ function chCard(it) {
   const r3 = m.plan_stop && m.plan_entry_hi ? m.plan_entry_hi + 3 * (m.plan_entry_hi - m.plan_stop) : null;
   el.innerHTML = `
     <div class="ch-hd">
-      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>${saLink(m.ticker)}
+      <span class="ch-tk" title="load in calculator" onclick="loadPlan('${m.ticker}', ${m.plan_entry_hi}, ${m.plan_stop})">${m.ticker}</span>${saLink(m.ticker)}${wlLink(m.ticker)}
       <span class="ch-nm" title="${m.name || ''}">${m.name || ''}</span>
       <span class="ch-dna">${keys.map(k => `<span class="dna-dot ${m.dna && m.dna[k] ? 'ok' : ''}" title="${titles[k]}" style="margin:0"></span>`).join('')}<span>SETUP ${m.setup_score}</span></span>
       ${whyPills(m)}
@@ -2368,6 +2391,114 @@ async function loadThemes() {
 }
 
 // ────────────────────────────────────────────────
+//  v7.4 — WATCHLIST (data/watchlist.json, read/written through the GitHub contents API)
+// ────────────────────────────────────────────────
+// The dashboard is static, so it writes straight to the repo with a fine-grained
+// token (Contents: read & write on this repo only) kept in localStorage. The nightly
+// run (fetch_swing.load_watchlist) picks the list up; names already in the market
+// scan show its data right away.
+const GH_REPO = 'vincentmymanfromamsterdam/traderdeck1', GH_WL_PATH = 'data/watchlist.json', GH_TOKEN_KEY = 'td_gh_token';
+let wlList = [], wlSha = null, wlState = 'loading', wlBusy = false, wlMsg = '';
+const wlHas = tk => wlList.some(e => e.ticker === tk);
+function ghToken() { try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch (e) { return ''; } }
+const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\n/g, ''))));
+const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+function wlLink(tk) {
+  if (!tk || tk === '—') return '';
+  const on = wlHas(tk);
+  return `<a class="wl-ln${on ? ' on' : ''}" data-wl="${tk}" onclick="event.stopPropagation(); wlToggle('${tk}', this)" title="${on ? 'staat op je watchlist — klik om te verwijderen' : 'zet ' + tk + ' op je watchlist'}">${on ? '✓' : '+'}</a>`;
+}
+function wlSourceOf(el) {
+  if (!el) return 'dashboard';
+  const tb = el.closest('tbody'), card = el.closest('.ch-card');
+  if (card) return '06 chart';
+  const id = tb ? tb.id : '';
+  return id === 'sc-tbody' ? '05 market scan' : id === 'sw-tbody' ? '05 screener' : id === 'su-tbody' ? '05b ' + SU_NAME[suMode]
+       : id === 'nt-tbody' ? '07 ' + ntMode : id === 'tb-themes' ? '03b thema' : el.closest('.section') ? el.closest('.section').id : 'dashboard';
+}
+async function wlLoad() {
+  const tok = ghToken();
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_WL_PATH}?ref=main&t=${Date.now()}`,
+                          { headers: tok ? { Authorization: 'Bearer ' + tok } : {}, cache: 'no-store' });
+    if (r.status === 404) { wlList = []; wlSha = null; wlState = 'ok'; }
+    else {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(); wlSha = j.sha;
+      wlList = (JSON.parse(b64dec(j.content)).tickers || []).filter(e => e && e.ticker); wlState = 'ok';
+    }
+  } catch (e) {
+    try { const r = await fetch('data/watchlist.json?t=' + Date.now()); const j = await r.json(); wlList = j.tickers || []; wlState = 'ro'; }
+    catch (e2) { wlList = []; wlState = 'err'; }
+  }
+  wlRefreshUi();
+}
+// op(list) -> new list. On a conflict (someone/something wrote in between) reload and re-apply once.
+async function wlSave(op, msg) {
+  const tok = ghToken();
+  if (!tok) { wlMsg = 'Stel eerst een GitHub-token in (⚙ TOKEN) om de watchlist op te slaan.'; wlToggleToken(true); wlRefreshUi(); return false; }
+  wlBusy = true; wlMsg = 'Opslaan…'; wlRefreshUi();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const next = op(wlList.slice());
+    const body = { message: msg, branch: 'main',
+                   content: b64enc(JSON.stringify({ updated_at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', tickers: next }, null, 1) + '\n') };
+    if (wlSha) body.sha = wlSha;
+    let r;
+    try {
+      r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_WL_PATH}`,
+                      { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' }, body: JSON.stringify(body) });
+    } catch (e) { r = null; }
+    if (r && r.ok) {
+      const j = await r.json(); wlSha = j.content.sha; wlList = next; wlBusy = false;
+      wlMsg = 'Opgeslagen in de repo · wordt na de volgende run volledig geanalyseerd'; wlRefreshUi(); return true;
+    }
+    if (r && (r.status === 409 || r.status === 422) && attempt === 0) { await wlLoad(); continue; }
+    wlBusy = false;
+    wlMsg = !r ? 'Geen verbinding met GitHub — niet opgeslagen.'
+          : (r.status === 401 || r.status === 403) ? 'Token geweigerd (' + r.status + ') — controleer de token en de rechten (Contents: read & write op traderdeck1).'
+          : 'Opslaan mislukt (HTTP ' + r.status + ').';
+    wlRefreshUi(); return false;
+  }
+}
+function wlAdd(tk, source) {
+  tk = String(tk || '').toUpperCase().trim().replace(/^\$/, '');
+  if (!/^[A-Z][A-Z0-9.\-]{0,6}$/.test(tk)) { wlMsg = 'Ongeldige ticker: ' + esc(tk); wlRefreshUi(); return; }
+  if (wlHas(tk)) { wlMsg = tk + ' staat al op je watchlist.'; wlRefreshUi(); return; }
+  const today = new Date().toISOString().slice(0, 10);
+  wlSave(l => l.some(e => e.ticker === tk) ? l : [...l, { ticker: tk, added: today, source: source || 'dashboard' }], 'watchlist: +' + tk);
+}
+function wlRemove(tk) { wlSave(l => l.filter(e => e.ticker !== tk), 'watchlist: -' + tk); }
+function wlToggle(tk, el) { if (wlBusy) return; wlHas(tk) ? wlRemove(tk) : wlAdd(tk, wlSourceOf(el)); }
+function wlAddFromInput() { const i = $('wl-input'); if (!i) return; wlAdd(i.value, '05 watchlist'); i.value = ''; }
+function wlToggleToken(force) {
+  const b = $('wl-tok'); if (!b) return;
+  b.style.display = force === true ? 'flex' : (b.style.display === 'flex' ? 'none' : 'flex');
+}
+function wlSaveToken() {
+  const v = ($('wl-tok-input') || {}).value || '';
+  try { localStorage.setItem(GH_TOKEN_KEY, v.trim()); } catch (e) {}
+  $('wl-tok-input').value = ''; $('wl-tok-msg').textContent = v.trim() ? 'Token opgeslagen in deze browser.' : '';
+  wlLoad();
+}
+function wlClearToken() { try { localStorage.removeItem(GH_TOKEN_KEY); } catch (e) {} $('wl-tok-msg').textContent = 'Token verwijderd.'; wlRefreshUi(); }
+function wlStatus() {
+  const el = $('wl-status'); if (!el) return;
+  const tok = !!ghToken();
+  const base = wlState === 'loading' ? 'Laden…' : wlState === 'err' ? 'Watchlist niet te laden.'
+             : `${wlList.length} namen · ${tok ? 'bewerken aan' : 'alleen lezen — stel een token in om te bewerken'}${wlState === 'ro' ? ' · (kopie van Pages)' : ''}`;
+  el.textContent = wlMsg ? base + ' · ' + wlMsg : base;
+}
+function wlRefreshUi() {
+  document.querySelectorAll('.wl-ln[data-wl]').forEach(a => {
+    const on = wlHas(a.dataset.wl);
+    a.classList.toggle('on', on); a.textContent = on ? '✓' : '+';
+    a.title = on ? 'staat op je watchlist — klik om te verwijderen' : 'zet ' + a.dataset.wl + ' op je watchlist';
+  });
+  if (typeof LIVE_TICKERS !== 'undefined') wlList.forEach(e => { if (!LIVE_TICKERS.includes(e.ticker)) LIVE_TICKERS.push(e.ticker); });
+  if (swMode === 'wl') renderSwing(); else wlStatus();
+}
+
+// ────────────────────────────────────────────────
 //  v7 — REGIME BAR (01) + SETUP MODULE (05b)
 // ────────────────────────────────────────────────
 // Regime label: the IBD status is primary; the own DD/FTD model (data/regime.json)
@@ -2531,7 +2662,7 @@ const SU_BADGE = {
         B: ['n', 'MK: kopen op de open, stop onder de low van de gapdag. Nog niet gemeten (T4) — de meetlog loopt.'],
         C: ['a', 'Nog niet gemeten; MK: voorzichtig bij een zwak model.'],
         D: ['r', 'MK: geen gap-ups kopen als het model op sell staat.'],
-        def: 'Open − vorige high ≥ 0,75 × ATR(40), vol ≥ 1,5× 50d, Stage 2, RS ≥ 70. Stop = low van de gapdag; "houdt" = die low staat nog.' },
+        def: 'Open − vorige high ≥ 0,75 × ATR(40), vol ≥ 1,5× 50d, gap aan het slot nog open (slot > vorige high, in de bovenste helft van de range), Stage 2, RS ≥ 70. Stop = low van de gapdag; "houdt" = die low staat nog.' },
   ur: { A: ['b', 'Gemeten (120 sessies): boven de 200 en vol ≥ 2× → +2,9% mediaan, 71% win in 10 dagen. Nog niet per regime gesplitst.'],
         B: ['b', 'Gemeten (120 sessies): boven de 200 en vol ≥ 2× → +2,9% mediaan, 71% win in 10 dagen. Nog niet per regime gesplitst.'],
         C: ['b', 'Alleen leiders. Gemeten: +2,9% mediaan / 71% win (n klein, niet per regime gesplitst).'],
@@ -2686,6 +2817,7 @@ loadSwingData();
 const _pScan = loadScanData();
 const _pIbd = loadIbd();
 Promise.allSettled([_pScan, _pIbd, loadRegime(), loadSetups()]).then(() => { renderRegime(); renderSetups(); });
+_pScan.then(wlLoad);
 loadSaNews().then(loadChartData);
 loadNotable();
 loadThemes();
@@ -2724,7 +2856,19 @@ function renderSwing() {
   if (swMode === 'setup') rows = rows.filter(r => r.confluence_n >= 2 && r.stage === 2);
   if (swMode === 'sr')    rows = rows.filter(r => r.in_sr);
   if (swMode === 'lt')    rows = rows.filter(r => r.in_lt);
-  if (swMode === 'wl')    rows = rows.filter(r => r.in_watchlist);
+  const bar = $('wl-bar'); if (bar) bar.style.display = swMode === 'wl' ? 'flex' : 'none';
+  if (swMode === 'wl') {
+    const byT = new Map(rows.map(r => [r.ticker, r]));
+    const sc = new Map(((scData && scData.all) || []).map(r => [r.ticker, r]));
+    rows = wlList.slice().reverse().map(e => byT.get(e.ticker) || sc.get(e.ticker) || { ticker: e.ticker, _pending: true });
+    LIST_TK.sw = rows.map(r => r.ticker);
+    wlStatus();
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="18" class="loading-msg">Je watchlist is leeg — voeg een ticker toe hierboven of met + achter een ticker elders op het dashboard.</td></tr>'; return; }
+    tb.innerHTML = rows.map(r => r._pending
+      ? `<tr><td data-tk="${r.ticker}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)}</td><td colspan="17" class="loading-msg" style="text-align:left">Nog geen data — wordt na de volgende nachtelijke run geanalyseerd (als Yahoo de ticker kent).</td></tr>`
+      : swRow(r)).join('');
+    return;
+  }
   if (swMode === 'mkt') {
     const mine = new Set(rows.map(r => r.ticker));
     const extra = ((scData && scData.leaders) || []).filter(r => r.dna_pass && !mine.has(r.ticker));
@@ -2776,7 +2920,7 @@ function swRow(r) {
     const rsCls = r.rs_rating >= 85 ? 'pos' : r.rs_rating >= 60 ? 'neu' : 'neg';
     const stCls = r.stage === 2 ? 'pos' : r.stage === 4 ? 'neg' : 'neu';
     const extCls = 'ext-' + (r.extension || 'ok');
-    const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', r.in_watchlist ? 'WL' : '', (r.in_universe === false) ? 'NEW' : ''].filter(Boolean).join('·');
+    const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', wlHas(r.ticker) ? 'WL' : '', (r.in_universe === false && !wlHas(r.ticker)) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
       <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
