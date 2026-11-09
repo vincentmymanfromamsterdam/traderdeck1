@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-08 20:11 UTC",
+ "updated_at": "2026-11-09 15:31 UTC",
  "asof": "2026-11-06",
  "model": {
   "state": "CORR",
@@ -23,83 +23,123 @@
   "last20": [
    {
     "d": "2026-10-12",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-13",
-    "dd": true
+    "dd": true,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-14",
-    "dd": true
+    "dd": true,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-15",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-16",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-19",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-20",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-21",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-22",
-    "dd": true
+    "dd": true,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-23",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-26",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-27",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-28",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-29",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-10-30",
-    "dd": true
+    "dd": true,
+    "cap": true,
+    "vix": false
    },
    {
     "d": "2026-11-02",
-    "dd": true
+    "dd": true,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-11-03",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-11-04",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    },
    {
     "d": "2026-11-05",
-    "dd": true
+    "dd": true,
+    "cap": true,
+    "vix": true
    },
    {
     "d": "2026-11-06",
-    "dd": false
+    "dd": false,
+    "cap": false,
+    "vix": false
    }
   ]
  },
@@ -143,6 +183,65 @@
  "chop": {
   "flips60": 2,
   "flag": false
+ },
+ "bottom": {
+  "window": 30,
+  "anchor": {
+   "date": "2026-11-05",
+   "low": 24262.14,
+   "chg": -5.52,
+   "qqq_vol": 130677400
+  },
+  "ref": {
+   "dates": [
+    "2026-10-30",
+    "2026-11-05"
+   ],
+   "chg": -5.52,
+   "qqq_vol": 130677400
+  },
+  "cap": {
+   "ok": true,
+   "dates": [
+    "2026-10-30",
+    "2026-11-05"
+   ],
+   "last": {
+    "date": "2026-11-05",
+    "chg": -5.52,
+    "vol_prev": 2.1,
+    "vol_50": 3.59
+   }
+  },
+  "vix": {
+   "ok": true,
+   "dates": [
+    "2026-11-05"
+   ],
+   "close": 25.64,
+   "last": {
+    "date": "2026-11-05",
+    "close": 28.18,
+    "prev": 16.61,
+    "chg": 69.66
+   }
+  },
+  "test": null,
+  "leader_test": {
+   "prior": "2026-10-30",
+   "prior_low": 25177.33,
+   "undercut": "2026-11-05",
+   "undercut_pct": -3.63
+  },
+  "params": {
+   "cap_drop": -1.0,
+   "cap_vol_prev": 2.0,
+   "cap_vol_50": 1.5,
+   "cap_vol_alone": 2.5,
+   "vix_jump": 30.0,
+   "vix_level": 25.0,
+   "test_near": 1.5
+  }
  },
  "params": {
   "dd_win": 20,
