@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-09 19:04 UTC",
+ "updated_at": "2026-11-09 19:08 UTC",
  "tickers": [
   {
    "ticker": "NVDA",
@@ -15,6 +15,11 @@
    "ticker": "AVTR",
    "added": "2026-11-09",
    "source": "06 chart"
+  },
+  {
+   "ticker": "AMPX",
+   "added": "2026-11-09",
+   "source": "05 screener"
   }
  ]
 }
