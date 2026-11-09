@@ -22,6 +22,7 @@ import datetime as dt
 import json
 import os
 import sys
+import time
 
 try:
     import numpy as np
@@ -238,13 +239,33 @@ def next_sessions(d, n):
 
 def main():
     print("TRADERDECK — Market regime")
-    raw = yf.download(["^IXIC", "^GSPC", "^RUT", "QQQ", "^VIX"], start=START, interval="1d",
-                      group_by="ticker", auto_adjust=True, progress=False, threads=True)
-    q = raw["^IXIC"].dropna(subset=["Close"])
-    s = raw["^GSPC"].dropna(subset=["Close"])
-    r = raw["^RUT"].dropna(subset=["Close"])
-    qqq = raw["QQQ"].dropna(subset=["Close"])
-    vix = raw["^VIX"].dropna(subset=["Close"])
+    # v7.5.1: the three indices exactly as before; QQQ and the VIX in their own call, so a
+    # Yahoo hiccup on one of them never stops the regime model (bottom checklist is skipped instead).
+    def get(tickers, tries=3):
+        for k in range(tries):
+            try:
+                raw = yf.download(tickers, start=START, interval="1d", group_by="ticker",
+                                  auto_adjust=True, progress=False, threads=False)
+                out = {}
+                for t in tickers:
+                    try:
+                        x = raw[t].dropna(subset=["Close"]) if len(tickers) > 1 else raw.dropna(subset=["Close"])
+                    except Exception:
+                        x = None
+                    if x is not None and len(x):
+                        out[t] = x
+                if len(out) == len(tickers):
+                    return out
+                print(f"  download {tickers}: got {sorted(out)} (try {k + 1})")
+            except Exception as e:
+                print(f"  download {tickers} failed: {e} (try {k + 1})")
+            time.sleep(10 * (k + 1))
+        return out if "out" in locals() else {}
+    ix = get(["^IXIC", "^GSPC", "^RUT"])
+    q, s, r = ix["^IXIC"], ix["^GSPC"], ix["^RUT"]
+    ex = get(["QQQ", "^VIX"])
+    empty = pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"], index=pd.DatetimeIndex([]))
+    qqq, vix = ex.get("QQQ", empty), ex.get("^VIX", empty)
     # A session still in progress (Yahoo returns today's partial bar) is dropped
     # when the run happens before the US close (21:00 UTC is safe all year).
     now = dt.datetime.now(dt.timezone.utc)
@@ -268,6 +289,8 @@ def main():
     s_idx = s[s["Volume"] > 0].index
 
     try:
+        if not len(qqq) or not len(vix):
+            raise ValueError("no QQQ/VIX data")
         bottom = bottom_block(qv, qqq, vix)
         capf, vixf = bottom.pop("_flags")
     except Exception as e:
