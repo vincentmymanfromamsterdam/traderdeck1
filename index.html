@@ -332,6 +332,12 @@
   .rg-dots { display:flex; gap:4px; flex-wrap:wrap; }
   .rg-dot { width:9px; height:9px; border-radius:50%; background:var(--border2); }
   .rg-dot.on { background:var(--red); }
+  /* ── v7.6: AI-sector ETFs ── */
+  .ai-row { cursor:pointer; } .ai-row:hover td { background:var(--bg3); }
+  .ai-pill { font-size:9px; font-weight:600; padding:0 5px; border:1px solid; white-space:nowrap; }
+  .ai-sub > td { padding:0 0 10px 18px !important; background:var(--bg2); }
+  .ai-sub table { width:100%; font-size:11px; }
+  .ai-sub th { font-size:8.5px !important; }
   .bp-link { text-decoration:none; } .bp-link:hover { text-decoration:underline; color:var(--blue) !important; }
   /* ── v7.5: bottom checklist + strip markers ── */
   .rg-day { display:flex; flex-direction:column; align-items:center; gap:2px; }
@@ -649,6 +655,18 @@
     </div>
     <div class="collapsible-body">
       <div class="table-wrap"><table><thead><tr><th>ETF</th><th>Name</th><th>Price</th><th>1D %</th><th>1W %</th><th>YTD %</th><th>5D</th></tr></thead><tbody id="tb-etfs"><tr><td colspan="7" class="loading-msg">Loading...</td></tr></tbody></table></div>
+    </div>
+
+    <div class="collapsible-head" onclick="toggle(this)">
+      <span class="caret">▸</span><span class="collapsible-title">AI-sector ETFs</span>
+      <span id="ai-upd" style="font-size:9px;color:var(--muted);letter-spacing:0.08em;margin-left:6px"></span>
+    </div>
+    <div class="collapsible-body">
+      <div style="font-size:9.5px;color:var(--muted);margin:-2px 0 8px">Klik op een ETF voor de top-10 holdings, gesorteerd op hoe goed ze standhielden sinds de swing-high van de ETF. Methode: 1) trend van de ETF op week/maand, 2) holdings die het best hielden, 3) dagchart: higher lows, break &amp; retest.</div>
+      <div class="table-wrap"><table><thead><tr><th>ETF</th><th>Thema</th><th>Price</th><th>1D %</th><th>1W %</th><th>1M %</th><th>YTD %</th><th title="afstand tot de 52-weeks high">vs high</th>
+        <th title="slot t.o.v. het 10-weeks gemiddelde (pijl = richting van dat gemiddelde)">10W</th><th title="slot t.o.v. het 40-weeks gemiddelde">40W</th><th title="slot t.o.v. het 10-maands gemiddelde">10M</th>
+        <th title="nieuwe 3-maands-low gezet in de laatste 20 sessies">Nieuwe low</th><th title="hoogste slot van de laatste 60 sessies en de daling sindsdien">Sinds swing-high</th><th>60D</th></tr></thead>
+        <tbody id="tb-ai"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody></table></div>
     </div>
 
     <div class="collapsible-head" onclick="toggle(this)">
@@ -2674,6 +2692,68 @@ function renderRegime() {
   renderRegimeStrip();
 }
 
+// v7.6 AI-sector ETFs (data/ai_etfs.json) — trend per ETF, holdings that held up best
+let aiData = null; const aiOpen = new Set();
+async function loadAiEtfs() {
+  try {
+    const r = await fetch('data/ai_etfs.json?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    aiData = await r.json();
+  } catch (e) { aiData = null; }
+  renderAiEtfs();
+}
+function aiPill(v, slope) {
+  if (v == null) return '<span style="color:var(--dim)">—</span>';
+  const c = v ? 'var(--green)' : 'var(--red)';
+  return `<span class="ai-pill" style="color:${c};border-color:${c}">${v ? 'BOVEN' : 'ONDER'}${slope == null ? '' : slope ? ' ↑' : ' ↓'}</span>`;
+}
+function aiSpark(arr) {
+  if (!arr || arr.length < 2) return '';
+  const w = 90, h = 22, mn = Math.min(...arr), mx = Math.max(...arr), rg = (mx - mn) || 1;
+  const pts = arr.map((v, i) => `${(i / (arr.length - 1) * w).toFixed(1)},${(h - (v - mn) / rg * h).toFixed(1)}`).join(' ');
+  const col = arr[arr.length - 1] >= arr[0] ? 'var(--green)' : 'var(--red)';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3"/></svg>`;
+}
+function aiToggle(tk) { aiOpen.has(tk) ? aiOpen.delete(tk) : aiOpen.add(tk); renderAiEtfs(); }
+function aiHoldings(e) {
+  const sc = {}; ((scData && scData.all) || []).forEach(r => { sc[r.ticker] = r; });
+  const rows = (e.holdings || []).map(h => {
+    const m = sc[h.ticker] || {};
+    if (!h.us) return `<tr style="color:var(--muted)"><td>${esc(h.ticker)}</td><td>${esc(h.name || '')}</td><td>${h.weight == null ? '—' : h.weight.toFixed(1) + '%'}</td>
+      <td colspan="9" style="font-size:9.5px">${h.cash ? 'geldmarktfonds' : 'niet-US notering — buiten de scan'}</td></tr>`;
+    return `<tr><td data-tk="${h.ticker}"><span style="color:var(--accent);font-weight:600">${h.ticker}</span>${saLink(h.ticker)}${chLink(h.ticker)}</td>
+      <td style="color:var(--muted)">${esc((h.name || '').slice(0, 30))}</td><td>${h.weight == null ? '—' : h.weight.toFixed(1) + '%'}</td>
+      <td>${h.price == null ? '—' : '$' + fmtPrice(h.price)}</td><td>${pct(h.chg_1d)}</td>
+      <td style="font-weight:600;color:${h.vs_etf == null ? 'var(--muted)' : h.vs_etf >= 0 ? 'var(--green)' : 'var(--red)'}">${h.vs_etf == null ? '—' : (h.vs_etf > 0 ? '+' : '') + h.vs_etf.toFixed(1) + ' pp'}</td>
+      <td>${pct(h.since_etf_high, 1)}</td><td>${pct(h.off_52w_high, 1)}</td><td>${aiPill(h.above_50d)}</td>
+      <td>${m.rs_rating ?? '—'}</td><td>${m.stage ?? '—'}</td><td>${ttCell(m.tt)}</td></tr>`;
+  }).join('');
+  const sh = e.swing_high || {};
+  return `<tr class="ai-sub"><td colspan="14"><table><thead><tr><th>Holding</th><th>Naam</th><th>Gewicht</th><th>Price</th><th>1D %</th>
+    <th title="rendement sinds de swing-high van ${esc(e.ticker)} (${sh.date || '?'}) minus dat van de ETF zelf, in procentpunten">vs ETF</th>
+    <th title="rendement sinds ${sh.date || '?'}">Sinds ${urDate(sh.date)}</th><th>vs high</th><th title="slot t.o.v. de 50-daags">50D</th><th>RS</th><th>Stage</th><th>TT</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="12" class="loading-msg">Geen holdings bekend.</td></tr>'}</tbody></table></td></tr>`;
+}
+function renderAiEtfs() {
+  const tb = $('tb-ai'); if (!tb) return;
+  if (!aiData || !aiData.etfs) { tb.innerHTML = '<tr><td colspan="14" class="loading-msg">Nog geen data — verschijnt na de volgende run.</td></tr>'; return; }
+  const u = $('ai-upd'); if (u) u.textContent = '· ' + (aiData.updated_at || '') + (aiData.holdings_updated ? ' · holdings ' + aiData.holdings_updated : '');
+  let grp = null;
+  tb.innerHTML = aiData.etfs.map(e => {
+    let head = '';
+    if (e.group !== grp) { grp = e.group; head = `<tr><td colspan="14" style="font-size:8.5px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;padding-top:10px">${esc(grp)}</td></tr>`; }
+    const open = aiOpen.has(e.ticker), sh = e.swing_high || {};
+    return head + `<tr class="ai-row" onclick="aiToggle('${e.ticker}')" title="klik voor de holdings">
+      <td class="td-name"><span style="color:var(--muted);display:inline-block;width:12px">${open ? '▾' : '▸'}</span>${e.ticker}</td>
+      <td style="color:var(--muted)">${esc(e.label)}</td><td class="td-price">${e.price == null ? '—' : fmtPrice(e.price)}</td>
+      <td>${pct(e.chg_1d)}</td><td>${pct(e.chg_1w)}</td><td>${pct(e.chg_1m)}</td><td>${pct(e.chg_ytd)}</td><td>${pct(e.off_52w_high, 1)}</td>
+      <td>${aiPill(e.above_10w, e.ma10w_slope_up)}</td><td>${aiPill(e.above_40w)}</td><td>${aiPill(e.above_10m)}</td>
+      <td>${e.new_low_20 == null ? '—' : e.new_low_20 ? '<span class="ai-pill" style="color:var(--red);border-color:var(--red)">JA</span>' : '<span style="color:var(--muted)">nee</span>'}</td>
+      <td>${sh.date ? pct(sh.since_pct, 1) + ' <span style="color:var(--muted);font-size:9.5px">sinds ' + urDate(sh.date) + '</span>' : '—'}</td>
+      <td>${aiSpark(e.spark)}</td></tr>` + (open ? aiHoldings(e) : '');
+  }).join('');
+}
+
 // v7.5 bottom checklist (O'Neil/MK, after a 5-sign list on X): visible in C/D and in
 // the first 5 sessions after an FTD. Signals 1, 2, 5 and the price half of 3 come from
 // regime.json (bottom), the new-lows half of 3 and signal 4 from setups.json (bottom).
@@ -2926,6 +3006,7 @@ const _pScan = loadScanData();
 const _pIbd = loadIbd();
 Promise.allSettled([_pScan, _pIbd, loadRegime(), loadSetups()]).then(() => { renderRegime(); renderSetups(); });
 _pScan.then(wlLoad);
+_pScan.then(loadAiEtfs);
 loadSaNews().then(loadChartData);
 loadNotable();
 loadThemes();
