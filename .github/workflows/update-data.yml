@@ -71,6 +71,12 @@ jobs:
           python fetch_scan.py
         continue-on-error: true
 
+      # ── STEP 3d: AI-sector ETFs + top holdings (v7.6) ──
+      - name: AI-sector ETFs
+        run: |
+          python fetch_aietf.py
+        continue-on-error: true
+
       # ── STEP 4: Commit everything ─────────────────────────
       - name: Commit and push data
         run: |
@@ -88,6 +94,7 @@ jobs:
           git add data/notable.json || true
           git add data/regime.json data/setups.json data/setups_log.json data/chart_more.json data/industry_map.json || true
           git add data/ibd.json || true
+          git add data/ai_etfs.json || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
