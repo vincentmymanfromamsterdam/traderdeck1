@@ -332,6 +332,7 @@
   .rg-dots { display:flex; gap:4px; flex-wrap:wrap; }
   .rg-dot { width:9px; height:9px; border-radius:50%; background:var(--border2); }
   .rg-dot.on { background:var(--red); }
+  .bp-link { text-decoration:none; } .bp-link:hover { text-decoration:underline; color:var(--blue) !important; }
   /* ── v7.5: bottom checklist + strip markers ── */
   .rg-day { display:flex; flex-direction:column; align-items:center; gap:2px; }
   .rg-cap { width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:7px solid var(--ch-purple); }
@@ -710,10 +711,11 @@
     <!-- IBD BIG PICTURE -->
     <div id="ibd-bigpic" style="margin:14px 0 0;border:1px solid var(--border2);background:var(--bg2);padding:10px 14px;display:none;font-size:11px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-        <div><span class="table-label" style="margin:0 10px 0 0;display:inline">IBD · The Big Picture</span><a id="ibd-bp-title" href="#" target="_blank" rel="noopener" style="color:var(--text);font-weight:600;text-decoration:none"></a></div>
+        <div><a id="ibd-bp-lbl" class="table-label bp-link" href="#" target="_blank" rel="noopener" style="margin:0 10px 0 0;display:inline">IBD · The Big Picture ↗</a><a id="ibd-bp-title" class="bp-link" href="#" target="_blank" rel="noopener" title="open het artikel op investors.com" style="color:var(--text);font-weight:600"></a></div>
         <span id="ibd-bp-date" style="color:var(--muted);font-size:9px;letter-spacing:0.1em"></span>
       </div>
       <div id="ibd-bp-text" style="margin-top:6px;color:var(--muted);line-height:1.5"></div>
+      <a id="ibd-bp-more" class="bp-link" href="#" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:10px;letter-spacing:0.1em;color:var(--blue)">LEES HET ARTIKEL OP IBD ↗</a>
       <div id="ibd-bp-hist" style="margin-top:6px;font-size:9px;color:var(--muted);letter-spacing:0.05em"></div>
     </div>
 
@@ -1856,7 +1858,9 @@ async function loadIbd() {
     const bp = ibdData.big_picture;
     if (bp && bp.title) {
       const box = $('ibd-bigpic'); if (box) box.style.display = 'block';
-      $('ibd-bp-title').textContent = bp.title; $('ibd-bp-title').href = bp.url || '#';
+      $('ibd-bp-title').textContent = bp.title;
+      const bpUrl = bp.url || 'https://www.investors.com/category/market/the-big-picture/';
+      ['ibd-bp-title', 'ibd-bp-lbl', 'ibd-bp-more'].forEach(id => { const a = $(id); if (a) a.href = bpUrl; });
       $('ibd-bp-date').textContent = bp.date || '';
       const txt = (bp.paragraphs && bp.paragraphs.length) ? bp.paragraphs.join(' ') : (bp.excerpt || '');
       $('ibd-bp-text').textContent = txt.length > 600 ? txt.slice(0, 600) + '…' : txt;
