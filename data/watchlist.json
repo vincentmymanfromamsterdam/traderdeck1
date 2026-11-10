@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-09 20:01 UTC",
+ "updated_at": "2026-11-10 08:59 UTC",
  "tickers": [
   {
    "ticker": "BLLN",
@@ -34,6 +34,11 @@
   {
    "ticker": "U",
    "added": "2026-11-09",
+   "source": "05 watchlist"
+  },
+  {
+   "ticker": "VSAT",
+   "added": "2026-11-10",
    "source": "05 watchlist"
   }
  ]
