@@ -1,0 +1,25 @@
+{
+ "updated_at": "2026-11-11 15:37 UTC",
+ "rows": [
+  {
+   "id": "2026-11-11|APPN|gapup",
+   "date": "2026-11-11",
+   "ticker": "APPN",
+   "setup": "gapup",
+   "action": "take",
+   "badges": "LL1 QUAD KQ",
+   "star": true,
+   "zone": 3.9,
+   "regime": "D",
+   "rs": 97,
+   "entry": 53.39,
+   "stop": 49.5,
+   "risk_pct": 0.5,
+   "trigger": "Retest",
+   "note": "retest resistance turning into support + reclaim",
+   "plan_entry": 53.85,
+   "plan_stop": 51.27,
+   "logged_at": "2026-11-11T15:37Z"
+  }
+ ]
+}
