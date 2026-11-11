@@ -732,8 +732,8 @@ def main():
                 history = json.load(f).get("regime", {}).get("history", []) or []
         except Exception:
             history = []
-    today = dt.date.today().isoformat()
-    history = [h for h in history if h.get("date") != today]
+    today = str(spy.index[-1].date()) if spy is not None and len(spy) else dt.date.today().isoformat()   # v7.7: bar date
+    history = [h for h in history if h.get("date") < today and dt.date.fromisoformat(h["date"]).weekday() < 5]
     history.append({"date": today, "pct_strong": pct_strong, "sp500_pct_strong": sp_pct_strong, "regime": regime})
     history = history[-60:]
 

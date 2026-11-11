@@ -687,7 +687,7 @@
 
     <div class="gauge-grid">
       <div class="gauge-cell">
-        <div class="gauge-label">Market regime</div>
+        <div class="gauge-label" title="breadth-meter van de marktscan — het regime (A–D) staat in sectie 01">Market breadth</div>
         <div class="gauge-val" id="sw-regime">—</div>
         <div class="gauge-sub" id="sw-regime-sub">% of liquid US stocks above rising EMA9 + EMA21</div>
       </div>
@@ -720,7 +720,7 @@
         <div class="gauge-sub" id="ibd-band-sub">recommended exposure</div>
       </div>
       <div class="gauge-cell">
-        <div class="gauge-label">Market regime trend (60d)</div>
+        <div class="gauge-label">Market breadth trend (60d)</div>
         <div class="gauge-val"><span class="spark-mini" id="sw-hist"></span></div>
         <div class="gauge-sub" id="sw-hist-sub">daily % strong</div>
       </div>
@@ -2788,7 +2788,7 @@ function bottomItems(rg) {
   let st4 = 'wait', val4 = 'WACHT', rule4 = 'RS-houders (tab 05b) blijven boven hun eigen low terwijl de Nasdaq een lagere low zet';
   if (h && h.test) {
     st4 = h.ok ? 'ok' : 'no';
-    rule4 = `Nasdaq zakte op ${urDate(h.test.undercut)} ${n2(h.test.undercut_pct)}% onder de low van ${urDate(h.test.prior)}: welke leiders hielden hun eigen low? Voldaan bij ≥ ${h.hold_min}`;
+    rule4 = `Nasdaq zakte op ${urDate(h.test.undercut)} ${n2(h.test.undercut_pct)}% onder de low van ${urDate(h.test.prior)}: welke leiders hielden hun eigen low? Voldaan bij ≥ ${h.hold_pct_min ?? 50}% (en ≥ ${h.hold_min})`;
     val4 = `${h.ok ? 'JA' : 'NEE'} · ${h.n_held} van ${h.n} hielden`;
   } else if (h) { val4 = `WACHT · ${h.n} kandidaten`; }
   it.push({ t: 'Leiders houden stand', st: st4, rule: rule4, val: val4 });
@@ -3284,7 +3284,7 @@ function renderChanges() {
   const wrap = (inner) => `<div class="chg-wrap">${inner}</div>`;
   const cols = [];
   if (c.regime_prev && c.regime_now && c.regime_prev !== c.regime_now)
-    cols.push(`<div><div class="gauge-label">Regime flip</div><span class="regime-pill regime-${c.regime_prev}">${c.regime_prev.toUpperCase()}</span> → <span class="regime-pill regime-${c.regime_now}">${c.regime_now.toUpperCase()}</span></div>`);
+    cols.push(`<div><div class="gauge-label">Breadth flip</div><span class="regime-pill regime-${c.regime_prev}">${c.regime_prev.toUpperCase()}</span> → <span class="regime-pill regime-${c.regime_now}">${c.regime_now.toUpperCase()}</span></div>`);
   cols.push(`<div><div class="gauge-label">New DNA pass <span class="pos">(${(c.new_dna_pass||[]).length})</span></div>${wrap((c.new_dna_pass||[]).slice(0,16).map(chip).join('') || '<span class="neu">none</span>')}</div>`);
   cols.push(`<div><div class="gauge-label">Dropped out <span class="neg">(${(c.dropped_dna_pass||[]).length})</span></div>${wrap((c.dropped_dna_pass||[]).slice(0,16).map(chip).join('') || '<span class="neu">none</span>')}</div>`);
   const er = (c.earnings_soon || []);

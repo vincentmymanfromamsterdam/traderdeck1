@@ -96,7 +96,8 @@ NL_SESSIONS      = 40                          # sessions of the new-52w-low cou
 RH_RS_MIN        = 85                          # RS-houders: leaders that hold up while the index corrects
 RH_OFF_HIGH_MAX  = 8.0                         #   <= 8% under the 52w high
 RH_PER_INDUSTRY  = 2                           #   in the tab: at most 2 per industry (counts cover all)
-RH_HOLD_MIN      = 10                          # signal 4 is met when >= 10 leaders held their low
+RH_HOLD_MIN      = 10                          # signal 4 is met when >= 10 leaders held their low ...
+RH_HOLD_PCT      = 50                          # ... and they are at least half of the tested leaders (v7.7)
 RH_REF_PAD       = 2                           # own reference low = min low within +-2 sessions of the prior heavy day
 
 CHART_PATH  = "data/chart_data.json"
@@ -657,7 +658,9 @@ def main():
         sec["industries"] = dict(sorted(inds.items(), key=lambda kv: (kv[1]["avg_rs"] or 0, kv[1]["pct_strong"] or 0), reverse=True))
         sectors[etf] = sec
     unclassified = sum(1 for r in all_rows if not r["etf"])
-    today_s = dt.date.today().isoformat()
+    # v7.7: date every history row and log row on the last BAR, not on the run's clock —
+    # the nightly run often starts after midnight UTC (and can run on a weekend).
+    today_s = str(spy.index[-1].date()) if spy is not None and len(spy) else dt.date.today().isoformat()
 
     # ── Industry / sector history (30 days) → 5-day change in % strong ──
     hist = {}
@@ -705,7 +708,7 @@ def main():
                 prev_payload = json.load(f)
         except Exception:
             prev_payload = {}
-    mkt_hist = [h for h in (prev_payload.get("regime_history") or []) if h.get("date") != today_s]
+    mkt_hist = [h for h in (prev_payload.get("regime_history") or []) if h.get("date") < today_s and dt.date.fromisoformat(h["date"]).weekday() < 5]
     mkt_hist.append({"date": today_s, "pct_strong": pct_strong_mkt, "regime": regime_mkt,
                      "dna_pass": len(passed), "pct_stage2": round(stage2 / n_analysed * 100, 1) if n_analysed else None})
     mkt_hist = mkt_hist[-60:]
@@ -970,7 +973,10 @@ def main():
             cand["holders"] = holders_all
             bottom = {"newlows": {"universe": nl_n, "series": nl_series}, "s3": s3,
                       "holders": {"n": len(holders_all), "n_held": n_held, "n_broke": n_broke,
-                                  "test": lt, "ok": bool(lt) and n_held >= RH_HOLD_MIN, "hold_min": RH_HOLD_MIN}}
+                                  "test": lt, "hold_min": RH_HOLD_MIN, "hold_pct_min": RH_HOLD_PCT,
+                                  "hold_pct": round(n_held / (n_held + n_broke) * 100) if (n_held + n_broke) else None,
+                                  "ok": bool(lt) and n_held >= RH_HOLD_MIN
+                                        and n_held * 100 >= RH_HOLD_PCT * (n_held + n_broke)}}
             print(f"  Bottom: new lows today {nl_series[-1]['n'] if nl_series else '?'} / {nl_n} · "
                   f"RS-houders {len(holders_all)} ({n_held} held, {n_broke} broke)" + (f" · test {lt['undercut']}" if lt else ""))
         except Exception as e:
@@ -1010,6 +1016,20 @@ def main():
                     model_regime = json.load(f).get("model", {}).get("regime")
             except Exception:
                 pass
+            # v7.7 one-off: pullback rows were stamped with the run date (Sun 8 Nov, Wed 11 Nov
+            # at 01:45 UTC) instead of the bar they describe.
+            FIX = {"2026-11-08": "2026-11-06", "2026-11-11": "2026-11-10"}
+            if not any(x.get("setup") == "_migrated_v77" for x in log):
+                have = {(x["date"], x["ticker"], x["setup"]) for x in log}
+                out_log = []
+                for x in log:
+                    if x.get("setup") == "pullback" and x.get("date") in FIX:
+                        k = (FIX[x["date"]], x["ticker"], "pullback")
+                        if k in have:
+                            continue
+                        x = dict(x, date=FIX[x["date"]]); have.add(k)
+                    out_log.append(x)
+                log = [{"date": "2026-11-11", "ticker": "", "setup": "_migrated_v77"}] + out_log
             seen_keys = {(x["date"], x["ticker"], x["setup"]) for x in log}
             shown_pb = {id(r) for r in cand["pullback"][:SETUP_CAP]}
             added = 0
