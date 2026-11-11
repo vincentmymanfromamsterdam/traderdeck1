@@ -27,7 +27,7 @@ import pandas as pd
 import yfinance as yf
 
 from fetch_swing import (
-    DNA, EXT_CAUTION, EXT_REDUCE, analyse, ema, load_universe, load_sp500, rs_raw, set_tt_rs,
+    DNA, EXT_CAUTION, EXT_REDUCE, analyse, atr, ema, load_universe, load_sp500, rs_raw, set_tt_rs,
 )
 from sector_map import load_directory, yf_fallback, SECTOR_ETF, exclude_dead, record_results, load_earnings, apply_industry_map
 
@@ -866,7 +866,44 @@ def main():
         SU_KEYS = ("ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating", "rs_chg_1m",
                    "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days",
                    "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi",
-                   "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu")
+                   "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu", "bdg")
+        # v7.9 badges (MEETRESULTATEN-T12): only the ones that survived the measurement.
+        #   ll1  = close above SMA10/20/50 and <= 4 ATR above the SMA50 (Liquid Leaders screen 1)
+        #   liq  = 20-day dollar volume >= $500M        quad = 5d and 21d return both in the upper half
+        #   kq   = ADR >= 5% and +25% in 22d / +50% in 67d / +100% in 126d (Qullamaggie)
+        #   sb9  = up day on >= 9M shares (shown in the gap-up tab)   zone = (close - SMA50) / ATR14
+        try:
+            r5, r21 = {}, {}
+            for r in rows:
+                df = full.get(r["ticker"])
+                if df is None or len(df) < 30:
+                    continue
+                c = df["Close"]
+                r5[r["ticker"]] = float(c.iloc[-1] / c.iloc[-6] - 1)
+                r21[r["ticker"]] = float(c.iloc[-1] / c.iloc[-22] - 1)
+            p5, p21 = pd.Series(r5).rank(pct=True), pd.Series(r21).rank(pct=True)
+            for r in rows:
+                t = r["ticker"]
+                df = full.get(t)
+                if df is None or len(df) < 60 or t not in p5:
+                    continue
+                c, h, l, v = df["Close"], df["High"], df["Low"], df["Volume"]
+                x = float(c.iloc[-1])
+                s10, s20, s50 = (float(c.rolling(n).mean().iloc[-1]) for n in (10, 20, 50))
+                a14 = float(atr(df, 14).iloc[-1])
+                if not a14 or np.isnan(a14) or np.isnan(s50):
+                    continue
+                zone = (x - s50) / a14
+                adr = float(((h / l).iloc[-20:].mean() - 1) * 100)
+                g = lambda n: (x / float(c.iloc[-1 - n]) - 1) if len(c) > n else -1.0
+                dvol = float((c * v).iloc[-20:].mean())
+                r["bdg"] = {"ll1": bool(x > s10 and x > s20 and x > s50 and zone <= 4),
+                            "liq": bool(dvol >= 5e8), "quad": bool(p5[t] >= 0.5 and p21[t] >= 0.5),
+                            "kq": bool(adr >= 5 and (g(22) >= 0.25 or g(67) >= 0.50 or g(126) >= 1.0)),
+                            "sb9": bool(float(v.iloc[-1]) >= 9e6 and g(1) > 0),
+                            "zone": round(zone, 1), "dvol_m": int(round(dvol / 1e6))}
+        except Exception as e:
+            print(f"  (badges skipped: {e})")
         cand = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
         gu_rejected = []
         for r in rows:
@@ -982,7 +1019,7 @@ def main():
         except Exception as e:
             print(f"  (bottom checklist skipped: {e})")
 
-        su_payload = {"updated_at": payload["updated_at"],
+        su_payload = {"updated_at": payload["updated_at"], "date": today_s,
                       "bottom": bottom,
                       "n_total": {k: len(v) for k, v in cand.items()},
                       "n_gapup_held": sum(1 for r in cand["gapup"] if r["gu"].get("held")),
