@@ -866,7 +866,7 @@ def main():
         SU_KEYS = ("ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating", "rs_chg_1m",
                    "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days",
                    "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi",
-                   "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu", "bdg")
+                   "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu", "bdg", "ema3")
         # v7.9 badges (MEETRESULTATEN-T12): only the ones that survived the measurement.
         #   ll1  = close above SMA10/20/50 and <= 4 ATR above the SMA50 (Liquid Leaders screen 1)
         #   liq  = 20-day dollar volume >= $500M        quad = 5d and 21d return both in the upper half
@@ -904,6 +904,15 @@ def main():
                             "zone": round(zone, 1), "dvol_m": int(round(dvol / 1e6))}
         except Exception as e:
             print(f"  (badges skipped: {e})")
+        # v7.10 (MEETRESULTATEN-T13): a pullback below the EMA50 was the weakest group in every
+        # regime and with every stop; a close above EMA9, 21 and 50 the strongest (+0.30R in A/B).
+        def _da(r, k):
+            v = (r.get("dist_atr") or {}).get(k)
+            return v if v is not None else -9.0
+        for r in rows:
+            r["ema3"] = bool(_da(r, "ema9") > 0 and _da(r, "ema21") > 0 and _da(r, "ema50") > 0)
+            if isinstance(r.get("bdg"), dict):
+                r["bdg"]["ema3"] = r["ema3"]
         cand = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
         gu_rejected = []
         for r in rows:
@@ -913,7 +922,8 @@ def main():
             if cap is not None and cap < SETUP_MIN_CAP:
                 continue
             rs = r.get("rs_rating") or 0
-            if r.get("stage") == 2 and rs >= SETUP_PB_RS_MIN and (r.get("confluence_n") or 0) >= SETUP_PB_MIN_LAYERS:
+            if (r.get("stage") == 2 and rs >= SETUP_PB_RS_MIN and (r.get("confluence_n") or 0) >= SETUP_PB_MIN_LAYERS
+                    and _da(r, "ema50") > 0):
                 cand["pullback"].append(r)
             if r.get("ur") and r.get("above_s200"):
                 cand["ur"].append(r)
@@ -928,7 +938,7 @@ def main():
         def near(r):
             d = [abs(v) for v in (r.get("dist_atr") or {}).values() if v is not None]
             return min(d) if d else 99
-        cand["pullback"].sort(key=lambda r: (-(r.get("confluence_n") or 0), near(r)))
+        cand["pullback"].sort(key=lambda r: (not r.get("ema3"), -(r.get("confluence_n") or 0), near(r)))
         cand["ur"].sort(key=lambda r: (r["ur"].get("age", 99), -(r["ur"].get("vol_x") or 0)))
         cand["breakout"].sort(key=lambda r: (r["bo"].get("age", 99), -(r.get("rs_rating") or 0)))
         cand["gapup"].sort(key=lambda r: (not r["gu"].get("held"), r["gu"].get("age", 99), -(r.get("rs_rating") or 0)))
@@ -1026,7 +1036,7 @@ def main():
                       "n_gapup_rejected": len(gu_rejected),
                       "thresholds": {"cap": SETUP_CAP, "min_price": SETUP_MIN_PRICE,
                                      "min_dollar_vol": SETUP_MIN_DOLLAR_VOL, "min_cap": SETUP_MIN_CAP,
-                                     "pullback": {"stage": 2, "rs_min": SETUP_PB_RS_MIN, "min_layers": SETUP_PB_MIN_LAYERS},
+                                     "pullback": {"stage": 2, "rs_min": SETUP_PB_RS_MIN, "min_layers": SETUP_PB_MIN_LAYERS, "above_ema50": True},
                                      "ur": {"min_held": 5, "min_vol_x": 2.0, "max_under_pct": 7.0, "max_age_days": 5,
                                             "gate": "close > SMA200"},
                                      "breakout": {"pivot": "260-session high, >= 25 sessions old", "max_depth_pct": 35,
