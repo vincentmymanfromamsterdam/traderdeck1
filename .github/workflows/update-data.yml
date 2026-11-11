@@ -34,9 +34,13 @@ jobs:
         run: |
           pip install yfinance playwright requests beautifulsoup4 --quiet
 
+      # No --with-deps: the runner image already has Chromium's libraries, and the apt step
+      # hung for minutes when the Ubuntu mirrors could not be resolved (11 nov 2026).
       - name: Install Playwright browsers
+        timeout-minutes: 6
+        continue-on-error: true
         run: |
-          python -m playwright install chromium --with-deps
+          python -m playwright install chromium
 
       # ── STEP 0: Market regime (Nasdaq DD/FTD, S&P, Russell) ──
       - name: Market regime
