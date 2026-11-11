@@ -77,6 +77,12 @@ jobs:
           python fetch_aietf.py
         continue-on-error: true
 
+      # ── STEP 3e: Beslislog doorrekenen (v7.8) ──
+      - name: Decision log
+        run: |
+          python fetch_decisions.py
+        continue-on-error: true
+
       # ── STEP 4: Commit everything ─────────────────────────
       - name: Commit and push data
         run: |
@@ -95,6 +101,7 @@ jobs:
           git add data/regime.json data/setups.json data/setups_log.json data/chart_more.json data/industry_map.json || true
           git add data/ibd.json || true
           git add data/ai_etfs.json || true
+          git add data/decisions_result.json || true
           git diff --cached --quiet || git commit -m "chore: update market + portfolio + swing + scan data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main
           git push
