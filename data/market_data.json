@@ -1,15 +1,15 @@
 {
-  "updated_at": "2026-11-11 14:50 UTC",
+  "updated_at": "2026-11-11 19:24 UTC",
   "updated_date": "2026-11-11",
   "futures": [
     {
       "ticker": "ES=F",
       "name": "E-mini S&P 500",
-      "price": 7610.5,
-      "chg_1d": 0.88,
-      "chg_1w": -1.42,
-      "chg_52w_hi": 10.69,
-      "chg_ytd": 10.29,
+      "price": 7650.5,
+      "chg_1d": 1.41,
+      "chg_1w": -0.91,
+      "chg_52w_hi": 11.27,
+      "chg_ytd": 10.87,
       "spark": [
         -4.37,
         0.26,
@@ -20,11 +20,11 @@
     {
       "ticker": "NQ=F",
       "name": "E-mini Nasdaq 100",
-      "price": 28343.5,
-      "chg_1d": 1.83,
-      "chg_1w": -0.78,
-      "chg_52w_hi": 10.61,
-      "chg_ytd": 11.65,
+      "price": 28579.25,
+      "chg_1d": 2.67,
+      "chg_1w": 0.04,
+      "chg_52w_hi": 11.53,
+      "chg_ytd": 12.58,
       "spark": [
         -6.35,
         1.25,
@@ -35,11 +35,11 @@
     {
       "ticker": "YM=F",
       "name": "E-mini Dow Jones",
-      "price": 52261.0,
-      "chg_1d": -0.1,
-      "chg_1w": -2.32,
-      "chg_52w_hi": 8.05,
-      "chg_ytd": 7.5,
+      "price": 52521.0,
+      "chg_1d": 0.39,
+      "chg_1w": -1.84,
+      "chg_52w_hi": 8.59,
+      "chg_ytd": 8.03,
       "spark": [
         -3.53,
         -0.45,
@@ -50,11 +50,11 @@
     {
       "ticker": "RTY=F",
       "name": "E-mini Russell 2000",
-      "price": 2843.8999,
-      "chg_1d": 0.53,
-      "chg_1w": -0.77,
-      "chg_52w_hi": 15.61,
-      "chg_ytd": 12.74,
+      "price": 2853.2,
+      "chg_1d": 0.86,
+      "chg_1w": -0.44,
+      "chg_52w_hi": 15.99,
+      "chg_ytd": 13.11,
       "spark": [
         -4.55,
         0.92,
@@ -67,11 +67,11 @@
     {
       "ticker": "^VIX",
       "name": "VIX Index",
-      "price": 18.47,
-      "chg_1d": -5.09,
-      "chg_1w": 11.2,
-      "chg_52w_hi": 5.48,
-      "chg_ytd": 27.29,
+      "price": 17.55,
+      "chg_1d": -9.82,
+      "chg_1w": 5.66,
+      "chg_52w_hi": 0.23,
+      "chg_ytd": 20.95,
       "spark": [
         69.66,
         -9.01,
@@ -82,11 +82,11 @@
     {
       "ticker": "^VVIX",
       "name": "VVIX",
-      "price": 97.17,
-      "chg_1d": 0.56,
-      "chg_1w": 7.48,
-      "chg_52w_hi": -6.09,
-      "chg_ytd": 7.85,
+      "price": 92.82,
+      "chg_1d": -3.94,
+      "chg_1w": 2.67,
+      "chg_52w_hi": -10.29,
+      "chg_ytd": 3.02,
       "spark": [
         49.31,
         -9.67,
@@ -97,11 +97,11 @@
     {
       "ticker": "DX-Y.NYB",
       "name": "US Dollar Index",
-      "price": 102.907,
-      "chg_1d": 0.66,
-      "chg_1w": 1.38,
-      "chg_52w_hi": 3.44,
-      "chg_ytd": 4.56,
+      "price": 102.923,
+      "chg_1d": 0.68,
+      "chg_1w": 1.39,
+      "chg_52w_hi": 3.46,
+      "chg_ytd": 4.58,
       "spark": [
         0.04,
         0.74,
@@ -112,11 +112,11 @@
     {
       "ticker": "EURUSD=X",
       "name": "EUR/USD",
-      "price": 1.109,
-      "chg_1d": -1.18,
-      "chg_1w": -1.04,
-      "chg_52w_hi": -4.29,
-      "chg_ytd": -5.62,
+      "price": 1.1095,
+      "chg_1d": -1.14,
+      "chg_1w": -1.0,
+      "chg_52w_hi": -4.25,
+      "chg_ytd": -5.58,
       "spark": [
         0.25,
         -0.06,
@@ -127,11 +127,11 @@
     {
       "ticker": "GBPUSD=X",
       "name": "GBP/USD",
-      "price": 1.3271,
-      "chg_1d": -1.27,
-      "chg_1w": -1.22,
-      "chg_52w_hi": 0.89,
-      "chg_ytd": -1.51,
+      "price": 1.3277,
+      "chg_1d": -1.23,
+      "chg_1w": -1.17,
+      "chg_52w_hi": 0.94,
+      "chg_ytd": -1.46,
       "spark": [
         0.32,
         -0.16,
@@ -142,11 +142,11 @@
     {
       "ticker": "USDJPY=X",
       "name": "USD/JPY",
-      "price": 159.666,
-      "chg_1d": 1.07,
-      "chg_1w": 0.76,
-      "chg_52w_hi": 3.63,
-      "chg_ytd": 1.87,
+      "price": 159.856,
+      "chg_1d": 1.19,
+      "chg_1w": 0.88,
+      "chg_52w_hi": 3.75,
+      "chg_ytd": 1.99,
       "spark": [
         -0.07,
         -0.54,
@@ -159,11 +159,11 @@
     {
       "ticker": "GC=F",
       "name": "Gold Futures",
-      "price": 4029.7,
-      "chg_1d": -0.01,
-      "chg_1w": -1.06,
-      "chg_52w_hi": -4.36,
-      "chg_ytd": -6.93,
+      "price": 3994.1001,
+      "chg_1d": -0.9,
+      "chg_1w": -1.94,
+      "chg_52w_hi": -5.21,
+      "chg_ytd": -7.75,
       "spark": [
         0.99,
         -0.94,
@@ -174,11 +174,11 @@
     {
       "ticker": "SI=F",
       "name": "Silver Futures",
-      "price": 52.4,
-      "chg_1d": 2.54,
-      "chg_1w": 0.54,
-      "chg_52w_hi": -1.75,
-      "chg_ytd": -25.73,
+      "price": 51.845,
+      "chg_1d": 1.46,
+      "chg_1w": -0.53,
+      "chg_52w_hi": -2.79,
+      "chg_ytd": -26.52,
       "spark": [
         0.22,
         -0.82,
@@ -189,11 +189,11 @@
     {
       "ticker": "HG=F",
       "name": "Copper Futures",
-      "price": 6.2725,
-      "chg_1d": 0.85,
-      "chg_1w": -2.04,
-      "chg_52w_hi": 23.24,
-      "chg_ytd": 11.21,
+      "price": 6.2735,
+      "chg_1d": 0.87,
+      "chg_1w": -2.02,
+      "chg_52w_hi": 23.26,
+      "chg_ytd": 11.23,
       "spark": [
         -2.41,
         -0.5,
@@ -204,11 +204,11 @@
     {
       "ticker": "PL=F",
       "name": "Platinum Futures",
-      "price": 1554.3,
-      "chg_1d": 1.0,
-      "chg_1w": 3.54,
-      "chg_52w_hi": -4.19,
-      "chg_ytd": -26.88,
+      "price": 1535.5,
+      "chg_1d": -0.22,
+      "chg_1w": 2.29,
+      "chg_52w_hi": -5.35,
+      "chg_ytd": -27.76,
       "spark": [
         1.55,
         0.91,
@@ -221,11 +221,11 @@
     {
       "ticker": "CL=F",
       "name": "WTI Crude Oil",
-      "price": 87.3,
-      "chg_1d": 1.46,
-      "chg_1w": -0.93,
-      "chg_52w_hi": 49.26,
-      "chg_ytd": 52.3,
+      "price": 87.19,
+      "chg_1d": 1.34,
+      "chg_1w": -1.06,
+      "chg_52w_hi": 49.07,
+      "chg_ytd": 52.11,
       "spark": [
         2.72,
         0.34,
@@ -236,11 +236,11 @@
     {
       "ticker": "BZ=F",
       "name": "Brent Crude Oil",
-      "price": 92.93,
-      "chg_1d": 1.57,
-      "chg_1w": -1.79,
-      "chg_52w_hi": 48.19,
-      "chg_ytd": 52.97,
+      "price": 93.4,
+      "chg_1d": 2.09,
+      "chg_1w": -1.29,
+      "chg_52w_hi": 48.94,
+      "chg_ytd": 53.74,
       "spark": [
         3.88,
         0.03,
@@ -251,11 +251,11 @@
     {
       "ticker": "NG=F",
       "name": "Natural Gas",
-      "price": 3.389,
-      "chg_1d": 2.82,
-      "chg_1w": 14.53,
-      "chg_52w_hi": -25.24,
-      "chg_ytd": -6.33,
+      "price": 3.227,
+      "chg_1d": -2.09,
+      "chg_1w": 9.06,
+      "chg_52w_hi": -28.81,
+      "chg_ytd": -10.81,
       "spark": [
         -0.41,
         1.73,
@@ -266,11 +266,11 @@
     {
       "ticker": "RB=F",
       "name": "RBOB Gasoline",
-      "price": 2.6087,
-      "chg_1d": -0.0,
-      "chg_1w": -4.39,
-      "chg_52w_hi": 33.41,
-      "chg_ytd": 53.62,
+      "price": 2.5839,
+      "chg_1d": -0.95,
+      "chg_1w": -5.3,
+      "chg_52w_hi": 32.14,
+      "chg_ytd": 52.16,
       "spark": [
         1.28,
         0.48,
@@ -325,11 +325,11 @@
     {
       "ticker": "^FTSE",
       "name": "FTSE 100",
-      "price": 10777.2598,
-      "chg_1d": 0.24,
-      "chg_1w": -0.48,
-      "chg_52w_hi": 8.74,
-      "chg_ytd": 8.3,
+      "price": 10835.4697,
+      "chg_1d": 0.78,
+      "chg_1w": 0.06,
+      "chg_52w_hi": 9.32,
+      "chg_ytd": 8.89,
       "spark": [
         -0.43,
         -1.01,
@@ -340,11 +340,11 @@
     {
       "ticker": "^GDAXI",
       "name": "DAX",
-      "price": 26521.5801,
-      "chg_1d": 0.66,
-      "chg_1w": 0.32,
-      "chg_52w_hi": 8.78,
-      "chg_ytd": 8.08,
+      "price": 26662.7695,
+      "chg_1d": 1.2,
+      "chg_1w": 0.85,
+      "chg_52w_hi": 9.36,
+      "chg_ytd": 8.65,
       "spark": [
         -0.43,
         -1.92,
@@ -355,11 +355,11 @@
     {
       "ticker": "^FCHI",
       "name": "CAC 40",
-      "price": 8304.5596,
-      "chg_1d": 0.31,
-      "chg_1w": 1.55,
-      "chg_52w_hi": 0.77,
-      "chg_ytd": 1.33,
+      "price": 8332.8701,
+      "chg_1d": 0.66,
+      "chg_1w": 1.9,
+      "chg_52w_hi": 1.11,
+      "chg_ytd": 1.68,
       "spark": [
         0.34,
         -0.81,
@@ -370,31 +370,31 @@
     {
       "ticker": "^N225",
       "name": "Nikkei 225",
-      "price": 61248.5898,
-      "chg_1d": 1.31,
-      "chg_1w": -1.51,
-      "chg_52w_hi": 19.95,
-      "chg_ytd": 18.17,
+      "price": 60459.5781,
+      "chg_1d": 2.87,
+      "chg_1w": -4.16,
+      "chg_52w_hi": 18.4,
+      "chg_ytd": 16.64,
       "spark": [
+        -1.42,
         -1.79,
         -5.96,
-        2.33,
-        2.87
+        2.33
       ]
     },
     {
       "ticker": "^HSI",
       "name": "Hang Seng",
-      "price": 24315.9199,
-      "chg_1d": -0.98,
-      "chg_1w": 1.66,
-      "chg_52w_hi": -9.68,
-      "chg_ytd": -7.68,
+      "price": 24557.0391,
+      "chg_1d": 0.44,
+      "chg_1w": 4.38,
+      "chg_52w_hi": -8.79,
+      "chg_ytd": -6.76,
       "spark": [
+        1.67,
         3.67,
         -1.27,
-        -0.13,
-        0.44
+        -0.13
       ]
     },
     {
@@ -415,16 +415,16 @@
     {
       "ticker": "^KS11",
       "name": "KOSPI",
-      "price": 5375.3599,
-      "chg_1d": 2.6,
-      "chg_1w": -5.43,
-      "chg_52w_hi": 29.51,
-      "chg_ytd": 24.73,
+      "price": 5239.1299,
+      "chg_1d": 4.39,
+      "chg_1w": -7.25,
+      "chg_52w_hi": 26.23,
+      "chg_ytd": 21.57,
       "spark": [
+        0.62,
         -5.28,
         -6.02,
-        -0.81,
-        4.39
+        -0.81
       ]
     }
   ],
@@ -432,11 +432,11 @@
     {
       "ticker": "XLC",
       "name": "Comm. Services",
-      "price": 108.17,
-      "chg_1d": 0.38,
-      "chg_1w": 3.06,
-      "chg_52w_hi": -3.55,
-      "chg_ytd": -6.62,
+      "price": 108.56,
+      "chg_1d": 0.74,
+      "chg_1w": 3.43,
+      "chg_52w_hi": -3.2,
+      "chg_ytd": -6.29,
       "spark": [
         -0.59,
         0.43,
@@ -445,28 +445,13 @@
       ]
     },
     {
-      "ticker": "XLU",
-      "name": "Utilities",
-      "price": 43.76,
-      "chg_1d": 0.07,
-      "chg_1w": 0.34,
-      "chg_52w_hi": 0.11,
-      "chg_ytd": 3.46,
-      "spark": [
-        -0.71,
-        -0.39,
-        1.53,
-        -0.14
-      ]
-    },
-    {
       "ticker": "XLI",
       "name": "Industrials",
-      "price": 169.63,
-      "chg_1d": 0.53,
-      "chg_1w": 0.1,
-      "chg_52w_hi": 11.13,
-      "chg_ytd": 8.23,
+      "price": 170.78,
+      "chg_1d": 1.21,
+      "chg_1w": 0.78,
+      "chg_52w_hi": 11.88,
+      "chg_ytd": 8.96,
       "spark": [
         -4.12,
         0.12,
@@ -475,73 +460,28 @@
       ]
     },
     {
-      "ticker": "XLV",
-      "name": "Health Care",
-      "price": 187.88,
-      "chg_1d": -0.53,
-      "chg_1w": -0.94,
-      "chg_52w_hi": 25.0,
-      "chg_ytd": 22.31,
+      "ticker": "XLU",
+      "name": "Utilities",
+      "price": 43.75,
+      "chg_1d": 0.05,
+      "chg_1w": 0.32,
+      "chg_52w_hi": 0.08,
+      "chg_ytd": 3.43,
       "spark": [
-        -2.5,
-        -0.06,
-        1.91,
-        0.29
-      ]
-    },
-    {
-      "ticker": "XLY",
-      "name": "Consumer Disc.",
-      "price": 121.01,
-      "chg_1d": -0.03,
-      "chg_1w": -1.08,
-      "chg_52w_hi": 2.55,
-      "chg_ytd": 2.88,
-      "spark": [
-        -3.83,
-        -0.05,
-        2.92,
-        0.03
-      ]
-    },
-    {
-      "ticker": "XLP",
-      "name": "Consumer Staples",
-      "price": 90.91,
-      "chg_1d": -0.13,
-      "chg_1w": -1.12,
-      "chg_52w_hi": 20.8,
-      "chg_ytd": 19.27,
-      "spark": [
-        -0.75,
-        -1.28,
-        0.9,
-        0.15
-      ]
-    },
-    {
-      "ticker": "XLRE",
-      "name": "Real Estate",
-      "price": 44.58,
-      "chg_1d": 0.0,
-      "chg_1w": -1.2,
-      "chg_52w_hi": 11.56,
-      "chg_ytd": 13.06,
-      "spark": [
-        -1.82,
-        -0.68,
-        1.45,
-        -0.13
+        -0.71,
+        -0.39,
+        1.53,
+        -0.14
       ]
     },
     {
       "ticker": "XLE",
       "name": "Energy",
-      "price": 62.75,
-      "chg_1d": 0.87,
-      "chg_1w": -1.21,
-      "chg_52w_hi": 43.02,
-      "chg_ytd": 40.18,
+      "price": 63.065,
+      "chg_1d": 1.37,
+      "chg_1w": -0.72,
+      "chg_52w_hi": 43.74,
+      "chg_ytd": 40.89,
       "spark": [
         -2.98,
         -0.02,
@@ -550,18 +490,93 @@
       ]
     },
     {
+      "ticker": "XLV",
+      "name": "Health Care",
+      "price": 188.265,
+      "chg_1d": -0.33,
+      "chg_1w": -0.74,
+      "chg_52w_hi": 25.25,
+      "chg_ytd": 22.56,
+      "spark": [
+        -2.5,
+        -0.06,
+        1.91,
+        0.29
+      ]
+    },
+    {
+      "ticker": "XLK",
+      "name": "Technology",
+      "price": 175.18,
+      "chg_1d": 3.71,
+      "chg_1w": -0.75,
+      "chg_52w_hi": 19.81,
+      "chg_ytd": 21.84,
+      "spark": [
+        -8.0,
+        1.45,
+        3.73,
+        -1.15
+      ]
+    },
+    {
+      "ticker": "XLP",
+      "name": "Consumer Staples",
+      "price": 91.0,
+      "chg_1d": -0.03,
+      "chg_1w": -1.02,
+      "chg_52w_hi": 20.92,
+      "chg_ytd": 19.39,
+      "spark": [
+        -0.75,
+        -1.28,
+        0.9,
+        0.15
+      ]
+    },
+    {
+      "ticker": "XLY",
+      "name": "Consumer Disc.",
+      "price": 120.96,
+      "chg_1d": -0.07,
+      "chg_1w": -1.12,
+      "chg_52w_hi": 2.51,
+      "chg_ytd": 2.84,
+      "spark": [
+        -3.83,
+        -0.05,
+        2.92,
+        0.03
+      ]
+    },
+    {
       "ticker": "XLF",
       "name": "Financials",
-      "price": 58.285,
-      "chg_1d": -0.01,
-      "chg_1w": -1.55,
-      "chg_52w_hi": 10.31,
-      "chg_ytd": 7.41,
+      "price": 58.505,
+      "chg_1d": 0.37,
+      "chg_1w": -1.17,
+      "chg_52w_hi": 10.73,
+      "chg_ytd": 7.81,
       "spark": [
         -2.87,
         -0.59,
         1.45,
         0.52
+      ]
+    },
+    {
+      "ticker": "XLRE",
+      "name": "Real Estate",
+      "price": 44.455,
+      "chg_1d": -0.28,
+      "chg_1w": -1.47,
+      "chg_52w_hi": 11.25,
+      "chg_ytd": 12.74,
+      "spark": [
+        -1.82,
+        -0.68,
+        1.45,
+        -0.13
       ]
     },
     {
@@ -578,32 +593,17 @@
         1.91,
         -0.17
       ]
-    },
-    {
-      "ticker": "XLK",
-      "name": "Technology",
-      "price": 172.63,
-      "chg_1d": 2.2,
-      "chg_1w": -2.19,
-      "chg_52w_hi": 18.07,
-      "chg_ytd": 20.06,
-      "spark": [
-        -8.0,
-        1.45,
-        3.73,
-        -1.15
-      ]
     }
   ],
   "major_etfs": [
     {
       "ticker": "SPY",
       "name": "S&P 500",
-      "price": 755.48,
-      "chg_1d": 0.74,
-      "chg_1w": -1.48,
-      "chg_52w_hi": 11.74,
-      "chg_ytd": 11.45,
+      "price": 760.09,
+      "chg_1d": 1.36,
+      "chg_1w": -0.88,
+      "chg_52w_hi": 12.43,
+      "chg_ytd": 12.13,
       "spark": [
         -4.41,
         0.31,
@@ -614,11 +614,11 @@
     {
       "ticker": "QQQ",
       "name": "Nasdaq 100",
-      "price": 683.79,
-      "chg_1d": 1.34,
-      "chg_1w": -1.18,
-      "chg_52w_hi": 10.61,
-      "chg_ytd": 11.91,
+      "price": 692.08,
+      "chg_1d": 2.57,
+      "chg_1w": 0.02,
+      "chg_52w_hi": 11.96,
+      "chg_ytd": 13.26,
       "spark": [
         -6.49,
         1.4,
@@ -629,11 +629,11 @@
     {
       "ticker": "IWM",
       "name": "Russell 2000",
-      "price": 282.485,
-      "chg_1d": 0.68,
-      "chg_1w": -0.54,
-      "chg_52w_hi": 17.12,
-      "chg_ytd": 14.32,
+      "price": 282.89,
+      "chg_1d": 0.82,
+      "chg_1w": -0.4,
+      "chg_52w_hi": 17.29,
+      "chg_ytd": 14.48,
       "spark": [
         -4.59,
         0.99,
@@ -644,11 +644,11 @@
     {
       "ticker": "DIA",
       "name": "Dow Jones",
-      "price": 521.44,
-      "chg_1d": -0.06,
-      "chg_1w": -2.19,
-      "chg_52w_hi": 9.59,
-      "chg_ytd": 9.02,
+      "price": 523.65,
+      "chg_1d": 0.37,
+      "chg_1w": -1.77,
+      "chg_52w_hi": 10.06,
+      "chg_ytd": 9.48,
       "spark": [
         -3.53,
         -0.4,
@@ -659,11 +659,11 @@
     {
       "ticker": "GLD",
       "name": "Gold",
-      "price": 368.17,
-      "chg_1d": -0.32,
-      "chg_1w": -1.16,
-      "chg_52w_hi": -4.62,
-      "chg_ytd": -7.56,
+      "price": 364.96,
+      "chg_1d": -1.19,
+      "chg_1w": -2.02,
+      "chg_52w_hi": -5.45,
+      "chg_ytd": -8.37,
       "spark": [
         0.81,
         -0.79,
@@ -674,11 +674,11 @@
     {
       "ticker": "SLV",
       "name": "Silver",
-      "price": 47.185,
-      "chg_1d": 1.52,
-      "chg_1w": 0.05,
-      "chg_52w_hi": -2.35,
-      "chg_ytd": -28.24,
+      "price": 46.6901,
+      "chg_1d": 0.45,
+      "chg_1w": -1.0,
+      "chg_52w_hi": -3.37,
+      "chg_ytd": -28.99,
       "spark": [
         -0.49,
         -0.13,
@@ -689,11 +689,11 @@
     {
       "ticker": "TLT",
       "name": "20Y Treasuries",
-      "price": 80.715,
-      "chg_1d": -0.2,
-      "chg_1w": -1.28,
-      "chg_52w_hi": -6.62,
-      "chg_ytd": -4.02,
+      "price": 80.905,
+      "chg_1d": 0.03,
+      "chg_1w": -1.05,
+      "chg_52w_hi": -6.4,
+      "chg_ytd": -3.8,
       "spark": [
         0.21,
         -0.01,
@@ -704,11 +704,11 @@
     {
       "ticker": "HYG",
       "name": "High Yield Corp",
-      "price": 77.195,
-      "chg_1d": 0.02,
-      "chg_1w": -0.42,
-      "chg_52w_hi": 1.15,
-      "chg_ytd": 0.03,
+      "price": 77.355,
+      "chg_1d": 0.23,
+      "chg_1w": -0.21,
+      "chg_52w_hi": 1.36,
+      "chg_ytd": 0.24,
       "spark": [
         -0.31,
         -0.06,
@@ -719,11 +719,11 @@
     {
       "ticker": "LQD",
       "name": "Investment Grade",
-      "price": 103.83,
-      "chg_1d": -0.05,
-      "chg_1w": -0.64,
-      "chg_52w_hi": -2.45,
-      "chg_ytd": -2.36,
+      "price": 103.9599,
+      "chg_1d": 0.08,
+      "chg_1w": -0.52,
+      "chg_52w_hi": -2.33,
+      "chg_ytd": -2.24,
       "spark": [
         0.15,
         -0.12,
@@ -734,11 +734,11 @@
     {
       "ticker": "VNQ",
       "name": "Real Estate",
-      "price": 97.015,
-      "chg_1d": -0.07,
-      "chg_1w": -1.04,
-      "chg_52w_hi": 11.24,
-      "chg_ytd": 12.71,
+      "price": 96.765,
+      "chg_1d": -0.32,
+      "chg_1w": -1.29,
+      "chg_52w_hi": 10.95,
+      "chg_ytd": 12.42,
       "spark": [
         -1.84,
         -0.52,
@@ -749,11 +749,11 @@
     {
       "ticker": "USO",
       "name": "Oil Fund",
-      "price": 143.035,
-      "chg_1d": 1.12,
-      "chg_1w": -1.63,
-      "chg_52w_hi": 104.95,
-      "chg_ytd": 107.42,
+      "price": 142.52,
+      "chg_1d": 0.76,
+      "chg_1w": -1.99,
+      "chg_52w_hi": 104.21,
+      "chg_ytd": 106.67,
       "spark": [
         1.93,
         0.13,
@@ -766,11 +766,11 @@
     {
       "ticker": "BTC-USD",
       "name": "Bitcoin",
-      "price": 73548.9062,
-      "chg_1d": -0.23,
-      "chg_1w": -2.9,
-      "chg_52w_hi": -27.65,
-      "chg_ytd": -17.11,
+      "price": 74190.0391,
+      "chg_1d": 0.64,
+      "chg_1w": -2.06,
+      "chg_52w_hi": -27.02,
+      "chg_ytd": -16.39,
       "spark": [
         0.0,
         -1.54,
@@ -781,11 +781,11 @@
     {
       "ticker": "ETH-USD",
       "name": "Ethereum",
-      "price": 2053.46,
-      "chg_1d": 0.16,
-      "chg_1w": -8.12,
-      "chg_52w_hi": -39.84,
-      "chg_ytd": -31.56,
+      "price": 2075.4099,
+      "chg_1d": 1.23,
+      "chg_1w": -7.14,
+      "chg_52w_hi": -39.19,
+      "chg_ytd": -30.83,
       "spark": [
         0.06,
         -5.16,
@@ -798,11 +798,11 @@
     {
       "ticker": "INDA",
       "name": "India",
-      "price": 51.505,
-      "chg_1d": -0.42,
-      "chg_1w": 2.95,
-      "chg_52w_hi": -5.6,
-      "chg_ytd": -5.6,
+      "price": 51.575,
+      "chg_1d": -0.28,
+      "chg_1w": 3.09,
+      "chg_52w_hi": -5.47,
+      "chg_ytd": -5.47,
       "spark": [
         -0.02,
         1.74,
@@ -813,11 +813,11 @@
     {
       "ticker": "EWZ",
       "name": "Brazil",
-      "price": 32.455,
-      "chg_1d": 0.95,
-      "chg_1w": 0.64,
-      "chg_52w_hi": 2.08,
-      "chg_ytd": 1.75,
+      "price": 32.395,
+      "chg_1d": 0.76,
+      "chg_1w": 0.45,
+      "chg_52w_hi": 1.89,
+      "chg_ytd": 1.56,
       "spark": [
         -1.52,
         0.69,
@@ -828,11 +828,11 @@
     {
       "ticker": "EWQ",
       "name": "France",
-      "price": 43.73,
-      "chg_1d": -0.91,
-      "chg_1w": -0.3,
-      "chg_52w_hi": -0.31,
-      "chg_ytd": -1.18,
+      "price": 43.91,
+      "chg_1d": -0.5,
+      "chg_1w": 0.11,
+      "chg_52w_hi": 0.1,
+      "chg_ytd": -0.78,
       "spark": [
         -1.05,
         -1.18,
@@ -841,28 +841,13 @@
       ]
     },
     {
-      "ticker": "FXI",
-      "name": "China",
-      "price": 34.0,
-      "chg_1d": -1.19,
-      "chg_1w": -1.71,
-      "chg_52w_hi": -15.36,
-      "chg_ytd": -13.97,
-      "spark": [
-        1.01,
-        0.03,
-        -0.83,
-        -0.72
-      ]
-    },
-    {
       "ticker": "EWG",
       "name": "Germany",
-      "price": 42.645,
-      "chg_1d": -0.71,
-      "chg_1w": -1.97,
-      "chg_52w_hi": 4.37,
-      "chg_ytd": 2.21,
+      "price": 42.95,
+      "chg_1d": 0.0,
+      "chg_1w": -1.26,
+      "chg_52w_hi": 5.11,
+      "chg_ytd": 2.94,
       "spark": [
         -1.72,
         -2.74,
@@ -873,11 +858,11 @@
     {
       "ticker": "EWA",
       "name": "Australia",
-      "price": 29.26,
-      "chg_1d": -0.51,
-      "chg_1w": -2.01,
-      "chg_52w_hi": 13.54,
-      "chg_ytd": 12.09,
+      "price": 29.4,
+      "chg_1d": -0.03,
+      "chg_1w": -1.54,
+      "chg_52w_hi": 14.08,
+      "chg_ytd": 12.63,
       "spark": [
         -2.04,
         -0.27,
@@ -886,28 +871,28 @@
       ]
     },
     {
-      "ticker": "EWC",
-      "name": "Canada",
-      "price": 60.36,
-      "chg_1d": 0.12,
-      "chg_1w": -2.39,
-      "chg_52w_hi": 18.23,
-      "chg_ytd": 11.91,
+      "ticker": "FXI",
+      "name": "China",
+      "price": 33.905,
+      "chg_1d": -1.47,
+      "chg_1w": -1.98,
+      "chg_52w_hi": -15.59,
+      "chg_ytd": -14.22,
       "spark": [
-        -2.7,
-        -0.38,
-        1.74,
-        -1.13
+        1.01,
+        0.03,
+        -0.83,
+        -0.72
       ]
     },
     {
       "ticker": "EWJ",
       "name": "Japan",
-      "price": 91.35,
-      "chg_1d": 1.06,
-      "chg_1w": -2.67,
-      "chg_52w_hi": 12.97,
-      "chg_ytd": 12.93,
+      "price": 91.9201,
+      "chg_1d": 1.69,
+      "chg_1w": -2.07,
+      "chg_52w_hi": 13.68,
+      "chg_ytd": 13.64,
       "spark": [
         -5.97,
         0.0,
@@ -916,13 +901,28 @@
       ]
     },
     {
+      "ticker": "EWC",
+      "name": "Canada",
+      "price": 60.53,
+      "chg_1d": 0.4,
+      "chg_1w": -2.12,
+      "chg_52w_hi": 18.56,
+      "chg_ytd": 12.22,
+      "spark": [
+        -2.7,
+        -0.38,
+        1.74,
+        -1.13
+      ]
+    },
+    {
       "ticker": "EWU",
       "name": "United Kingdom",
-      "price": 47.56,
-      "chg_1d": -0.83,
-      "chg_1w": -2.8,
-      "chg_52w_hi": 13.02,
-      "chg_ytd": 8.5,
+      "price": 47.825,
+      "chg_1d": -0.28,
+      "chg_1w": -2.26,
+      "chg_52w_hi": 13.65,
+      "chg_ytd": 9.11,
       "spark": [
         -2.13,
         -1.4,
@@ -933,11 +933,11 @@
     {
       "ticker": "EWY",
       "name": "South Korea",
-      "price": 145.69,
-      "chg_1d": 4.68,
-      "chg_1w": -4.23,
-      "chg_52w_hi": 55.3,
-      "chg_ytd": 42.53,
+      "price": 148.665,
+      "chg_1d": 6.81,
+      "chg_1w": -2.27,
+      "chg_52w_hi": 58.47,
+      "chg_ytd": 45.44,
       "spark": [
         -13.46,
         4.07,
@@ -947,14 +947,14 @@
     }
   ],
   "breadth": {
-    "pct_above_ma50": 68.6,
-    "pct_above_ma200": 66.6,
-    "new_52w_highs": 58,
+    "pct_above_ma50": 70.2,
+    "pct_above_ma200": 66.8,
+    "new_52w_highs": 57,
     "new_52w_lows": 0,
     "total_stocks": 500
   },
   "fear_greed": {
-    "score": 38.1,
+    "score": 37.5,
     "rating": "Fear",
     "previous_close": 33.5
   }
