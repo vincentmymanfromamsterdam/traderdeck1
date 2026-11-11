@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-11 15:37 UTC",
+ "updated_at": "2026-11-11 19:49 UTC",
  "rows": [
   {
    "id": "2026-11-11|APPN|gapup",
@@ -20,6 +20,26 @@
    "plan_entry": 53.85,
    "plan_stop": 51.27,
    "logged_at": "2026-11-11T15:37Z"
+  },
+  {
+   "id": "2026-11-11|AMD|pullback",
+   "date": "2026-11-11",
+   "ticker": "AMD",
+   "setup": "pullback",
+   "action": "take",
+   "badges": "EMA↑ LL1 LIQ",
+   "star": true,
+   "zone": 0.3,
+   "regime": "D",
+   "rs": 95,
+   "entry": 562.99,
+   "stop": 522,
+   "risk_pct": 0.5,
+   "trigger": "Trendlijnbreuk",
+   "note": "50 MA reclaim on volume",
+   "plan_entry": 561.21,
+   "plan_stop": 495.32,
+   "logged_at": "2026-11-11T19:49Z"
   }
  ]
 }
