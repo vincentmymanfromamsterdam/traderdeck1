@@ -2546,7 +2546,7 @@ function dcClear(tk, setup) {
 }
 function dcSkip(tk, setup, reason) {
   const r = dcRowOf(tk, setup), p = dcPlan(r, setup);
-  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'skip', reason, badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null,
+  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'skip', reason, badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null, er: r.earnings_days ?? null,
                 regime: (curRegime && curRegime.letter) || null, rs: r.rs_rating ?? null,
                 plan_entry: p.entry, plan_stop: p.stop, logged_at: new Date().toISOString().slice(0, 16) + 'Z' };
   dcSave(dcRows.filter(x => x.id !== row.id).concat([row]), 'beslislog: skip ' + tk + ' (' + reason + ')');
@@ -2556,7 +2556,7 @@ function dcTake(tk, setup) {
   const num = id => { const v = parseFloat(String(($(id) || {}).value || '').replace(',', '.')); return isFinite(v) ? v : null; };
   const entry = num('dc-e') ?? p.entry, stop = num('dc-s') ?? p.stop;
   if (!entry || !stop || stop >= entry) { dcMsg = 'Entry moet boven de stop liggen.'; renderSetups(); return; }
-  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'take', badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null,
+  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'take', badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null, er: r.earnings_days ?? null,
                 regime: (curRegime && curRegime.letter) || null, rs: r.rs_rating ?? null,
                 entry, stop, risk_pct: num('dc-r') ?? 0.5,
                 trigger: (($('dc-t') || {}).value) || DC_TRIGGERS[0], note: (($('dc-n') || {}).value || '').slice(0, 140),
@@ -3054,17 +3054,17 @@ function renderRegimeStrip() {
 const SU_HEAD = {
   pb: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th>
        <th title="supportlagen binnen 1 ATR">Lagen</th><th>n</th><th title="afstand tot de dichtstbijzijnde laag, in ATR">Dichtst</th><th title="slot t.o.v. de dagrange (0 = low)">LoD</th><th>ADR %</th>
-       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="voorgestelde stop onder structuur · klik om in de calculator te laden">Stop &middot; %</th><th>Beslissing</th></tr>`,
-  ur: NT_HEAD.ur.replace('<th></th>', '<th>Beslissing</th>').replace('<th>$ Vol</th>', '<th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th>'),
+       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="voorgestelde stop onder structuur · klik om in de calculator te laden">Stop &middot; %</th><th title="dagen tot de cijfers · rood ≤ 5, amber ≤ 10 — een gap door de cijfers kan ver voorbij de stop vallen">ER</th><th>Beslissing</th></tr>`,
+  ur: NT_HEAD.ur.replace('<th></th>', '<th title="dagen tot de cijfers · rood ≤ 5, amber ≤ 10 — een gap door de cijfers kan ver voorbij de stop vallen">ER</th><th>Beslissing</th>').replace('<th>$ Vol</th>', '<th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th>'),
   bo: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th title="datum van de breakout · RT = retest van de pivot gezien">Breakout</th><th>Pivot</th><th title="slot op de breakoutdag t.o.v. de pivot">Ext.</th><th title="volume op de breakoutdag t.o.v. het 50-daags gemiddelde">Vol &times;</th>
        <th title="lengte en diepte van de base">Base</th><th title="welke base sinds het laatste slot onder de 200 (1–2 = vroeg, 3+ = laat)">Base#</th><th>RS</th>
-       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="huidige koers t.o.v. de pivot">Nu vs pivot</th><th>Beslissing</th></tr>`,
+       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="huidige koers t.o.v. de pivot">Nu vs pivot</th><th title="dagen tot de cijfers · rood ≤ 5, amber ≤ 10 — een gap door de cijfers kan ver voorbij de stop vallen">ER</th><th>Beslissing</th></tr>`,
   gu: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th title="datum van de gap">Gap-up</th><th title="open t.o.v. het vorige slot">Gap</th><th title="open − vorige high, in ATR(40)">Gap / ATR</th><th title="volume op de gapdag t.o.v. het 50-daags gemiddelde">Vol &times;</th>
        <th title="stop = low van de gapdag · klik om in de calculator te laden">Stop (low)</th><th title="koers t.o.v. de low van de gapdag">Boven low</th><th title="staat de low van de gapdag nog?">Low houdt</th><th>RS</th>
-       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th>Beslissing</th></tr>`,
+       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="dagen tot de cijfers · rood ≤ 5, amber ≤ 10 — een gap door de cijfers kan ver voorbij de stop vallen">ER</th><th>Beslissing</th></tr>`,
   rh: `<tr><th>Ticker</th><th>Price</th><th>1D %</th><th>RS</th><th title="verandering in RS-rating t.o.v. 21 handelsdagen geleden">&Delta;RS</th><th title="afstand tot de 52-weeks high">vs high</th>
        <th title="eigen low rond de eerdere zware dag van de index (±2 sessies)">Eigen low</th><th title="laagste low sinds de lagere index-low">Low sinds</th><th title="HIELD = bleef boven de eigen low terwijl de Nasdaq een lagere low zette">Test</th><th title="koers t.o.v. de eigen low">vs low</th>
-       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th>Beslissing</th></tr>`
+       <th title="badges die de meting (T12) doorstonden · ★ = de combinatie die in deze tab het best mat">Badges</th><th title="afstand tot de SMA50 in ATR · groen 0–4, amber 4–7, rood ≥ 7 (verlies in 11 van 12 jaar)">Zone</th><th title="dagen tot de cijfers · rood ≤ 5, amber ≤ 10 — een gap door de cijfers kan ver voorbij de stop vallen">ER</th><th>Beslissing</th></tr>`
 };
 const SU_EMPTY = { pb: 'Geen Stage 2-leiders boven de EMA50 in een confluence-zone van ≥ 3 lagen.', ur: 'Geen verse undercut &amp; reclaim — deze setup vult zich vooral op omslagdagen.',
                    bo: 'Geen base breakouts in de laatste 5 sessies.', gu: 'Geen buyable gap-ups in de laatste 5 sessies.',
@@ -3139,7 +3139,7 @@ function suShow(mode) {
 function renderSetups() {
   const tb = $('su-tbody'); if (!tb) return;
   const lg = $('su-bdg-legend');
-  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + (suMode === 'bo' ? ' · <b>RS↑</b> RS-lijn op een 52-weeks high op de breakoutdag · volume groen vanaf 2,5× (A/B)' : '') + (suMode === 'ur' ? ' · volume groen vanaf 3× (A/B)' : '') + ' · Zone = ATR boven de SMA50 · gemeten in T12' + (suMode === 'pb' ? ' en T13' : (suMode === 'bo' || suMode === 'ur') ? ' en T14' : '');
+  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + (suMode === 'bo' ? ' · <b>RS↑</b> RS-lijn op een 52-weeks high op de breakoutdag · volume groen vanaf 2,5× (A/B)' : '') + (suMode === 'ur' ? ' · volume groen vanaf 3× (A/B)' : '') + ' · Zone = ATR boven de SMA50 · <b>ER</b> dagen tot de cijfers (rood ≤ 5) · gemeten in T12' + (suMode === 'pb' ? ' en T13' : (suMode === 'bo' || suMode === 'ur') ? ' en T14' : '');
   dcPanel();
   const th = $('su-thead'); if (th) th.innerHTML = SU_HEAD[suMode];
   const bd = $('su-badge');
@@ -3164,7 +3164,7 @@ function renderSetups() {
         <td style="font-weight:600">${r.confluence_n ?? '—'}</td>
         <td>${near == null ? '—' : (near > 0 ? '+' : '') + near.toFixed(2)}</td>
         <td>${r.lod_dist == null ? '—' : r.lod_dist + '%'}</td><td>${r.adr_pct == null ? '—' : r.adr_pct.toFixed(1)}</td>
-        <td>${bdgCell(r, 'pb')}</td><td>${zoneCell(r)}</td><td>${planCell(r)}</td>${dcCell(r, 'pb')}</tr>` + dcForm(r, 'pb', 14);
+        <td>${bdgCell(r, 'pb')}</td><td>${zoneCell(r)}</td><td>${planCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'pb')}</tr>` + dcForm(r, 'pb', 15);
     }).join('');
   } else if (suMode === 'ur') {
     tb.innerHTML = rows.map(r => {
@@ -3177,7 +3177,7 @@ function renderSetups() {
         <td style="color:${u.vol_x >= UR_HOT_VOL && !bdgWeak() ? 'var(--green)' : 'var(--blue)'};font-weight:600" title="${u.vol_x >= UR_HOT_VOL ? (bdgWeak() ? 'volume ≥ 3× · in C/D geen voordeel gemeten' : 'volume ≥ 3×: +0,18R in A/B tegen +0,02R daaronder (T14d)') : 'volume t.o.v. het 20-daags gemiddelde'}">${u.vol_x == null ? '—' : u.vol_x.toFixed(2) + '×'}</td>
         <td>${maPills(r)}</td><td>${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
         <td>${bdgCell(r, 'ur')}</td><td>${zoneCell(r)}</td>
-        <td>${urStopCell(r)}</td>${dcCell(r, 'ur')}</tr>` + dcForm(r, 'ur', 14);
+        <td>${urStopCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'ur')}</tr>` + dcForm(r, 'ur', 15);
     }).join('');
   } else if (suMode === 'bo') {
     tb.innerHTML = rows.map(r => {
@@ -3190,7 +3190,7 @@ function renderSetups() {
         <td>${b.base_wk ?? '?'} wk · −${b.depth_pct ?? '?'}%</td>
         <td style="color:${(b.base_n || 0) >= 3 ? 'var(--amber)' : 'var(--text)'}" title="${(b.base_n || 0) >= 3 ? 'late base: faalt vaker (O\'Neil, Minervini)' : 'vroege base'}">${b.base_n ?? '—'}</td>
         <td>${r.rs_rating ?? '—'}</td><td>${bdgCell(r, 'bo')}</td><td>${zoneCell(r)}</td>
-        <td>${pct(b.now_vs_pivot, 1)}</td>${dcCell(r, 'bo')}</tr>` + dcForm(r, 'bo', 14);
+        <td>${pct(b.now_vs_pivot, 1)}</td><td>${erCell(r)}</td>${dcCell(r, 'bo')}</tr>` + dcForm(r, 'bo', 15);
     }).join('');
   } else if (suMode === 'rh') {
     tb.innerHTML = rows.map(r => {
@@ -3201,7 +3201,7 @@ function renderSetups() {
         <td>${pct(r.off_52w_high, 1)}</td>
         <td>${h.ref_low == null ? '—' : '$' + fmtPrice(h.ref_low)}</td><td>${h.test_low == null ? '—' : '$' + fmtPrice(h.test_low)}</td>
         <td>${tc}</td><td>${h.vs_ref_pct == null ? '—' : pct(h.vs_ref_pct, 1)}</td>
-        <td>${bdgCell(r, 'rh')}</td><td>${zoneCell(r)}</td>${dcCell(r, 'rh')}</tr>` + dcForm(r, 'rh', 13);
+        <td>${bdgCell(r, 'rh')}</td><td>${zoneCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'rh')}</tr>` + dcForm(r, 'rh', 14);
     }).join('');
   } else {
     tb.innerHTML = rows.map(r => {
@@ -3214,7 +3214,7 @@ function renderSetups() {
         <td style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.price}, ${g.low})" title="stop onder de low van de gapdag · klik om in de calculator te laden">$${fmtPrice(g.low)}</td>
         <td>${pct(g.dist_low_pct, 1)}</td>
         <td style="color:${g.held ? 'var(--green)' : 'var(--red)'};font-weight:600">${g.held ? 'JA' : 'NEE'}</td>
-        <td>${r.rs_rating ?? '—'}</td><td>${bdgCell(r, 'gu')}</td><td>${zoneCell(r)}</td>${dcCell(r, 'gu')}</tr>` + dcForm(r, 'gu', 14);
+        <td>${r.rs_rating ?? '—'}</td><td>${bdgCell(r, 'gu')}</td><td>${zoneCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'gu')}</tr>` + dcForm(r, 'gu', 15);
     }).join('');
   }
 }

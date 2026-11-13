@@ -864,7 +864,7 @@ def main():
     setup_of = {}
     try:
         SU_KEYS = ("ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating", "rs_chg_1m",
-                   "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days",
+                   "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days", "earnings_date",
                    "plan_stop", "plan_stop_pct", "plan_stop_basis", "plan_entry_lo", "plan_entry_hi",
                    "above_ema50", "confluence", "confluence_n", "dist_atr", "ur", "bo", "gu", "bdg", "ema3")
         # v7.9 badges (MEETRESULTATEN-T12): only the ones that survived the measurement.
