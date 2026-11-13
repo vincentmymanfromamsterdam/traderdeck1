@@ -904,6 +904,28 @@ def main():
                             "zone": round(zone, 1), "dvol_m": int(round(dvol / 1e6))}
         except Exception as e:
             print(f"  (badges skipped: {e})")
+        # v7.11 (MEETRESULTATEN-T14 b/c): for a breakout, the RS line (close / SPY) at a 252-session
+        # high ON the breakout day, or volume >= 2.5x, separated the good ones in A/B (+0.33R against
+        # +0.04R for the rest, 9 of 12 years); LL1 + QUAD did not. bdg.rsl feeds the star and the
+        # RS badge in the breakout tab only.
+        BO_STAR_VOL = 2.5
+        try:
+            spy_c = full.get("SPY")["Close"]
+            for r in rows:
+                b = r.get("bo")
+                if not b or not isinstance(r.get("bdg"), dict):
+                    continue
+                c = full[r["ticker"]]["Close"].dropna()
+                line = (c / spy_c.reindex(c.index).ffill()).dropna()
+                d0 = pd.Timestamp(b["date"])
+                if d0 not in line.index:
+                    continue
+                i = line.index.get_loc(d0)
+                r["bdg"]["rsl"] = bool(i >= 251 and line.iloc[i] >= line.iloc[i - 251:i + 1].max() - 1e-12)
+        except Exception as e:
+            print(f"  (RS line skipped: {e})")
+        def _bo_star(r):
+            return bool(((r.get("bo") or {}).get("vol_x") or 0) >= BO_STAR_VOL or (r.get("bdg") or {}).get("rsl"))
         # v7.10 (MEETRESULTATEN-T13): a pullback below the EMA50 was the weakest group in every
         # regime and with every stop; a close above EMA9, 21 and 50 the strongest (+0.30R in A/B).
         def _da(r, k):
@@ -940,7 +962,7 @@ def main():
             return min(d) if d else 99
         cand["pullback"].sort(key=lambda r: (not r.get("ema3"), -(r.get("confluence_n") or 0), near(r)))
         cand["ur"].sort(key=lambda r: (r["ur"].get("age", 99), -(r["ur"].get("vol_x") or 0)))
-        cand["breakout"].sort(key=lambda r: (r["bo"].get("age", 99), -(r.get("rs_rating") or 0)))
+        cand["breakout"].sort(key=lambda r: (r["bo"].get("age", 99), not _bo_star(r), -(r.get("rs_rating") or 0)))
         cand["gapup"].sort(key=lambda r: (not r["gu"].get("held"), r["gu"].get("age", 99), -(r.get("rs_rating") or 0)))
 
         for k, lst in cand.items():
@@ -1040,7 +1062,8 @@ def main():
                                      "ur": {"min_held": 5, "min_vol_x": 2.0, "max_under_pct": 7.0, "max_age_days": 5,
                                             "gate": "close > SMA200"},
                                      "breakout": {"pivot": "260-session high, >= 25 sessions old", "max_depth_pct": 35,
-                                                  "max_ext_pct": 5, "min_vol_x": 1.5, "max_age_days": 5},
+                                                  "max_ext_pct": 5, "min_vol_x": 1.5, "max_age_days": 5,
+                                                  "star": "vol_x >= 2.5 or RS line at a 252-session high on the breakout day (A/B)"},
                                      "gapup": {"gap": "open - prior high >= 0.75 x ATR(40)", "min_vol_x": 1.5,
                                                "close": "close > prior high and in the upper half of the range",
                                                "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5},

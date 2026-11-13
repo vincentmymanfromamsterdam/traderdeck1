@@ -2546,7 +2546,7 @@ function dcClear(tk, setup) {
 }
 function dcSkip(tk, setup, reason) {
   const r = dcRowOf(tk, setup), p = dcPlan(r, setup);
-  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'skip', reason, badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg)), zone: r.bdg ? r.bdg.zone : null,
+  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'skip', reason, badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null,
                 regime: (curRegime && curRegime.letter) || null, rs: r.rs_rating ?? null,
                 plan_entry: p.entry, plan_stop: p.stop, logged_at: new Date().toISOString().slice(0, 16) + 'Z' };
   dcSave(dcRows.filter(x => x.id !== row.id).concat([row]), 'beslislog: skip ' + tk + ' (' + reason + ')');
@@ -2556,7 +2556,7 @@ function dcTake(tk, setup) {
   const num = id => { const v = parseFloat(String(($(id) || {}).value || '').replace(',', '.')); return isFinite(v) ? v : null; };
   const entry = num('dc-e') ?? p.entry, stop = num('dc-s') ?? p.stop;
   if (!entry || !stop || stop >= entry) { dcMsg = 'Entry moet boven de stop liggen.'; renderSetups(); return; }
-  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'take', badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg)), zone: r.bdg ? r.bdg.zone : null,
+  const row = { id: dcKey(tk, SU_LIST[setup]), date: dcDate(), ticker: tk, setup: SU_LIST[setup], action: 'take', badges: bdgList(r, setup).map(x => x[0]).join(' '), star: !!(r.bdg && BDG_STAR[setup](r.bdg, r)), vol_x: (r[setup] || {}).vol_x ?? null, zone: r.bdg ? r.bdg.zone : null,
                 regime: (curRegime && curRegime.letter) || null, rs: r.rs_rating ?? null,
                 entry, stop, risk_pct: num('dc-r') ?? 0.5,
                 trigger: (($('dc-t') || {}).value) || DC_TRIGGERS[0], note: (($('dc-n') || {}).value || '').slice(0, 140),
@@ -3074,9 +3074,14 @@ const dnaTip = (r, k) => DNA_T[k] + (r && r.dna && r.dna[k] ? ' ✓' : ' ✗');
 const LAYER = { ema9: '9', ema21: '21', ema50: '50', ma10w: '10W', avwap: 'AV' };
 // v7.9 badges (MEETRESULTATEN-T12). The star marks the combination that measured best in that tab.
 // v7.10 (T13): in the pullback tab a close above EMA9/21/50 earns a star as well; both = two stars.
-const BDG_STAR = { pb: g => g.kq || g.ema3, ur: g => g.ll1 && g.quad, bo: g => g.ll1 && g.quad,
+// v7.11 (T14b-d): the breakout star is volume >= 2.5x or the RS line at a 52-week high on the breakout day,
+// in A/B only (LL1 + QUAD did not separate breakouts). The U&R star stays LL1 + QUAD: it held in C/D too.
+const BO_STAR_VOL = 2.5, UR_HOT_VOL = 3;
+const bdgWeak = () => !!(curRegime && 'CD'.includes(curRegime.letter || '?'));
+const BDG_STAR = { pb: g => g.kq || g.ema3, ur: g => g.ll1 && g.quad,
+                   bo: (g, r) => !bdgWeak() && !!(((r && r.bo || {}).vol_x >= BO_STAR_VOL) || g.rsl),
                    gu: g => (g.kq || g.sb9) && g.zone < 7, rh: g => false };
-const BDG_STAR_TXT = { pb: 'slot boven EMA9, 21 en 50 (+0,30R in A/B) en/of KQ (+0,36R) — beide = ★★', ur: 'LL1 + QUAD', bo: 'LL1 + QUAD (+0,26R, doorstond alle toetsen)',
+const BDG_STAR_TXT = { pb: 'slot boven EMA9, 21 en 50 (+0,30R in A/B) en/of KQ (+0,36R) — beide = ★★', ur: 'LL1 + QUAD (+0,35R in A/B tegen +0,02R voor de rest; in C/D +0,18R tegen −0,04R · T14d)', bo: 'volume ≥ 2,5× of RS-lijn op een 52-weeks high op de breakoutdag: +0,33R in A/B tegen +0,04R voor de rest, 9 van 12 jaren (T14c) · geen ster in C/D',
                        gu: 'KQ of SB9, en zone < 7', rh: 'geen ster: RS-houders zijn niet als setup gemeten' };
 function bdgList(r, mode) {
   const g = r.bdg; if (!g) return [];
@@ -3087,13 +3092,14 @@ function bdgList(r, mode) {
   if (g.liq) out.push(['LIQ', 'var(--green)', 'dagomzet $' + (g.dvol_m >= 1000 ? (g.dvol_m / 1000).toFixed(1).replace('.', ',') + ' mld' : g.dvol_m + ' mln') + ' (≥ $500M) · +0,21R in A/B']);
   if (g.quad) out.push(['QUAD', 'var(--blue)', '5- en 21-daags rendement in de bovenste helft · sterk samen met LL1']);
   if (g.kq) out.push(['KQ', weak ? 'var(--amber)' : 'var(--green)', weak ? 'Qullamaggie-momentum · in C/D een waarschuwing: −0,21R' : 'Qullamaggie-momentum: ADR ≥ 5% en +25% in 1 mnd, +50% in 3 mnd of +100% in 6 mnd · +0,33R in A/B']);
+  if (g.rsl && mode === 'bo') out.push(['RS↑', weak ? 'var(--muted)' : 'var(--green)', weak ? 'RS-lijn (koers ÷ S&P 500) op een 52-weeks high op de breakoutdag · in C/D geen voordeel gemeten (+0,09R)' : 'RS-lijn (koers ÷ S&P 500) op een 52-weeks high op de breakoutdag · +0,34R in A/B tegen +0,11R zonder (T14b)']);
   if (g.sb9 && mode === 'gu') out.push(['SB9', 'var(--blue)', 'stijgende dag op ≥ 9 mln aandelen · gap-ups: +0,32R in A/B']);
   return out;
 }
 function bdgCell(r, mode) {
   const g = r.bdg;
   if (!g) return '<span style="color:var(--dim)">—</span>';
-  const nStar = mode === 'pb' ? (g.kq ? 1 : 0) + (g.ema3 ? 1 : 0) : (BDG_STAR[mode](g) ? 1 : 0);
+  const nStar = mode === 'pb' ? (g.kq ? 1 : 0) + (g.ema3 ? 1 : 0) : (BDG_STAR[mode](g, r) ? 1 : 0);
   const star = nStar ? `<span style="color:#FFD54F;margin-right:4px" title="★ ${BDG_STAR_TXT[mode]}">${'★'.repeat(nStar)}</span>` : '';
   const b = bdgList(r, mode).map(x => `<span class="bdg" style="color:${x[1]};border-color:${x[1]}" title="${esc(x[2])}">${x[0]}</span>`).join('');
   return star + (b || '<span style="color:var(--dim)">—</span>');
@@ -3133,7 +3139,7 @@ function suShow(mode) {
 function renderSetups() {
   const tb = $('su-tbody'); if (!tb) return;
   const lg = $('su-bdg-legend');
-  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + ' · Zone = ATR boven de SMA50 · gemeten in T12' + (suMode === 'pb' ? ' en T13' : '');
+  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + (suMode === 'bo' ? ' · <b>RS↑</b> RS-lijn op een 52-weeks high op de breakoutdag · volume groen vanaf 2,5× (A/B)' : '') + (suMode === 'ur' ? ' · volume groen vanaf 3× (A/B)' : '') + ' · Zone = ATR boven de SMA50 · gemeten in T12' + (suMode === 'pb' ? ' en T13' : (suMode === 'bo' || suMode === 'ur') ? ' en T14' : '');
   dcPanel();
   const th = $('su-thead'); if (th) th.innerHTML = SU_HEAD[suMode];
   const bd = $('su-badge');
@@ -3168,7 +3174,7 @@ function renderSetups() {
         <td>${urDate(u.date)} <span style="color:var(--muted)">· ${u.age == null ? '?' : u.age}d</span>${u.span === 2 ? ' <span class="sig-tag ur-on" title="tweedaags: dag 1 brak de steun en sloot eronder, dag 2 sloot er weer boven op volume">2D</span>' : ''}</td>
         <td>$${fmtPrice(u.ref)} <span style="color:var(--muted)">· ${u.held == null ? '?' : u.held}d</span></td>
         <td>${u.under_pct == null ? '—' : u.under_pct.toFixed(1) + '%'}</td>
-        <td style="color:var(--blue);font-weight:600">${u.vol_x == null ? '—' : u.vol_x.toFixed(2) + '×'}</td>
+        <td style="color:${u.vol_x >= UR_HOT_VOL && !bdgWeak() ? 'var(--green)' : 'var(--blue)'};font-weight:600" title="${u.vol_x >= UR_HOT_VOL ? (bdgWeak() ? 'volume ≥ 3× · in C/D geen voordeel gemeten' : 'volume ≥ 3×: +0,18R in A/B tegen +0,02R daaronder (T14d)') : 'volume t.o.v. het 20-daags gemiddelde'}">${u.vol_x == null ? '—' : u.vol_x.toFixed(2) + '×'}</td>
         <td>${maPills(r)}</td><td>${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
         <td>${bdgCell(r, 'ur')}</td><td>${zoneCell(r)}</td>
         <td>${urStopCell(r)}</td>${dcCell(r, 'ur')}</tr>` + dcForm(r, 'ur', 14);
@@ -3180,7 +3186,7 @@ function renderSetups() {
         <td>$${fmtPrice(r.price)}</td><td>${pct(r.chg_1d)}</td>
         <td>${urDate(b.date)} <span style="color:var(--muted)">· ${b.age == null ? '?' : b.age}d</span>${b.retest ? ' <span class="sig-tag on" title="na de breakout raakte de koers de pivot (≤ +2%) en sloot erboven — de entry die in regime A het best deed">RT</span>' : ''}</td>
         <td style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.price}, ${b.pivot})" title="pivot als referentie · klik om in de calculator te laden">$${fmtPrice(b.pivot)}</td>
-        <td>+${b.ext_pct ?? '—'}%</td><td style="font-weight:600">${b.vol_x == null ? '—' : b.vol_x.toFixed(1) + '×'}</td>
+        <td>+${b.ext_pct ?? '—'}%</td><td style="font-weight:600${b.vol_x >= BO_STAR_VOL && !bdgWeak() ? ';color:var(--green)' : ''}" title="${b.vol_x >= BO_STAR_VOL ? (bdgWeak() ? 'volume ≥ 2,5× · in C/D geen voordeel gemeten' : 'volume ≥ 2,5×: +0,39R in A/B tegen +0,09R daaronder (T14c)') : 'volume op de breakoutdag t.o.v. het 50-daags gemiddelde'}">${b.vol_x == null ? '—' : b.vol_x.toFixed(2) + '×'}</td>
         <td>${b.base_wk ?? '?'} wk · −${b.depth_pct ?? '?'}%</td>
         <td style="color:${(b.base_n || 0) >= 3 ? 'var(--amber)' : 'var(--text)'}" title="${(b.base_n || 0) >= 3 ? 'late base: faalt vaker (O\'Neil, Minervini)' : 'vroege base'}">${b.base_n ?? '—'}</td>
         <td>${r.rs_rating ?? '—'}</td><td>${bdgCell(r, 'bo')}</td><td>${zoneCell(r)}</td>
