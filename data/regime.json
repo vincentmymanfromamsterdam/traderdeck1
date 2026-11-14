@@ -1,16 +1,16 @@
 {
- "updated_at": "2026-11-13 11:04 UTC",
- "asof": "2026-11-12",
+ "updated_at": "2026-11-14 02:29 UTC",
+ "asof": "2026-11-13",
  "model": {
   "state": "UP",
   "regime": "B",
   "since": "2026-11-11"
  },
  "nasdaq": {
-  "close": 25366.09,
-  "chg": -0.39,
-  "vs50": -3.8,
-  "vs200": 0.9,
+  "close": 25136.27,
+  "chg": -0.91,
+  "vs50": -4.6,
+  "vs200": -0.0,
   "dd20": 4,
   "dd_dates": [
    "2026-10-22",
@@ -19,12 +19,6 @@
    "2026-11-05"
   ],
   "last20": [
-   {
-    "d": "2026-10-16",
-    "dd": false,
-    "cap": false,
-    "vix": false
-   },
    {
     "d": "2026-10-19",
     "dd": false,
@@ -138,14 +132,20 @@
     "dd": false,
     "cap": false,
     "vix": false
+   },
+   {
+    "d": "2026-11-13",
+    "dd": false,
+    "cap": false,
+    "vix": false
    }
   ]
  },
  "sp500": {
-  "close": 7592.4,
-  "chg": -0.35,
-  "vs50": -1.0,
-  "vs200": 3.5,
+  "close": 7561.67,
+  "chg": -0.4,
+  "vs50": -1.4,
+  "vs200": 3.0,
   "dd20": 5,
   "dd_dates": [
    "2026-10-22",
@@ -156,11 +156,11 @@
   ]
  },
  "russell": {
-  "close": 2799.06,
-  "vs50": -1.0,
-  "vs200": -0.4,
-  "ratio_vs50": false,
-  "ratio_chg20": 3.2
+  "close": 2790.49,
+  "vs50": -1.2,
+  "vs200": -0.8,
+  "ratio_vs50": true,
+  "ratio_chg20": 3.9
  },
  "rally": null,
  "ftd": {
@@ -169,7 +169,7 @@
   "thr": 1.59,
   "status": "active",
   "failed_on": null,
-  "days_since": 1
+  "days_since": 2
  },
  "standby": null,
  "chop": {
@@ -210,7 +210,7 @@
    "dates": [
     "2026-11-05"
    ],
-   "close": 18.7,
+   "close": 19.3,
    "last": {
     "date": "2026-11-05",
     "close": 28.18,
@@ -273,6 +273,13 @@
   },
   {
    "date": "2026-11-12",
+   "model": "B",
+   "state": "UP",
+   "ibd": "Uptrend Under Pressure",
+   "dd20": 4
+  },
+  {
+   "date": "2026-11-13",
    "model": "B",
    "state": "UP",
    "ibd": "Uptrend Under Pressure",
