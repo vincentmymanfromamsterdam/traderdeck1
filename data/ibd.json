@@ -1,24 +1,24 @@
 {
- "updated_at": "2026-11-16 06:59 UTC",
- "updated_date": "2026-11-16",
+ "updated_at": "2026-11-17 06:56 UTC",
+ "updated_date": "2026-11-17",
  "ok": true,
  "source": "local",
- "outlook": "Uptrend Under Pressure",
+ "outlook": "Market In Correction",
  "exposure_band": [
-  20,
-  40
+  0,
+  20
  ],
- "exposure_step": 2,
- "summary": "Nasdaq works its way back above the 200-day moving average.",
- "raw": "Stock Market Exposure 0-20% 20-40% 40-60% 60-80% 80-100% % to % Invested Nasdaq works its way back above the 200-day moving average. Learn More",
+ "exposure_step": 1,
+ "summary": "Nasdaq undercuts 200-day moving average; S&P testing it.",
+ "raw": "Stock Market Exposure 0-20% 20-40% 40-60% 60-80% 80-100% % to % Invested Nasdaq undercuts 200-day moving average; S&P testing it. Learn More",
  "big_picture": {
-  "title": "Stock Market Falls But Nasdaq Holds Key Level; Anthropic IPO, Nvidia Earnings Loom",
-  "url": "https://www.investors.com/market-trend/the-big-picture/stock-market-falls-but-nasdaq-holds-key-level-anthropic-ipo-nvidia-earnings-loom/",
-  "date": "November 13, 2026",
-  "excerpt": "The stock market mostly fell but the Dow Jones index squeezed out a gain. Nvidia earnings and the Anthropic IPO are now due.",
+  "title": "Stock Market Hit Again As Nvidia, Chip Stocks Cast Pall On Nasdaq And AI Trade",
+  "url": "https://www.investors.com/market-trend/the-big-picture/stock-market-hit-chip-ai-stocks-cast-pall-nasdaq-sp500/",
+  "date": "November 16, 2026",
+  "excerpt": "The stock market made another leg down Monday as sentiment stayed negative in chip in AI stocks ahead of Anthropic's IPO debut Thursday.",
   "paragraphs": [
-   "The stock market dipped Friday as the fallout from Jensen Huang's resignation continued, but the Nasdaq composite held a key level. Nvidia (NVDA) earnings and the stock market debut of artificial intelligence firm Anthropic now loom.",
-   "The Nasdaq fought its way back from session lows, but still dropped 0.9% Friday. The tech-heavy index notched a 2.3% gain for the week and encouragingly held support at its 200-day moving average. It now holds a gain for the year of 8.2%."
+   "An ornery stock market woke up from where it left off last week as more unsettling losses in the chip sector Monday unleashed another wave of selling in the Nasdaq composite.",
+   "After closing one point below its 200-day moving average Friday, the Nasdaq composite swooned 2.5%. The Nasdaq 100 fell 2.7%, weighed down by weakness in Astera Labs (ALAB) and Lumentum (LITE), each of which slumped nearly 9%. Memory and storage stocks like Sandisk (SNDK) and Micron (MU) fell roughly 8% apiece."
   ]
  },
  "outlook_history": [
@@ -44,6 +44,14 @@
    "band": [
     20,
     40
+   ]
+  },
+  {
+   "date": "2026-11-17",
+   "outlook": "Market In Correction",
+   "band": [
+    0,
+    20
    ]
   }
  ]
