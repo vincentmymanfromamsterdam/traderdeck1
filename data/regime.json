@@ -1,30 +1,25 @@
 {
- "updated_at": "2026-11-17 04:35 UTC",
- "asof": "2026-11-16",
+ "updated_at": "2026-11-18 03:44 UTC",
+ "asof": "2026-11-17",
  "model": {
-  "state": "UP",
-  "regime": "B",
-  "since": "2026-11-11"
+  "state": "CORR",
+  "regime": "D",
+  "since": "2026-11-17"
  },
  "nasdaq": {
-  "close": 24509.76,
-  "chg": -2.49,
-  "vs50": -6.8,
-  "vs200": -2.5,
-  "dd20": 4,
+  "close": 24328.38,
+  "chg": -0.74,
+  "vs50": -7.4,
+  "vs200": -3.3,
+  "dd20": 5,
   "dd_dates": [
    "2026-10-22",
    "2026-10-30",
    "2026-11-02",
-   "2026-11-05"
+   "2026-11-05",
+   "2026-11-16"
   ],
   "last20": [
-   {
-    "d": "2026-10-20",
-    "dd": false,
-    "cap": false,
-    "vix": false
-   },
    {
     "d": "2026-10-21",
     "dd": false,
@@ -135,54 +130,61 @@
    },
    {
     "d": "2026-11-16",
-    "dd": false,
+    "dd": true,
     "cap": false,
     "vix": false
+   },
+   {
+    "d": "2026-11-17",
+    "dd": false,
+    "cap": false,
+    "vix": true
    }
   ]
  },
  "sp500": {
-  "close": 7416.59,
-  "chg": -1.92,
-  "vs50": -3.2,
-  "vs200": 1.0,
-  "dd20": 5,
+  "close": 7340.53,
+  "chg": -1.03,
+  "vs50": -4.1,
+  "vs200": -0.1,
+  "dd20": 6,
   "dd_dates": [
    "2026-10-22",
    "2026-10-29",
    "2026-10-30",
    "2026-11-05",
-   "2026-11-12"
+   "2026-11-12",
+   "2026-11-16"
   ]
  },
  "russell": {
-  "close": 2742.94,
-  "vs50": -2.7,
-  "vs200": -2.5,
+  "close": 2701.87,
+  "vs50": -4.0,
+  "vs200": -3.9,
   "ratio_vs50": true,
-  "ratio_chg20": 4.3
+  "ratio_chg20": 2.4
  },
  "rally": null,
  "ftd": {
   "last": "2026-11-11",
   "pct": 1.6,
   "thr": 1.59,
-  "status": "active",
+  "status": "ended",
   "failed_on": null,
-  "days_since": 3
+  "days_since": null
  },
  "standby": null,
  "chop": {
-  "flips60": 3,
+  "flips60": 5,
   "flag": true
  },
  "bottom": {
   "window": 30,
   "anchor": {
-   "date": "2026-11-05",
-   "low": 24262.14,
-   "chg": -5.52,
-   "qqq_vol": 130677400
+   "date": "2026-11-17",
+   "low": 23989.09,
+   "chg": -0.74,
+   "qqq_vol": 55054900
   },
   "ref": {
    "dates": [
@@ -208,30 +210,23 @@
   "vix": {
    "ok": true,
    "dates": [
-    "2026-11-05"
+    "2026-11-05",
+    "2026-11-17"
    ],
-   "close": 22.91,
+   "close": 25.46,
    "last": {
-    "date": "2026-11-05",
-    "close": 28.18,
-    "prev": 16.61,
-    "chg": 69.66
+    "date": "2026-11-17",
+    "close": 25.46,
+    "prev": 22.91,
+    "chg": 11.13
    }
   },
-  "test": {
-   "date": "2026-11-16",
-   "chg": -2.49,
-   "qqq_vol": 42801200,
-   "low": 24460.28,
-   "smaller_loss": true,
-   "lower_vol": true,
-   "px_ok": true
-  },
+  "test": null,
   "leader_test": {
-   "prior": "2026-10-30",
-   "prior_low": 25177.33,
-   "undercut": "2026-11-05",
-   "undercut_pct": -3.63
+   "prior": "2026-11-05",
+   "prior_low": 24262.14,
+   "undercut": "2026-11-17",
+   "undercut_pct": -1.13
   },
   "params": {
    "cap_drop": -1.0,
@@ -299,6 +294,13 @@
    "state": "UP",
    "ibd": "Uptrend Under Pressure",
    "dd20": 4
+  },
+  {
+   "date": "2026-11-17",
+   "model": "D",
+   "state": "CORR",
+   "ibd": "Market In Correction",
+   "dd20": 5
   }
  ]
 }
