@@ -137,6 +137,14 @@ def run_model(q, s):
             if state == "UP" and i - ftd_i > FTD_LOW_DAYS:
                 ftd_low = None
         elif state == "PRES":
+            # v7.13: a low under the FTD's rally low fails the FTD here too. Before this,
+            # an FTD undercut via the standby detour (UP -> PRES -> CORR, like 16-17 Nov 2026,
+            # low 23,989 under rally low 24,262) was archived as 'ended' with no failed_on,
+            # so the calibration archive undercounted failed FTDs. Display was unaffected.
+            if ftd_low is not None and L[i] < ftd_low:
+                if ftds and ftds[-1]["i"] == ftd_i:
+                    ftds[-1]["failed_i"] = i
+                ftd_low = None
             if L[i] < stby_low and (not CORR_NEEDS_50 or C[i] < sma50[i]):
                 state, low_c, rally_d, rally_low, rally_start, ftd_low = "CORR", L[i], 0, None, None, None
             elif H[i] > stby_high and dd20[i] < DD_STANDBY:

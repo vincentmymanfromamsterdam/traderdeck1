@@ -2975,6 +2975,12 @@ function bottomItems(rg) {
   const f = rg.ftd, ra = rg.rally;
   let st5 = 'wait', val5 = 'WACHT · rally-dag 1 nodig', rule5 = 'Dag ≥ 4 van een rally-poging: Nasdaq of S&P sluit boven de drempel op hoger volume';
   if (f && f.status === 'active' && f.days_since != null && f.days_since <= 5) { st5 = 'ok'; val5 = `JA · ${urDate(f.last)} · +${n2(f.pct)}%`; }
+  else if (f && f.status === 'failed' && f.failed_on && (Date.now() - new Date(f.failed_on + 'T12:00:00Z')) < 45 * 864e5) {
+    // v7.13: een vers mislukte FTD is zelf informatie (O'Neil: een snel gebroken FTD is een waarschuwing).
+    st5 = 'no';
+    val5 = `MISLUKT · FTD ${urDate(f.last)} · low gebroken ${urDate(f.failed_on)}` + (ra ? ` · nieuwe poging dag ${ra.day}` : '');
+    rule5 = 'De low van de rally is gebroken na de FTD — de teller begint opnieuw bij de volgende rally-poging';
+  }
   else if (ra) { val5 = ra.day >= 4 ? `MOGELIJK · dag ${ra.day} · ≥ +${n2(ra.ftd_thr)}%` : `WACHT · dag ${ra.day} · vanaf ${urDate(ra.ftd_from)} · ≥ +${n2(ra.ftd_thr)}%`; }
   it.push({ t: 'Follow-through day', st: st5, rule: rule5, val: val5 });
   return it;
