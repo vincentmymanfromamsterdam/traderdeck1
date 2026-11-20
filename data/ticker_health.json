@@ -1,8 +1,4 @@
 {
-"SNDK": {
-"last_miss": "2026-11-19",
-"misses": 1
-},
 "VVVV": {
 "last_miss": "2026-11-18",
 "misses": 2
@@ -10,5 +6,9 @@
 "WWB": {
 "last_miss": "2026-11-18",
 "misses": 2
+},
+"ZOAR": {
+"last_miss": "2026-11-20",
+"misses": 1
 }
 }
