@@ -3158,6 +3158,8 @@ function renderSetups() {
   if (!suData) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">Nog geen setup-data — verschijnt na de volgende nachtelijke run.</td></tr>`; return; }
   const rows = (suData.lists || {})[SU_LIST[suMode]] || [];
   LIST_TK.su = rows.map(r => r.ticker);
+  // v7.14: de houders-tab toont max 15 (cap + 2 per industrie), maar CHARTS opent ze allemaal.
+  if (suMode === 'rh') { const all = (((suData.bottom || {}).holders || {}).tickers) || []; if (all.length) LIST_TK.su = all; }
   if (!rows.length) { tb.innerHTML = `<tr><td colspan="14" class="loading-msg">${SU_EMPTY[suMode]}</td></tr>`; return; }
   const open = tk => `onclick="chShowTicker('${tk}','setups')" title="klik voor de chart"`;
   if (suMode === 'pb') {

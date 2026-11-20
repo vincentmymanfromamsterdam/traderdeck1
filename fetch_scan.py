@@ -862,6 +862,7 @@ def main():
     # each tab with the regime warning; nothing is hidden by regime.
     setups = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
     setup_of = {}
+    rh_chart_tks = []          # v7.14: ALL RS-holders (the tab shows at most 15); charts are built for each
     try:
         SU_KEYS = ("ticker", "name", "industry", "etf", "price", "chg_1d", "stage", "rs_rating", "rs_chg_1m",
                    "tt", "grp", "adr_pct", "lod_dist", "avg_dollar_vol", "above_s200", "earnings_days", "earnings_date",
@@ -1040,8 +1041,10 @@ def main():
             setups["holders"] = [dict({f: r.get(f) for f in SU_KEYS}, off_52w_high=r.get("off_52w_high"), rh=r["rh"])
                                  for r in shown]
             cand["holders"] = holders_all
+            rh_chart_tks = [r["ticker"] for r in holders_all]
             bottom = {"newlows": {"universe": nl_n, "series": nl_series}, "s3": s3,
                       "holders": {"n": len(holders_all), "n_held": n_held, "n_broke": n_broke,
+                                  "tickers": rh_chart_tks,
                                   "test": lt, "hold_min": RH_HOLD_MIN, "hold_pct_min": RH_HOLD_PCT,
                                   "hold_pct": round(n_held / (n_held + n_broke) * 100) if (n_held + n_broke) else None,
                                   "ok": bool(lt) and n_held >= RH_HOLD_MIN
@@ -1173,6 +1176,11 @@ def main():
             if tk not in seen and tk in by_t:
                 chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "notable"
         for tk in setup_of:
+            if tk not in seen and tk in by_t:
+                chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "setup"
+        # v7.14: chart data for every RS-holder, so the CHARTS button in the holders tab
+        # can open the whole list (the tab itself still shows at most 15).
+        for tk in rh_chart_tks:
             if tk not in seen and tk in by_t:
                 chart_rows.append(by_t[tk]); seen.add(tk); why[tk] = "setup"
 
