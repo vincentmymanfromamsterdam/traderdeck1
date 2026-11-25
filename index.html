@@ -3145,7 +3145,7 @@ function suShow(mode) {
 function renderSetups() {
   const tb = $('su-tbody'); if (!tb) return;
   const lg = $('su-bdg-legend');
-  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + (suMode === 'bo' ? ' · <b>RS↑</b> RS-lijn op een 52-weeks high op de breakoutdag · volume groen vanaf 2,5× (A/B)' : '') + (suMode === 'ur' ? ' · volume groen vanaf 3× (A/B)' : '') + ' · Zone = ATR boven de SMA50 · <b>ER</b> dagen tot de cijfers (rood ≤ 5) · gemeten in T12' + (suMode === 'pb' ? ' en T13' : (suMode === 'bo' || suMode === 'ur') ? ' en T14' : '');
+  if (lg) lg.innerHTML = '<span style="color:#FFD54F">★</span> ' + BDG_STAR_TXT[suMode] + ' · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D)' + (suMode === 'gu' ? ' · <b>SB9</b> ≥ 9 mln aandelen' : '') + (suMode === 'pb' ? ' · <b>EMA↑</b> slot boven EMA9, 21 en 50' : '') + (suMode === 'bo' ? ' · <b>RS↑</b> RS-lijn op een 52-weeks high op de breakoutdag · volume groen vanaf 2,5× (A/B)' : '') + (suMode === 'ur' ? ' · volume groen vanaf 3× (A/B)' : '') + (suMode === 'pb' || suMode === 'ur' ? ' · <b>2 ATR</b> stop op 2 × ATR onder de instap (T26)' : '') + ' · Zone = ATR boven de SMA50 · <b>ER</b> dagen tot de cijfers (rood ≤ 5) · gemeten in T12' + (suMode === 'pb' ? ' en T13' : (suMode === 'bo' || suMode === 'ur') ? ' en T14' : '');
   dcPanel();
   const th = $('su-thead'); if (th) th.innerHTML = SU_HEAD[suMode];
   const bd = $('su-badge');
@@ -3172,7 +3172,7 @@ function renderSetups() {
         <td style="font-weight:600">${r.confluence_n ?? '—'}</td>
         <td>${near == null ? '—' : (near > 0 ? '+' : '') + near.toFixed(2)}</td>
         <td>${r.lod_dist == null ? '—' : r.lod_dist + '%'}</td><td>${r.adr_pct == null ? '—' : r.adr_pct.toFixed(1)}</td>
-        <td>${bdgCell(r, 'pb')}</td><td>${zoneCell(r)}</td><td>${planCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'pb')}</tr>` + dcForm(r, 'pb', 15);
+        <td>${bdgCell(r, 'pb')}</td><td>${zoneCell(r)}</td><td>${planCell(r)}${atr2Line(r, r.plan_entry_hi)}</td><td>${erCell(r)}</td>${dcCell(r, 'pb')}</tr>` + dcForm(r, 'pb', 15);
     }).join('');
   } else if (suMode === 'ur') {
     tb.innerHTML = rows.map(r => {
@@ -3185,7 +3185,7 @@ function renderSetups() {
         <td style="color:${u.vol_x >= UR_HOT_VOL && !bdgWeak() ? 'var(--green)' : 'var(--blue)'};font-weight:600" title="${u.vol_x >= UR_HOT_VOL ? (bdgWeak() ? 'volume ≥ 3× · in C/D geen voordeel gemeten' : 'volume ≥ 3×: +0,18R in A/B tegen +0,02R daaronder (T14d)') : 'volume t.o.v. het 20-daags gemiddelde'}">${u.vol_x == null ? '—' : u.vol_x.toFixed(2) + '×'}</td>
         <td>${maPills(r)}</td><td>${r.rs_rating ?? '—'}</td><td>${rsDelta(r.rs_chg_1m)}</td>
         <td>${bdgCell(r, 'ur')}</td><td>${zoneCell(r)}</td>
-        <td>${urStopCell(r)}</td><td>${erCell(r)}</td>${dcCell(r, 'ur')}</tr>` + dcForm(r, 'ur', 15);
+        <td>${urStopCell(r)}${atr2Line(r, r.price)}</td><td>${erCell(r)}</td>${dcCell(r, 'ur')}</tr>` + dcForm(r, 'ur', 15);
     }).join('');
   } else if (suMode === 'bo') {
     tb.innerHTML = rows.map(r => {
@@ -3314,6 +3314,13 @@ function planCell(r) {
   const c = pct <= 3 ? 'var(--green)' : pct <= 5 ? 'var(--amber)' : 'var(--red)';
   const basis = r.plan_stop_basis === 'atr' ? 'no structure within 1.5 ATR · 1.5 ATR stop' : 'under ' + r.plan_stop_basis.toUpperCase() + ' − 0.3 ATR';
   return `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" title="${basis} · entry zone $${fmtPrice(r.plan_entry_lo)}–$${fmtPrice(r.plan_entry_hi)} · click to load in calculator" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.plan_entry_hi}, ${r.plan_stop})">$${fmtPrice(r.plan_stop)} <span style="color:${c}">${pct.toFixed(1)}%</span></span>`;
+}
+// v7.15 (T26): een stop op 2 ATR onder de instap deed het in A/B beter dan de structuurstop bij
+// pullback (+0,20 tegen +0,14R) en U&R (+0,13 tegen +0,08R). Tweede regel in de stopcel van die twee tabs.
+function atr2Line(r, entry) {
+  const a = (r.bdg || {}).atr; if (!a || !entry) return '';
+  const s = entry - 2 * a, pct = 2 * a / entry * 100;
+  return `<br><span style="cursor:pointer;color:var(--muted);font-size:10px;white-space:nowrap" title="stop op 2 × ATR14 onder de instap ($${fmtPrice(entry)}) · in A/B beter dan de structuurstop (T26) · klik om in de calculator te laden" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${entry}, ${s.toFixed(2)})">2 ATR $${fmtPrice(s)} ${pct.toFixed(1)}%</span>`;
 }
 function loadPlan(ticker, entry, stop) {
   $('entry').value = entry; $('stop').value = stop;
