@@ -1,32 +1,27 @@
 {
- "updated_at": "2026-11-25 04:56 UTC",
- "asof": "2026-11-24",
+ "updated_at": "2026-11-26 04:12 UTC",
+ "asof": "2026-11-25",
  "model": {
   "state": "CORR",
   "regime": "D",
   "since": "2026-11-17"
  },
  "nasdaq": {
-  "close": 23733.54,
-  "chg": -1.48,
-  "vs50": -8.8,
-  "vs200": -5.7,
-  "dd20": 6,
+  "close": 23585.8,
+  "chg": -0.62,
+  "vs50": -9.2,
+  "vs200": -6.3,
+  "dd20": 7,
   "dd_dates": [
    "2026-10-30",
    "2026-11-02",
    "2026-11-05",
    "2026-11-16",
    "2026-11-17",
-   "2026-11-19"
+   "2026-11-19",
+   "2026-11-25"
   ],
   "last20": [
-   {
-    "d": "2026-10-28",
-    "dd": false,
-    "cap": false,
-    "vix": false
-   },
    {
     "d": "2026-10-29",
     "dd": false,
@@ -140,14 +135,20 @@
     "dd": false,
     "cap": false,
     "vix": false
+   },
+   {
+    "d": "2026-11-25",
+    "dd": true,
+    "cap": false,
+    "vix": false
    }
   ]
  },
  "sp500": {
-  "close": 7201.09,
-  "chg": -0.5,
-  "vs50": -5.4,
-  "vs200": -2.0,
+  "close": 7182.78,
+  "chg": -0.25,
+  "vs50": -5.5,
+  "vs200": -2.3,
   "dd20": 9,
   "dd_dates": [
    "2026-10-29",
@@ -162,18 +163,18 @@
   ]
  },
  "russell": {
-  "close": 2684.94,
-  "vs50": -3.8,
-  "vs200": -4.6,
+  "close": 2704.06,
+  "vs50": -3.0,
+  "vs200": -3.9,
   "ratio_vs50": true,
-  "ratio_chg20": 2.1
+  "ratio_chg20": 3.0
  },
  "rally": {
-  "day": 2,
+  "day": 3,
   "start": "2026-11-23",
   "low": 22513.01,
   "ftd_from": "2026-11-26",
-  "ftd_thr": 2.05
+  "ftd_thr": 2.07
  },
  "ftd": {
   "last": "2026-11-11",
@@ -226,7 +227,7 @@
     "2026-11-17",
     "2026-11-19"
    ],
-   "close": 26.36,
+   "close": 28.29,
    "last": {
     "date": "2026-11-19",
     "close": 28.44,
@@ -234,7 +235,15 @@
     "chg": 15.8
    }
   },
-  "test": null,
+  "test": {
+   "date": "2026-11-25",
+   "chg": -0.62,
+   "qqq_vol": 81600300,
+   "low": 22632.4,
+   "smaller_loss": true,
+   "lower_vol": true,
+   "px_ok": true
+  },
   "leader_test": {
    "prior": "2026-11-05",
    "prior_low": 24262.14,
@@ -349,6 +358,13 @@
    "state": "CORR",
    "ibd": "Market In Correction",
    "dd20": 6
+  },
+  {
+   "date": "2026-11-25",
+   "model": "D",
+   "state": "CORR",
+   "ibd": "Market In Correction",
+   "dd20": 7
   }
  ]
 }
