@@ -778,6 +778,7 @@
     <div class="wl-bar" id="wl-bar">
       <input id="wl-input" placeholder="+ TICKER" maxlength="7" onkeydown="if(event.key==='Enter') wlAddFromInput()" aria-label="ticker toevoegen aan watchlist">
       <button class="dir-btn active-long" onclick="wlAddFromInput()">TOEVOEGEN</button>
+      <button class="dir-btn" onclick="chOpenSet(wlList.map(e => e.ticker), 'WATCHLIST')" title="open alle tickers van je watchlist als chartkaarten in 06">▦ CHARTS</button>
       <span class="st" id="wl-status">—</span>
       <span style="margin-left:auto"></span>
       <button class="dir-btn" onclick="wlToggleToken()" title="GitHub-token om de watchlist in de repo op te slaan">⚙ TOKEN</button>

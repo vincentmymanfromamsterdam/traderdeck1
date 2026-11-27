@@ -585,8 +585,9 @@ def main():
             rows.append(m)
     n_analysed = len(rows)
     # theme tickers that did not pass the liquidity pre-filter: analysed too, but kept out of market breadth / sectors
+    # v7.17: the same for my universe (Carnivore + watchlist), so every screener / watchlist name gets a chart card
     extra = {}
-    for t in theme_tickers:
+    for t in sorted(set(theme_tickers) | set(universe)):
         if t in full and t not in {r["ticker"] for r in rows}:
             m = enrich(t)
             if m:
