@@ -902,7 +902,8 @@ def main():
                             "liq": bool(dvol >= 5e8), "quad": bool(p5[t] >= 0.5 and p21[t] >= 0.5),
                             "kq": bool(adr >= 5 and (g(22) >= 0.25 or g(67) >= 0.50 or g(126) >= 1.0)),
                             "sb9": bool(float(v.iloc[-1]) >= 9e6 and g(1) > 0),
-                            "zone": round(zone, 1), "dvol_m": int(round(dvol / 1e6))}
+                            "zone": round(zone, 1), "dvol_m": int(round(dvol / 1e6)),
+                            "atr": round(a14, 2)}       # v7.15 (T26, T32): feeds the 1.5-ATR stop in the pullback tab
         except Exception as e:
             print(f"  (badges skipped: {e})")
         # v7.11 (MEETRESULTATEN-T14 b/c): for a breakout, the RS line (close / SPY) at a 252-session
