@@ -1936,7 +1936,7 @@ applyThemeBtn();
 // ────────────────────────────────────────────────
 //  06 CHARTS — DNA pass
 // ────────────────────────────────────────────────
-let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'potential', chFilter = 'top';
+let chData = null, chLayers = { e9:1, e21:1, e50:1, m10w:0, av:1, plan:1 }, chN = 130, chSortKey = 'potential', chSortPrev = null, chFilter = 'top';
 // v7.1: default view = TOP (by potential); the rest (data/chart_more.json) loads on demand.
 let chMoreState = 'no', chMorePromise = null, chSet = [], chSetLabel = '', chPinned = [], chLimit = 60;
 const LIST_TK = {};          // per table: the tickers it currently shows (for "▦ CHARTS")
@@ -2198,6 +2198,10 @@ function chRange(b) { chN = +b.dataset.chn; chSetActive(document.querySelectorAl
 function chSort(b)  { chSortKey = b.dataset.chs; chSetActive(document.querySelectorAll('[data-chs]'), b); chRender(); }
 function chShow(b)  {
   if (b.dataset.chf === 'theme') return;
+  if (chSortPrev != null) {            // v7.16: na een thema terug naar de sortering van daarvoor
+    const o = document.querySelector('[data-chs="' + chSortPrev + '"]');
+    chSortKey = chSortPrev; chSortPrev = null; if (o) chSetActive(document.querySelectorAll('[data-chs]'), o);
+  }
   chFilter = b.dataset.chf; chLimit = 60; chSetActive(document.querySelectorAll('[data-chf]'), b);
   if (chFilter === 'top' || chFilter === 'set') chRender(); else chEnsureMore().then(chRender);
 }
@@ -2226,7 +2230,12 @@ function chRender() {
   if (chFilter === 'uni') items = items.filter(i => i.meta.in_universe);
   if (chFilter === 'notable') items = items.filter(i => i.meta.why === 'notable');
   if (chFilter === 'setups') items = items.filter(i => (i.meta.setups || []).length);
-  if (chFilter.startsWith('theme:')) { const id = chFilter.slice(6); items = items.filter(i => (i.meta.themes || []).includes(id)); }
+  if (chFilter.startsWith('theme:')) {
+    // v7.16: alle leden van het thema (uit themes_data.json), niet alleen de top 5 op RS.
+    const th = thData && thData.themes.find(t => t.id === chFilter.slice(6));
+    const S = new Set(th ? th.tickers.map(r => r.ticker) : []);
+    items = items.filter(i => S.has(i.meta.ticker));
+  }
   else { const b = $('chf-theme'); if (b) b.style.display = 'none'; }
   items.sort((a, b) => (b.meta[chSortKey] || 0) - (a.meta[chSortKey] || 0));
   if (chFilter === 'set') {
@@ -2394,7 +2403,11 @@ function thBar(v, max) { if (v == null) return ''; const neg = v < 0; return `<s
 function thShowCharts(id) {
   chFilter = 'theme:' + id; document.querySelectorAll('[data-chf]').forEach(x => x.classList.remove('active-long'));
   const b = $('chf-theme'); if (b) { b.style.display = ''; b.classList.add('active-long'); b.textContent = 'THEME: ' + ((thData.themes.find(t => t.id === id) || {}).name || id).toUpperCase(); }
-  chRender(); document.getElementById('charts').scrollIntoView({ behavior: 'smooth' });
+  // v7.16: de meeste themaleden staan in chart_more.json (wordt pas op verzoek geladen); sorteer op RS.
+  chLimit = 60;
+  const rs = document.querySelector('[data-chs="rs_rating"]');
+  if (rs) { if (chSortPrev == null) chSortPrev = chSortKey; chSortKey = 'rs_rating'; chSetActive(document.querySelectorAll('[data-chs]'), rs); }
+  chEnsureMore().then(() => { chRender(); document.getElementById('charts').scrollIntoView({ behavior: 'smooth' }); });
 }
 function renderThemes() {
   const tb = $('tb-themes'); if (!tb || !thData) return;
@@ -2430,7 +2443,7 @@ function renderThemes() {
         <td>${r.plan_stop != null ? `<span style="cursor:pointer;border-bottom:1px dotted var(--muted)" onclick="event.stopPropagation(); loadPlan('${r.ticker}', ${r.plan_entry_hi ?? r.price}, ${r.plan_stop})">$${Number(r.plan_stop).toFixed(2)} <span class="${r.plan_stop_pct <= 3 ? 'pos' : r.plan_stop_pct <= 5 ? 'amb' : 'neg'}">${Number(r.plan_stop_pct).toFixed(1)}%</span></span>` : '—'}</td>
         <td class="${r.earnings_days != null && r.earnings_days <= 7 ? 'neg' : 'mut'}">${r.earnings_days == null ? '—' : r.earnings_days === 0 ? 'today' : r.earnings_days + 'd'}</td>
       </tr>`).join('')}</tbody></table>
-      <div class="th-actions"><button class="dir-btn active-long" onclick="event.stopPropagation(); thShowCharts('${t.id}')">→ CHARTS (TOP ${t.chart_tickers.length} BY RS)</button><span>basket: ${t.tickers.map(r => r.ticker).join(', ')}${t.missing && t.missing.length ? ` · no data: ${t.missing.join(', ')}` : ''}</span></div>
+      <div class="th-actions"><button class="dir-btn active-long" onclick="event.stopPropagation(); thShowCharts('${t.id}')">→ CHARTS (ALLE ${t.tickers.length} OP RS)</button><span>basket: ${t.tickers.map(r => r.ticker).join(', ')}${t.missing && t.missing.length ? ` · no data: ${t.missing.join(', ')}` : ''}</span></div>
     </td></tr>`;
   }).join('') : '<tr><td colspan="17" class="loading-msg">No themes match</td></tr>';
 }
