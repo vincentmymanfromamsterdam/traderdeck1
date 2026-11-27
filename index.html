@@ -335,6 +335,7 @@
   .rg-dot { width:9px; height:9px; border-radius:50%; background:var(--border2); }
   .rg-dot.on { background:var(--red); }
   /* ── v7.9: badges ── */
+  .bdg-line { margin-top:3px; white-space:nowrap; line-height:1.5; }
   .bdg { display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:0.04em; padding:0 4px; border:1px solid; border-radius:3px; margin-right:3px; line-height:1.6; }
   .bdg-z { display:inline-block; min-width:26px; text-align:center; font-size:9.5px; font-weight:700; padding:0 4px; border:1px solid; border-radius:10px; line-height:1.6; }
   /* ── v7.8: beslislog ── */
@@ -613,8 +614,8 @@
       <div id="carnivore-sr-summary" style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--border)"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unreal. P&amp;L</th><th>Return %</th><th>Weight</th><th title="7 DNA-filters, van links naar rechts: ADR &ge; 3% &middot; dagomzet &ge; $50M &middot; RS &ge; 85 &middot; Stage 2 &middot; boven de 50 EMA &middot; &le; 25% onder de 52w-high &middot; &le; 10 ATR boven de 50. Groen = voldoet.">DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
-          <tbody id="tb-carnivore-sr"><tr><td colspan="14" class="loading-msg">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Ticker</th><th style="text-align:left" title="badges uit de setup-module · ★ + naam = staat nu met ster in die setup-tab">Badges</th><th>Company</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Mkt Value</th><th>Unreal. P&amp;L</th><th>Return %</th><th>Weight</th><th title="7 DNA-filters, van links naar rechts: ADR &ge; 3% &middot; dagomzet &ge; $50M &middot; RS &ge; 85 &middot; Stage 2 &middot; boven de 50 EMA &middot; &le; 25% onder de 52w-high &middot; &le; 10 ATR boven de 50. Groen = voldoet.">DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
+          <tbody id="tb-carnivore-sr"><tr><td colspan="15" class="loading-msg">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -629,10 +630,11 @@
       <div id="carnivore-lt-summary" style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--border)"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Entry Date</th><th>Avg Cost</th><th>Current</th><th>Stop Loss</th><th>Buy Up To</th><th>Return %</th><th>Stop Dist.</th><th>Upside</th><th title="7 DNA-filters, van links naar rechts: ADR &ge; 3% &middot; dagomzet &ge; $50M &middot; RS &ge; 85 &middot; Stage 2 &middot; boven de 50 EMA &middot; &le; 25% onder de 52w-high &middot; &le; 10 ATR boven de 50. Groen = voldoet.">DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
-          <tbody id="tb-carnivore-lt"><tr><td colspan="15" class="loading-msg">Loading...</td></tr></tbody>
+          <thead><tr><th>#</th><th>Ticker</th><th style="text-align:left" title="badges uit de setup-module · ★ + naam = staat nu met ster in die setup-tab">Badges</th><th>Company</th><th>Entry Date</th><th>Avg Cost</th><th>Current</th><th>Stop Loss</th><th>Buy Up To</th><th>Return %</th><th>Stop Dist.</th><th>Upside</th><th title="7 DNA-filters, van links naar rechts: ADR &ge; 3% &middot; dagomzet &ge; $50M &middot; RS &ge; 85 &middot; Stage 2 &middot; boven de 50 EMA &middot; &le; 25% onder de 52w-high &middot; &le; 10 ATR boven de 50. Groen = voldoet.">DNA</th><th>ATR× 50</th><th>Signals</th><th>ER</th></tr></thead>
+          <tbody id="tb-carnivore-lt"><tr><td colspan="16" class="loading-msg">Loading...</td></tr></tbody>
         </table>
       </div>
+      <div class="bdg-legend" style="margin-top:8px;font-size:9px;color:var(--muted);letter-spacing:0.05em"></div>
     </div>
   </div>
 
@@ -830,6 +832,7 @@
     </div>
 
     <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:14px;font-size:9px;color:var(--muted);letter-spacing:0.05em">
+      <span class="bdg-legend" style="flex-basis:100%"></span>
       <span>DNA dots: ADR&gt;3 · $Vol&gt;50M · RS≥85 · Stage 2 · &lt;25% off high · ATR×&lt;10</span>
       <span><span class="ext-caution">ATR× &gt;10</span> = do not chase · <span class="ext-reduce">&gt;15</span> = consider trimming</span>
       <span>Signals: PP = pocket pivot · DRY = vol 5d/20d &lt;0.8 · TIGHT = 3-day range ≤1.5 ATR · WIS n = green on red SPY days (20d)</span>
@@ -1436,6 +1439,7 @@ function renderPortfolioTable(tbodyId, positions) {
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
       <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${p.ticker || '—'}${saLink(p.ticker)}${chLink(p.ticker)}</td>
+      <td style="text-align:left;white-space:nowrap">${bdgSlot(p.ticker)}</td>
       <td style="color:var(--muted)">${p.name && p.name !== p.ticker ? p.name : '—'}</td>
       <td>${p.shares != null ? Number(p.shares).toLocaleString() : '—'}</td>
       <td>${p.avg_cost != null ? '$' + fmtPrice(p.avg_cost) : '—'}</td>
@@ -1470,6 +1474,7 @@ function renderLongTermTable(tbodyId, positions) {
     return `<tr style="${rowStyle}">
       <td style="color:var(--muted);font-size:10px">${String(i+1).padStart(2,'0')}</td>
       <td class="td-name" data-tk="${p.ticker || ''}" style="font-weight:700">${warnIcon}${p.ticker || '—'}${saLink(p.ticker)}${chLink(p.ticker)}</td>
+      <td style="text-align:left;white-space:nowrap">${bdgSlot(p.ticker)}</td>
       <td style="color:var(--muted);font-size:10px">${p.name || '—'}</td>
       <td style="color:var(--muted);font-size:10px">${p.entry_date || '—'}</td>
       <td>$${p.avg_cost != null ? p.avg_cost.toFixed(2) : '—'}</td>
@@ -3107,7 +3112,7 @@ function bdgList(r, mode) {
   const g = r.bdg; if (!g) return [];
   const weak = curRegime && 'CD'.includes(curRegime.letter || '');
   const out = [];
-  if (g.ema3 && mode === 'pb') out.push(['EMA↑', 'var(--green)', 'slot boven EMA9, 21 en 50 · +0,30R in A/B tegen +0,14R voor alle pullbacks; in C/D 0,00R (T13)']);
+  if (g.ema3 && (mode === 'pb' || mode === 'gen')) out.push(['EMA↑', 'var(--green)', 'slot boven EMA9, 21 en 50 · +0,30R in A/B tegen +0,14R voor alle pullbacks; in C/D 0,00R (T13)']);
   if (g.ll1) out.push(['LL1', 'var(--green)', 'boven SMA10, 20 en 50 en ≤ 4 ATR boven de 50 · +0,24R in A/B']);
   if (g.liq) out.push(['LIQ', 'var(--green)', 'dagomzet $' + (g.dvol_m >= 1000 ? (g.dvol_m / 1000).toFixed(1).replace('.', ',') + ' mld' : g.dvol_m + ' mln') + ' (≥ $500M) · +0,21R in A/B']);
   if (g.quad) out.push(['QUAD', 'var(--blue)', '5- en 21-daags rendement in de bovenste helft · sterk samen met LL1']);
@@ -3115,6 +3120,40 @@ function bdgList(r, mode) {
   if (g.rsl && mode === 'bo') out.push(['RS↑', weak ? 'var(--muted)' : 'var(--green)', weak ? 'RS-lijn (koers ÷ S&P 500) op een 52-weeks high op de breakoutdag · in C/D geen voordeel gemeten (+0,09R)' : 'RS-lijn (koers ÷ S&P 500) op een 52-weeks high op de breakoutdag · +0,34R in A/B tegen +0,11R zonder (T14b)']);
   if (g.sb9 && mode === 'gu') out.push(['SB9', 'var(--blue)', 'stijgende dag op ≥ 9 mln aandelen · gap-ups: +0,32R in A/B']);
   return out;
+}
+// v7.18: badges and the setup star outside the setup module (Carnivore lists, screener, market scan).
+// A row renders an empty slot; bdgFill() fills every slot once setups.json (badges + setup lists) is in.
+// The star only shows when the ticker is in a setup tab right now, with the name of that setup.
+const SU_SHORT = { pb: 'PB', ur: 'U&R', bo: 'BO', gu: 'GAP' };
+let bdgTimer = null;
+function bdgSlot(tk) {
+  if (!tk) return '';
+  if (!bdgTimer) bdgTimer = setTimeout(() => { bdgTimer = null; bdgFill(); }, 0);
+  return `<span class="bdg-slot" data-bdg="${tk}"></span>`;
+}
+function bdgSetupTags() {
+  const out = {};
+  if (!suData || !suData.lists) return out;
+  Object.keys(SU_SHORT).forEach(mode => ((suData.lists[SU_LIST[mode]]) || []).forEach(r => {
+    const g = r.bdg || {};
+    const n = mode === 'pb' ? (g.kq ? 1 : 0) + (g.ema3 ? 1 : 0) : (BDG_STAR[mode](g, r) ? 1 : 0);
+    (out[r.ticker] = out[r.ticker] || []).push(n
+      ? `<span style="color:#FFD54F;font-size:9px;font-weight:700;margin-right:5px;white-space:nowrap" title="★ in de setup-tab ${SU_NAME[mode]}: ${esc(BDG_STAR_TXT[mode])}">${'★'.repeat(n)} ${esc(SU_SHORT[mode])}</span>`
+      : `<span style="color:var(--muted);font-size:9px;font-weight:700;margin-right:5px;white-space:nowrap" title="staat in de setup-tab ${SU_NAME[mode]}, zonder ster">${esc(SU_SHORT[mode])}</span>`);
+  }));
+  return out;
+}
+function bdgFill() {
+  const all = suData && suData.badges; if (!all) return;
+  const tags = bdgSetupTags();
+  document.querySelectorAll('.bdg-slot').forEach(el => {
+    const tk = el.dataset.bdg, g = all[tk];
+    const chips = g ? bdgList({ bdg: g }, 'gen').map(x => `<span class="bdg" style="color:${x[1]};border-color:${x[1]}" title="${esc(x[2])}">${x[0]}</span>`).join('') : '';
+    el.innerHTML = (tags[tk] || []).join('') + chips || '<span style="color:var(--dim)">—</span>';
+  });
+  document.querySelectorAll('.bdg-legend').forEach(el => {
+    el.innerHTML = '<span style="color:#FFD54F">★ PB · BO · U&amp;R · GAP</span> staat nu met ster in die setup-tab (05b); grijs = in de tab zonder ster · <b>LL1</b> boven SMA10/20/50, ≤ 4 ATR · <b>LIQ</b> omzet ≥ $500M · <b>QUAD</b> week en maand in de bovenste helft · <b>KQ</b> Qullamaggie-momentum (amber in C/D) · <b>EMA↑</b> slot boven EMA9, 21 en 50 · gemeten in T12–T14';
+  });
 }
 function bdgCell(r, mode) {
   const g = r.bdg;
@@ -3249,7 +3288,7 @@ loadCarnivorePortfolios();
 loadSwingData();
 const _pScan = loadScanData();
 const _pIbd = loadIbd();
-Promise.allSettled([_pScan, _pIbd, loadRegime(), loadSetups()]).then(() => { renderRegime(); renderSetups(); });
+Promise.allSettled([_pScan, _pIbd, loadRegime(), loadSetups()]).then(() => { renderRegime(); renderSetups(); bdgFill(); });
 _pScan.then(wlLoad);
 _pScan.then(loadAiEtfs);
 Promise.allSettled([_pScan, loadSetups()]).then(dcLoad);
@@ -3367,7 +3406,7 @@ function swRow(r) {
     const src = [r.in_sr ? 'SR' : '', r.in_lt ? 'LT' : '', wlHas(r.ticker) ? 'WL' : '', (r.in_universe === false && !wlHas(r.ticker)) ? 'NEW' : ''].filter(Boolean).join('·');
     const lod = r.lod_dist == null ? '—' : `<span class="${r.lod_dist > 60 ? 'neg' : ''}">${r.lod_dist}%</span>`;
     return `<tr>
-      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span></td>
+      <td data-tk="${r.ticker}" title="${r.name || ''}"><span style="color:var(--accent);font-weight:600">${r.ticker}</span>${saLink(r.ticker)}${chLink(r.ticker)} <span style="font-size:8px;color:var(--muted)">${src}</span><div class="bdg-line">${bdgSlot(r.ticker)}</div></td>
       <td>$${fmtPrice(r.price)}</td>
       <td>${pct(r.chg_1d)}</td>
       <td><span class="dna-dots">${dots}</span></td>

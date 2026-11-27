@@ -884,7 +884,17 @@ def main():
                 r5[r["ticker"]] = float(c.iloc[-1] / c.iloc[-6] - 1)
                 r21[r["ticker"]] = float(c.iloc[-1] / c.iloc[-22] - 1)
             p5, p21 = pd.Series(r5).rank(pct=True), pd.Series(r21).rank(pct=True)
-            for r in rows:
+            # v7.18: badges for the names outside the liquid pool too (themes, my universe), so every
+            # table can show them. Their QUAD percentile is measured against the pool, not within it.
+            pool5, pool21 = np.sort(list(r5.values())), np.sort(list(r21.values()))
+            for t in extra:
+                df = full.get(t)
+                if df is None or len(df) < 30 or t in p5 or not len(pool5):
+                    continue
+                c = df["Close"]
+                p5[t] = float(np.searchsorted(pool5, float(c.iloc[-1] / c.iloc[-6] - 1), side="right") / len(pool5))
+                p21[t] = float(np.searchsorted(pool21, float(c.iloc[-1] / c.iloc[-22] - 1), side="right") / len(pool21))
+            for r in list(rows) + list(extra.values()):
                 t = r["ticker"]
                 df = full.get(t)
                 if df is None or len(df) < 60 or t not in p5:
@@ -934,10 +944,15 @@ def main():
         def _da(r, k):
             v = (r.get("dist_atr") or {}).get(k)
             return v if v is not None else -9.0
-        for r in rows:
+        for r in list(rows) + list(extra.values()):
             r["ema3"] = bool(_da(r, "ema9") > 0 and _da(r, "ema21") > 0 and _da(r, "ema50") > 0)
             if isinstance(r.get("bdg"), dict):
                 r["bdg"]["ema3"] = r["ema3"]
+        # v7.18: the general badges for every analysed name, keyed by ticker (only the true ones, to keep
+        # setups.json small). The dashboard shows them in the Carnivore lists, the screener and the market scan.
+        BDG_ALL = ("ll1", "liq", "quad", "kq", "ema3")
+        badges_all = {r["ticker"]: {k: 1 for k in BDG_ALL if r["bdg"].get(k)} | {"dvol_m": r["bdg"].get("dvol_m")}
+                      for r in list(rows) + list(extra.values()) if isinstance(r.get("bdg"), dict)}
         cand = {"pullback": [], "ur": [], "breakout": [], "gapup": []}
         gu_rejected = []
         for r in rows:
@@ -1074,7 +1089,7 @@ def main():
                                                "stage": 2, "rs_min": SETUP_GU_RS_MIN, "max_age_days": 5},
                                      "holders": {"rs_min": RH_RS_MIN, "off_high_max": RH_OFF_HIGH_MAX, "above": "EMA50",
                                                  "per_industry": RH_PER_INDUSTRY, "hold_min": RH_HOLD_MIN}},
-                      "lists": setups}
+                      "lists": setups, "badges": badges_all}
         with open(SETUPS_PATH, "w") as f:
             json.dump(su_payload, f, separators=(",", ":"))
         print(f"  Saved {SETUPS_PATH} (" + ", ".join(f"{k} {len(setups[k])}/{len(cand[k])}" for k in setups) + ")")
