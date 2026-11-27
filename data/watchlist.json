@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-13 13:11 UTC",
+ "updated_at": "2026-11-27 10:34 UTC",
  "tickers": [
   {
    "ticker": "BLLN",
@@ -45,6 +45,11 @@
    "ticker": "FISV",
    "added": "2026-11-13",
    "source": "06 chart"
+  },
+  {
+   "ticker": "KSS",
+   "added": "2026-11-27",
+   "source": "05b U&R"
   }
  ]
 }
