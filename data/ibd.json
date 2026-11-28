@@ -1,24 +1,24 @@
 {
- "updated_at": "2026-11-27 06:59 UTC",
- "updated_date": "2026-11-27",
+ "updated_at": "2026-11-28 06:30 UTC",
+ "updated_date": "2026-11-28",
  "ok": true,
  "source": "local",
- "outlook": "Market In Correction",
+ "outlook": "Uptrend Under Pressure",
  "exposure_band": [
-  0,
-  20
+  20,
+  40
  ],
- "exposure_step": 1,
- "summary": "Nasdaq undercuts 200-day moving average; S&P testing it.",
- "raw": "Stock Market Exposure 0-20% 20-40% 40-60% 60-80% 80-100% % to % Invested Nasdaq undercuts 200-day moving average; S&P testing it. Learn More",
+ "exposure_step": 2,
+ "summary": "Nasdaq, S&P 500 rebound sharply off lows.",
+ "raw": "Stock Market Exposure 0-20% 20-40% 40-60% 60-80% 80-100% % to % Invested Nasdaq, S&P 500 rebound sharply off lows. Learn More",
  "big_picture": {
-  "title": "Stock Market Shows Resilience Ahead Of Thanksgiving Holiday; Anthropic Rises, Nvidia Sinks",
-  "url": "https://www.investors.com/market-trend/the-big-picture/stock-market-dow-jones-sp500-nasdaq-markets-inflation-fed-dell-stock-thanksgiving-holiday/",
-  "date": "November 25, 2026",
-  "excerpt": "After a poor start, the Dow ends in the black Wednesday while the Nasdaq and S&P 500 trim losses.",
+  "title": "Stock Market Rallies, Triggers This Shift; Jensen Huang Testimony, Jobs Report Loom",
+  "url": "https://www.investors.com/market-trend/the-big-picture/stock-market-rallies-dow-jones-nasdaq-jensen-huang-testimony-jobs-report/",
+  "date": "November 27, 2026",
+  "excerpt": "The stock market, including the Dow Jones index, ended a powerful rally week higher. Testimony from Nvidia CEO Jensen Huang now looms.",
   "paragraphs": [
-   "The stock market improved dramatically by the end of Wednesday's session after falling on a hotter-than-anticipated inflation reading, while signs of a booming economy firmed up bets for a December rate hike. Major indexes trimmed losses and finished near session highs ahead of the Thanksgiving Day holiday, with the Dow Jones Industrial Average completing a stunning turnaround.",
-   "While tech stocks remain broadly under pressure, high-profile artificial intelligence name Nvidia (NVDA) finished sharply off its intraday low, and IPO stock Anthropic (ANT) swung higher. The Dow Jones Industrial Average climbed back into the black, gaining 0.3% after erasing a loss of more than 1,100 points. The S&P 500 and the Nasdaq sliced their declines down to 0.3% and 0.6%, respectively."
+   "The stock market ended a powerful rebound week sharply higher, which prompted a shift in recommended exposure. Testimony from Nvidia (NVDA) Chief Executive Jensen Huang and a new jobs report now loom. The Nasdaq gave the bears a black eye on Friday as it vaulted 2.3%. Nevertheless, the tech-heavy index remains in correction territory as it is still 12.6% off\u2026",
+   "Copyright \u00a92026 Investor's Business Daily, LLC. All rights reserved. 87990cbe856818d5eddac44c7b1cdeb8"
   ]
  },
  "outlook_history": [
@@ -52,6 +52,14 @@
    "band": [
     0,
     20
+   ]
+  },
+  {
+   "date": "2026-11-28",
+   "outlook": "Uptrend Under Pressure",
+   "band": [
+    20,
+    40
    ]
   }
  ]
